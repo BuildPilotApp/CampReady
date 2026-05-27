@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   description:
     "Offline-first camping checklist built for one-handed use in the field.",
   applicationName: "CampReady",
-  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
