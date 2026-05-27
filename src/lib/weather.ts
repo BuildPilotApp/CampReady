@@ -81,64 +81,174 @@ function daysUntil(dateIso: string): number {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-export async function getWeatherSummary(input: {
+function parseDailyResponse(data: any): Map<string, { maxC: number; minC: number; windKmh: number }> {
+  const daily = data?.daily;
+  const times: string[] = Array.isArray(daily?.time) ? daily.time : [];
+  const maxArr: number[] = Array.isArray(daily?.temperature_2m_max) ? daily.temperature_2m_max : [];
+  const minArr: number[] = Array.isArray(daily?.temperature_2m_min) ? daily.temperature_2m_min : [];
+  const windArr: number[] = Array.isArray(daily?.windspeed_10m_max) ? daily.windspeed_10m_max : [];
+
+  const map = new Map<string, { maxC: number; minC: number; windKmh: number }>();
+  for (let i = 0; i < times.length; i++) {
+    const t = times[i];
+    const maxC = maxArr[i];
+    const minC = minArr[i];
+    const windKmh = windArr[i];
+    if (typeof t === "string" && typeof maxC === "number" && typeof minC === "number" && typeof windKmh === "number") {
+      map.set(t, { maxC, minC, windKmh });
+    }
+  }
+  return map;
+}
+
+function isoDatePrevYear(dateIso: string): string {
+  const [y, m, d] = dateIso.split("-").map((v) => Number(v));
+  const year = (y ?? 0) - 1;
+  return `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function sortIsoAsc(dates: string[]): string[] {
+  return [...dates].sort((a, b) => a.localeCompare(b));
+}
+
+function isWithinNext10(dateIso: string): boolean {
+  const diffDays = daysUntil(dateIso);
+  return diffDays >= 0 && diffDays <= 10;
+}
+
+async function fetchDailyRange(input: {
+  endpoint: string;
   latitude: number;
   longitude: number;
-  dateIso: string;
-}): Promise<WeatherSummary | null> {
-  const { latitude, longitude, dateIso } = input;
-  const within10 = daysUntil(dateIso) <= 10;
-  const key = cacheKey([
-    within10 ? "forecast" : "archive",
-    String(latitude),
-    String(longitude),
-    dateIso,
-  ]);
-
-  const cached = readCache<WeatherSummary>(key, 1000 * 60 * 30);
-  if (cached) return cached;
-
-  const url = new URL(within10 ? FORECAST_ENDPOINT : ARCHIVE_ENDPOINT);
+  startIso: string;
+  endIso: string;
+}): Promise<Map<string, { maxC: number; minC: number; windKmh: number }> | null> {
+  const { endpoint, latitude, longitude, startIso, endIso } = input;
+  const url = new URL(endpoint);
   url.searchParams.set("latitude", String(latitude));
   url.searchParams.set("longitude", String(longitude));
-  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,windspeed_10m_max");
+  url.searchParams.set(
+    "daily",
+    "temperature_2m_max,temperature_2m_min,windspeed_10m_max",
+  );
   url.searchParams.set("timezone", "auto");
   url.searchParams.set("temperature_unit", "celsius");
   url.searchParams.set("wind_speed_unit", "kmh");
-
-  if (within10) {
-    url.searchParams.set("start_date", dateIso);
-    url.searchParams.set("end_date", dateIso);
-  } else {
-    const [y, m, d] = dateIso.split("-").map((v) => Number(v));
-    const year = (y ?? 0) - 1;
-    const prior = `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    url.searchParams.set("start_date", prior);
-    url.searchParams.set("end_date", prior);
-  }
+  url.searchParams.set("start_date", startIso);
+  url.searchParams.set("end_date", endIso);
 
   const res = await fetch(url.toString());
   if (!res.ok) return null;
   const data = (await res.json()) as any;
-  const daily = data?.daily;
-  const maxC = daily?.temperature_2m_max?.[0];
-  const minC = daily?.temperature_2m_min?.[0];
-  const windKmh = daily?.windspeed_10m_max?.[0];
-  if (
-    typeof maxC !== "number" ||
-    typeof minC !== "number" ||
-    typeof windKmh !== "number"
-  ) {
-    return null;
+  return parseDailyResponse(data);
+}
+
+export async function getWeatherSummariesForDates(input: {
+  latitude: number;
+  longitude: number;
+  datesIso: string[];
+}): Promise<Record<string, WeatherSummary> | null> {
+  const { latitude, longitude, datesIso } = input;
+  const uniqueDates = sortIsoAsc(Array.from(new Set(datesIso)));
+  if (uniqueDates.length === 0) return {};
+
+  const results: Record<string, WeatherSummary> = {};
+
+  const forecastDates: string[] = [];
+  const archiveDates: string[] = [];
+
+  for (const d of uniqueDates) {
+    if (isWithinNext10(d)) forecastDates.push(d);
+    else archiveDates.push(d);
   }
 
-  const summary: WeatherSummary = {
-    highF: Math.round(toF(maxC)),
-    lowF: Math.round(toF(minC)),
-    windMph: Math.round(toMph(windKmh)),
-    label: within10 ? "Live Forecast" : `Historical Average (${new Date().getFullYear() - 1})`,
+  // 1) Fill from cache when possible; collect the missing subsets.
+  const missingForecast: string[] = [];
+  const missingArchive: string[] = [];
+
+  for (const d of forecastDates) {
+    const key = cacheKey(["forecast", String(latitude), String(longitude), d]);
+    const cached = readCache<WeatherSummary>(key, 1000 * 60 * 30);
+    if (cached) results[d] = cached;
+    else missingForecast.push(d);
+  }
+
+  for (const d of archiveDates) {
+    const prev = isoDatePrevYear(d);
+    const key = cacheKey(["archive", String(latitude), String(longitude), d, prev]);
+    const cached = readCache<WeatherSummary>(key, 1000 * 60 * 30);
+    if (cached) results[d] = cached;
+    else missingArchive.push(d);
+  }
+
+  const applyToResults = (dateIso: string, maxC: number, minC: number, windKmh: number) => {
+    const summary: WeatherSummary = {
+      highF: Math.round(toF(maxC)),
+      lowF: Math.round(toF(minC)),
+      windMph: Math.round(toMph(windKmh)),
+      label: isWithinNext10(dateIso)
+        ? "Live Forecast"
+        : `Historical Average (${new Date(isoDatePrevYear(dateIso)).getFullYear()})`,
+    };
+    results[dateIso] = summary;
+    return summary;
   };
-  writeCache(key, summary);
-  return summary;
+
+  // 2) Fetch forecast range for missing forecast dates.
+  if (missingForecast.length > 0) {
+    const startIso = missingForecast[0];
+    const endIso = missingForecast[missingForecast.length - 1];
+    const dailyMap = await fetchDailyRange({
+      endpoint: FORECAST_ENDPOINT,
+      latitude,
+      longitude,
+      startIso,
+      endIso,
+    });
+
+    if (!dailyMap) return null;
+
+    for (const d of missingForecast) {
+      const row = dailyMap.get(d);
+      if (!row) continue;
+      const key = cacheKey(["forecast", String(latitude), String(longitude), d]);
+      const summary = applyToResults(d, row.maxC, row.minC, row.windKmh);
+      writeCache(key, summary);
+    }
+  }
+
+  // 3) Fetch archive range for missing archive dates (previous-year equivalents).
+  if (missingArchive.length > 0) {
+    const priorDates = sortIsoAsc(missingArchive.map(isoDatePrevYear));
+    const startIso = priorDates[0];
+    const endIso = priorDates[priorDates.length - 1];
+
+    const dailyMap = await fetchDailyRange({
+      endpoint: ARCHIVE_ENDPOINT,
+      latitude,
+      longitude,
+      startIso,
+      endIso,
+    });
+
+    if (!dailyMap) return null;
+
+    for (const d of missingArchive) {
+      const priorIso = isoDatePrevYear(d);
+      const row = dailyMap.get(priorIso);
+      if (!row) continue;
+      const key = cacheKey([
+        "archive",
+        String(latitude),
+        String(longitude),
+        d,
+        priorIso,
+      ]);
+      const summary = applyToResults(d, row.maxC, row.minC, row.windKmh);
+      writeCache(key, summary);
+    }
+  }
+
+  return results;
 }
 

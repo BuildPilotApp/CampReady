@@ -10,10 +10,18 @@ function todayIso(): string {
 }
 
 export function TripManager() {
-  const { database, activeTrip, selectTrip, createNewTrip, deleteTrip, updateTrip } =
+  const {
+    database,
+    activeTrip,
+    selectTrip,
+    createNewTrip,
+    deleteTrip,
+    updateTrip,
+  } =
     useCampReady();
   const [name, setName] = useState("");
-  const [date, setDate] = useState<string>(todayIso());
+  const [startDate, setStartDate] = useState<string>(todayIso());
+  const [endDate, setEndDate] = useState<string>(todayIso());
   const [location, setLocation] = useState("");
 
   const trips = useMemo(() => database.trips ?? [], [database.trips]);
@@ -48,8 +56,28 @@ export function TripManager() {
             </span>
             <input
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={startDate}
+              onChange={(e) => {
+                const next = e.target.value;
+                setStartDate(next);
+                setEndDate((current) => (current < next ? next : current));
+              }}
+              className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted">
+              End date
+            </span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                const next = e.target.value;
+                setEndDate(next);
+                setStartDate((current) => (current > next ? next : current));
+              }}
               className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
             />
           </label>
@@ -71,10 +99,13 @@ export function TripManager() {
             onClick={() => {
               createNewTrip({
                 name,
-                date,
+                startDate,
+                endDate,
                 locationQuery: location,
               });
               setName("");
+              setStartDate(todayIso());
+              setEndDate(todayIso());
               setLocation("");
             }}
             className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90"
@@ -103,7 +134,13 @@ export function TripManager() {
                   <span className="mt-1 flex flex-col gap-1 text-xs font-semibold text-muted">
                     <span className="inline-flex items-center gap-2">
                       <CalendarDays className="size-4 text-accent" aria-hidden />
-                      {trip.date}
+                        {trip.startDate === trip.endDate ? (
+                          trip.startDate
+                        ) : (
+                          <>
+                            {trip.startDate} - {trip.endDate}
+                          </>
+                        )}
                     </span>
                     {trip.location?.query ? (
                       <span className="inline-flex items-center gap-2">
@@ -139,6 +176,45 @@ export function TripManager() {
                           placeholder="Moab"
                         />
                       </label>
+
+                      <div className="flex flex-col gap-3">
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
+                            Start
+                          </span>
+                          <input
+                            type="date"
+                            value={trip.startDate}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              updateTrip(trip.id, {
+                                startDate: next,
+                                endDate:
+                                  trip.endDate < next ? next : trip.endDate,
+                              });
+                            }}
+                            className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
+                            End
+                          </span>
+                          <input
+                            type="date"
+                            value={trip.endDate}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              updateTrip(trip.id, {
+                                endDate: next,
+                                startDate:
+                                  trip.startDate > next ? next : trip.startDate,
+                              });
+                            }}
+                            className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
+                          />
+                        </label>
+                      </div>
                     </div>
                   </details>
 

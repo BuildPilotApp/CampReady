@@ -39,7 +39,14 @@ export function ActiveTripCard() {
       <div className="mt-3 flex flex-col gap-2 text-sm font-medium text-muted">
         <span className="inline-flex items-center gap-2">
           <CalendarDays className="size-4 shrink-0 text-accent" aria-hidden />
-          {formatTripDate(activeTrip.date)}
+          {activeTrip.startDate === activeTrip.endDate ? (
+            formatTripDate(activeTrip.startDate)
+          ) : (
+            <>
+              {formatTripDate(activeTrip.startDate)} -{" "}
+              {formatTripDate(activeTrip.endDate)}
+            </>
+          )}
         </span>
         <span className="inline-flex items-center gap-2">
           <MapPin className="size-4 shrink-0 text-accent" aria-hidden />

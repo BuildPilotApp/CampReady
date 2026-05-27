@@ -24,7 +24,8 @@ export function createSeedDatabase(): CampReadyDatabase {
   const template = getTemplateById(DEFAULT_TEMPLATE_ID);
   const trip = createTrip({
     name: "Yosemite Weekend",
-    date: defaultTripDate(),
+    startDate: defaultTripDate(),
+    endDate: defaultTripDate(),
     location: { query: "Yosemite" },
   });
 

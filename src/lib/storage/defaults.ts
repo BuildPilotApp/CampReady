@@ -17,14 +17,15 @@ export function createEmptyDatabase(): CampReadyDatabase {
 }
 
 export function createTrip(
-  partial: Pick<Trip, "name" | "date"> &
+  partial: Pick<Trip, "name" | "startDate" | "endDate"> &
     Partial<Pick<Trip, "id" | "location">>,
 ): TripRecord {
   const now = new Date().toISOString();
   return {
     id: partial.id ?? crypto.randomUUID(),
     name: partial.name,
-    date: partial.date,
+    startDate: partial.startDate,
+    endDate: partial.endDate,
     location: partial.location,
     categories: [],
     createdAt: now,

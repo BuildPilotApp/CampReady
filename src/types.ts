@@ -16,7 +16,9 @@ export interface Trip {
   id: string;
   name: string;
   /** ISO 8601 date string (YYYY-MM-DD). */
-  date: string;
+  startDate: string;
+  /** ISO 8601 date string (YYYY-MM-DD). */
+  endDate: string;
   location?: TripLocation;
 }
 

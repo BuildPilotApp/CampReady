@@ -36,14 +36,40 @@ function parseDatabase(raw: string): CampReadyDatabase | null {
         : null;
 
       const trips: TripRecord[] = (record.trips as TripRecord[]).map((trip, idx) => {
-        if ("categories" in trip && Array.isArray((trip as TripRecord).categories)) {
-          return trip as TripRecord;
+        const hasCategories =
+          "categories" in trip && Array.isArray((trip as TripRecord).categories);
+
+        const legacyDate =
+          typeof (trip as any).date === "string" ? (trip as any).date : undefined;
+        const startDate =
+          typeof (trip as any).startDate === "string"
+            ? (trip as any).startDate
+            : legacyDate ?? defaultTripDate();
+        const endDate =
+          typeof (trip as any).endDate === "string"
+            ? (trip as any).endDate
+            : legacyDate ?? startDate;
+
+        if (hasCategories) {
+          const now = new Date().toISOString();
+          return {
+            ...(trip as any),
+            location: (trip as any).location,
+            startDate,
+            endDate,
+            createdAt: (trip as any).createdAt ?? now,
+            updatedAt: (trip as any).updatedAt ?? now,
+          } as TripRecord;
         }
 
         const now = new Date().toISOString();
+        // Legacy schema used a single `date` field; migrate it to start/end.
+
         return {
           ...(trip as any),
           location: (trip as any).location,
+          startDate,
+          endDate,
           categories: idx === 0 && legacyCategories ? legacyCategories : [],
           createdAt: (trip as any).createdAt ?? now,
           updatedAt: (trip as any).updatedAt ?? now,
@@ -61,6 +87,12 @@ function parseDatabase(raw: string): CampReadyDatabase | null {
     return null;
   }
   return null;
+}
+
+function defaultTripDate(): string {
+  const date = new Date();
+  date.setDate(date.getDate() + 7);
+  return date.toISOString().slice(0, 10);
 }
 
 function finalizeDatabase(data: CampReadyDatabase): CampReadyDatabase {

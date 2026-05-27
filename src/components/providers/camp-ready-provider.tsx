@@ -47,10 +47,15 @@ interface CampReadyContextValue {
   setChecklistFilter: (filter: ChecklistFilter) => void;
   toggleCategory: (categoryId: string) => void;
   selectTrip: (tripId: string) => void;
-  createNewTrip: (input: { name: string; date: string; locationQuery?: string }) => void;
+  createNewTrip: (input: {
+    name: string;
+    startDate: string;
+    endDate: string;
+    locationQuery?: string;
+  }) => void;
   updateTrip: (
     tripId: string,
-    patch: Partial<Pick<TripRecord, "name" | "date" | "location">>,
+    patch: Partial<Pick<TripRecord, "name" | "startDate" | "endDate" | "location">>,
   ) => void;
   deleteTrip: (tripId: string) => void;
 
@@ -160,11 +165,12 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   );
 
   const createNewTrip = useCallback(
-    (input: { name: string; date: string; locationQuery?: string }) => {
+    (input: { name: string; startDate: string; endDate: string; locationQuery?: string }) => {
       if (!database) return;
       const trip = createTrip({
         name: input.name.trim() || "New Trip",
-        date: input.date,
+        startDate: input.startDate,
+        endDate: input.endDate,
         location: normalizeLocation(input.locationQuery),
       });
       const next = {
@@ -181,7 +187,12 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updateTrip = useCallback(
-    (tripId: string, patch: Partial<Pick<TripRecord, "name" | "date" | "location">>) => {
+    (
+      tripId: string,
+      patch: Partial<
+        Pick<TripRecord, "name" | "startDate" | "endDate" | "location">
+      >,
+    ) => {
       if (!database) return;
       persist(
         updateTripById(database, tripId, (trip) => ({
