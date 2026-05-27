@@ -1,26 +1,115 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #eef2eb;
+  --foreground: #081408;
+  --muted: #2d4a36;
+  --border: #9fb39a;
+  --accent: #14532d;
+  --accent-foreground: #f0fdf4;
+  --surface: #ffffff;
+  --ring-track: #c5d4c0;
+  --ring-progress: #15803d;
+  --touch-target: 3rem;
+  --mobile-max-width: 430px;
+  --status-missing-bg: #fef2f2;
+  --status-missing-fg: #991b1b;
+  --status-missing-border: #f87171;
+  --status-staged-bg: #fefce8;
+  --status-staged-fg: #854d0e;
+  --status-staged-border: #facc15;
+  --status-packed-bg: #ecfdf5;
+  --status-packed-fg: #14532d;
+  --status-packed-border: #22c55e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-surface: var(--surface);
+  --color-status-missing-bg: var(--status-missing-bg);
+  --color-status-missing-fg: var(--status-missing-fg);
+  --color-status-missing-border: var(--status-missing-border);
+  --color-status-staged-bg: var(--status-staged-bg);
+  --color-status-staged-fg: var(--status-staged-fg);
+  --color-status-staged-border: var(--status-staged-border);
+  --color-status-packed-bg: var(--status-packed-bg);
+  --color-status-packed-fg: var(--status-packed-fg);
+  --color-status-packed-border: var(--status-packed-border);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0a120c;
+    --foreground: #f0fdf4;
+    --muted: #a8c4b0;
+    --border: #3d5c47;
+    --accent: #4ade80;
+    --accent-foreground: #052e16;
+    --surface: #132218;
+    --ring-track: #2a4030;
+    --ring-progress: #4ade80;
+    --status-missing-bg: #450a0a;
+    --status-missing-fg: #fecaca;
+    --status-missing-border: #ef4444;
+    --status-staged-bg: #422006;
+    --status-staged-fg: #fef08a;
+    --status-staged-border: #eab308;
+    --status-packed-bg: #052e16;
+    --status-packed-fg: #bbf7d0;
+    --status-packed-border: #22c55e;
   }
 }
 
+html {
+  height: 100%;
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
+}
+
 body {
+  margin: 0;
+  min-height: 100%;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overscroll-behavior-y: none;
+}
+
+.mobile-app-shell {
+  width: 100%;
+  max-width: var(--mobile-max-width);
+  margin-inline: auto;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.mobile-safe-x {
+  padding-inline: max(1rem, env(safe-area-inset-left))
+    max(1rem, env(safe-area-inset-right));
+}
+
+.mobile-safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.mobile-safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.touch-target {
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+}
+
+/* No hover-dependent UI — outdoor / touch only */
+@media (hover: hover) {
+  a:hover,
+  button:hover {
+    /* intentionally empty */
+  }
 }
