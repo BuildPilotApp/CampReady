@@ -1,6 +1,6 @@
-import type { CampReadyDatabase, Category } from "@/types";
-import { getTemplateById } from "@/lib/templates";
-import { createEmptyDatabase, createTrip, syncTripCounts } from "./defaults";
+import type { CampReadyDatabase, Category, ChecklistTemplate, TripRecord } from "@/types";
+import { CHECKLIST_TEMPLATES, getTemplateById } from "@/lib/templates";
+import { createTrip } from "./defaults";
 
 const DEFAULT_TEMPLATE_ID = "weekend-car-camping";
 
@@ -25,16 +25,17 @@ export function createSeedDatabase(): CampReadyDatabase {
   const trip = createTrip({
     name: "Yosemite Weekend",
     date: defaultTripDate(),
+    location: { query: "Yosemite" },
   });
 
   const categories = template ? cloneCategories(template.categories) : [];
-  const syncedTrip = syncTripCounts(trip, categories);
+  const seededTrip: TripRecord = { ...trip, categories };
 
   return {
     version: 1,
-    trips: [syncedTrip],
-    categories,
-    activeTripId: syncedTrip.id,
+    trips: [seededTrip],
+    templates: CHECKLIST_TEMPLATES,
+    activeTripId: seededTrip.id,
   };
 }
 
@@ -47,15 +48,20 @@ function defaultTripDate(): string {
 export function ensureSeededDatabase(
   data: CampReadyDatabase,
 ): CampReadyDatabase {
-  if (data.trips.length > 0 && data.categories.length > 0) {
-    return {
-      ...data,
-      activeTripId: data.activeTripId ?? data.trips[0]?.id ?? null,
-    };
+  const base: CampReadyDatabase = {
+    version: 1,
+    trips: data.trips ?? [],
+    templates: data.templates ?? CHECKLIST_TEMPLATES,
+    activeTripId: data.activeTripId ?? data.trips?.[0]?.id ?? null,
+  };
+
+  if (base.trips.length > 0) {
+    return base;
   }
+
   return createSeedDatabase();
 }
 
 export function isEmptyDatabase(data: CampReadyDatabase): boolean {
-  return data.trips.length === 0 && data.categories.length === 0;
+  return data.trips.length === 0;
 }

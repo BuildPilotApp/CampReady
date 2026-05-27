@@ -2,6 +2,7 @@
 
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { WeatherBanner } from "@/components/weather/weather-banner";
 import { CalendarDays, MapPin } from "lucide-react";
 
 function formatTripDate(isoDate: string): string {
@@ -14,7 +15,7 @@ function formatTripDate(isoDate: string): string {
 }
 
 export function ActiveTripCard() {
-  const { activeTrip } = useCampReady();
+  const { activeTrip, activeTripStats } = useCampReady();
 
   if (!activeTrip) {
     return (
@@ -46,19 +47,21 @@ export function ActiveTripCard() {
         </span>
       </div>
 
+      <WeatherBanner />
+
       <div className="mt-5 flex items-center gap-5">
         <ProgressRing
-          packed={activeTrip.packedItems}
-          total={activeTrip.totalItems}
+          packed={activeTripStats?.packedItems ?? 0}
+          total={activeTripStats?.totalItems ?? 0}
           size={128}
           strokeWidth={11}
         />
         <div className="min-w-0 flex-1">
           <p className="text-3xl font-bold leading-none tabular-nums text-foreground">
-            {activeTrip.packedItems}
+            {activeTripStats?.packedItems ?? 0}
             <span className="text-xl font-semibold text-muted">
               {" "}
-              / {activeTrip.totalItems}
+              / {activeTripStats?.totalItems ?? 0}
             </span>
           </p>
           <p className="mt-2 text-base font-semibold text-foreground">

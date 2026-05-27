@@ -4,7 +4,8 @@ export {
   createTrip,
   createCategory,
   createGearItem,
-  syncTripCounts,
+  getTripStats,
+  touchTrip,
 } from "./defaults";
 export {
   createSeedDatabase,

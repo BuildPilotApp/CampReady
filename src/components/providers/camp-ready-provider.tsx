@@ -1,19 +1,25 @@
 "use client";
 
-import { CHECKLIST_TEMPLATES } from "@/lib/templates";
 import { nextGearStatus } from "@/lib/gear-status";
 import {
   cloneCategories,
   hydrateDatabase,
-  syncTripCounts,
+  createCategory,
+  createGearItem,
+  createTrip,
+  getTripStats,
+  touchTrip,
   writeDatabaseSync,
 } from "@/lib/storage";
 import type {
   AppTab,
   CampReadyDatabase,
   ChecklistFilter,
+  GearItem,
   GearItemStatus,
-  Trip,
+  ChecklistTemplate,
+  TripRecord,
+  TripLocation,
 } from "@/types";
 import {
   createContext,
@@ -27,38 +33,72 @@ import {
 interface CampReadyContextValue {
   ready: boolean;
   database: CampReadyDatabase;
-  activeTrip: Trip | null;
+  activeTrip: TripRecord | null;
+  activeTripStats: {
+    totalItems: number;
+    packedItems: number;
+    totalWeightLbs: number;
+    percentPacked: number;
+  } | null;
   activeTab: AppTab;
   checklistFilter: ChecklistFilter;
   collapsedCategories: Record<string, boolean>;
   setActiveTab: (tab: AppTab) => void;
   setChecklistFilter: (filter: ChecklistFilter) => void;
   toggleCategory: (categoryId: string) => void;
+  selectTrip: (tripId: string) => void;
+  createNewTrip: (input: { name: string; date: string; locationQuery?: string }) => void;
+  updateTrip: (
+    tripId: string,
+    patch: Partial<Pick<TripRecord, "name" | "date" | "location">>,
+  ) => void;
+  deleteTrip: (tripId: string) => void;
+
+  createTemplateFromTrip: (input: {
+    tripId: string;
+    name: string;
+    description: string;
+  }) => void;
+  updateTemplate: (
+    templateId: string,
+    patch: Partial<Pick<ChecklistTemplate, "name" | "description">>,
+  ) => void;
+  deleteTemplate: (templateId: string) => void;
+  applyTemplateToActiveTrip: (templateId: string) => void;
+
+  addCategory: (name: string) => void;
+  updateCategory: (categoryId: string, name: string) => void;
+  deleteCategory: (categoryId: string) => void;
+
+  addItem: (input: {
+    categoryId: string;
+    name: string;
+    weight_lbs?: number;
+    storageLocation?: string;
+  }) => void;
+  updateItem: (itemId: string, patch: Partial<Omit<GearItem, "id" | "category">>) => void;
+  deleteItem: (itemId: string) => void;
   cycleItemStatus: (itemId: string) => void;
-  applyTemplate: (templateId: string) => void;
   resetAllItems: () => void;
 }
 
 const CampReadyContext = createContext<CampReadyContextValue | null>(null);
 
-function updateActiveTrip(
+function normalizeLocation(query?: string): TripLocation | undefined {
+  const trimmed = query?.trim();
+  if (!trimmed) return undefined;
+  return { query: trimmed };
+}
+
+function updateTripById(
   database: CampReadyDatabase,
+  tripId: string,
+  updater: (trip: TripRecord) => TripRecord,
 ): CampReadyDatabase {
-  if (!database.activeTripId) {
-    return database;
-  }
-
-  const tripIndex = database.trips.findIndex(
-    (trip) => trip.id === database.activeTripId,
-  );
-  if (tripIndex === -1) {
-    return database;
-  }
-
-  const synced = syncTripCounts(database.trips[tripIndex]!, database.categories);
+  const idx = database.trips.findIndex((trip) => trip.id === tripId);
+  if (idx === -1) return database;
   const trips = [...database.trips];
-  trips[tripIndex] = synced;
-
+  trips[idx] = touchTrip(updater(trips[idx]!));
   return { ...database, trips };
 }
 
@@ -88,19 +128,19 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const persist = useCallback((next: CampReadyDatabase) => {
-    const withCounts = updateActiveTrip(next);
-    setDatabase(withCounts);
-    writeDatabaseSync(withCounts);
+    setDatabase(next);
+    writeDatabaseSync(next);
   }, []);
 
-  const activeTrip = useMemo(() => {
-    if (!database?.activeTripId) {
-      return null;
-    }
-    return (
-      database.trips.find((trip) => trip.id === database.activeTripId) ?? null
-    );
+  const activeTrip = useMemo<TripRecord | null>(() => {
+    if (!database?.activeTripId) return null;
+    return database.trips.find((trip) => trip.id === database.activeTripId) ?? null;
   }, [database]);
+
+  const activeTripStats = useMemo(() => {
+    if (!activeTrip) return null;
+    return getTripStats(activeTrip);
+  }, [activeTrip]);
 
   const toggleCategory = useCallback((categoryId: string) => {
     setCollapsedCategories((current) => ({
@@ -109,40 +149,113 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const cycleItemStatus = useCallback(
-    (itemId: string) => {
-      if (!database) {
-        return;
-      }
-
-      const categories = database.categories.map((category) => ({
-        ...category,
-        items: category.items.map((item) => {
-          if (item.id !== itemId) {
-            return item;
-          }
-          return { ...item, status: nextGearStatus(item.status) };
-        }),
-      }));
-
-      persist({ ...database, categories });
+  const selectTrip = useCallback(
+    (tripId: string) => {
+      if (!database) return;
+      persist({ ...database, activeTripId: tripId });
+      setCollapsedCategories({});
+      setChecklistFilter("all");
     },
     [database, persist],
   );
 
-  const applyTemplate = useCallback(
+  const createNewTrip = useCallback(
+    (input: { name: string; date: string; locationQuery?: string }) => {
+      if (!database) return;
+      const trip = createTrip({
+        name: input.name.trim() || "New Trip",
+        date: input.date,
+        location: normalizeLocation(input.locationQuery),
+      });
+      const next = {
+        ...database,
+        trips: [trip, ...database.trips],
+        activeTripId: trip.id,
+      };
+      persist(next);
+      setActiveTab("checklist");
+      setCollapsedCategories({});
+      setChecklistFilter("all");
+    },
+    [database, persist],
+  );
+
+  const updateTrip = useCallback(
+    (tripId: string, patch: Partial<Pick<TripRecord, "name" | "date" | "location">>) => {
+      if (!database) return;
+      persist(
+        updateTripById(database, tripId, (trip) => ({
+          ...trip,
+          ...patch,
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const deleteTrip = useCallback(
+    (tripId: string) => {
+      if (!database) return;
+      const trips = database.trips.filter((trip) => trip.id !== tripId);
+      const activeTripId =
+        database.activeTripId === tripId ? trips[0]?.id ?? null : database.activeTripId;
+      persist({ ...database, trips, activeTripId });
+      setCollapsedCategories({});
+      setChecklistFilter("all");
+    },
+    [database, persist],
+  );
+
+  const createTemplateFromTrip = useCallback(
+    (input: { tripId: string; name: string; description: string }) => {
+      if (!database) return;
+      const trip = database.trips.find((t) => t.id === input.tripId);
+      if (!trip) return;
+      const template: ChecklistTemplate = {
+        id: crypto.randomUUID(),
+        name: input.name.trim() || "My Template",
+        description: input.description.trim() || "Saved from a trip checklist.",
+        categories: trip.categories,
+      };
+      persist({ ...database, templates: [template, ...database.templates] });
+    },
+    [database, persist],
+  );
+
+  const updateTemplate = useCallback(
+    (templateId: string, patch: Partial<Pick<ChecklistTemplate, "name" | "description">>) => {
+      if (!database) return;
+      const templates = database.templates.map((t) =>
+        t.id === templateId ? { ...t, ...patch } : t,
+      );
+      persist({ ...database, templates });
+    },
+    [database, persist],
+  );
+
+  const deleteTemplate = useCallback(
     (templateId: string) => {
-      if (!database) {
-        return;
-      }
+      if (!database) return;
+      persist({
+        ...database,
+        templates: database.templates.filter((t) => t.id !== templateId),
+      });
+    },
+    [database, persist],
+  );
 
-      const template = CHECKLIST_TEMPLATES.find((entry) => entry.id === templateId);
-      if (!template) {
-        return;
-      }
-
+  const applyTemplateToActiveTrip = useCallback(
+    (templateId: string) => {
+      if (!database?.activeTripId) return;
+      const template = database.templates.find((t) => t.id === templateId);
+      if (!template) return;
       const categories = cloneCategories(template.categories);
-      persist({ ...database, categories });
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => ({
+          ...trip,
+          categories,
+        })),
+      );
       setActiveTab("checklist");
       setChecklistFilter("all");
       setCollapsedCategories({});
@@ -150,10 +263,121 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const addCategory = useCallback(
+    (name: string) => {
+      if (!database?.activeTripId) return;
+      const category = createCategory({ name: name.trim() || "New Category" });
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => ({
+          ...trip,
+          categories: [category, ...trip.categories],
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const updateCategory = useCallback(
+    (categoryId: string, name: string) => {
+      if (!database?.activeTripId) return;
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => ({
+          ...trip,
+          categories: trip.categories.map((c) =>
+            c.id === categoryId ? { ...c, name } : c,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const deleteCategory = useCallback(
+    (categoryId: string) => {
+      if (!database?.activeTripId) return;
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => ({
+          ...trip,
+          categories: trip.categories.filter((c) => c.id !== categoryId),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const addItem = useCallback(
+    (input: { categoryId: string; name: string; weight_lbs?: number; storageLocation?: string }) => {
+      if (!database?.activeTripId) return;
+      const item = createGearItem({
+        name: input.name.trim() || "New Item",
+        category: input.categoryId,
+        weight_lbs: input.weight_lbs,
+        storageLocation: input.storageLocation?.trim() || undefined,
+      });
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => ({
+          ...trip,
+          categories: trip.categories.map((c) =>
+            c.id === input.categoryId ? { ...c, items: [item, ...c.items] } : c,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const updateItem = useCallback(
+    (itemId: string, patch: Partial<Omit<GearItem, "id" | "category">>) => {
+      if (!database?.activeTripId) return;
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => ({
+          ...trip,
+          categories: trip.categories.map((c) => ({
+            ...c,
+            items: c.items.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
+          })),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const deleteItem = useCallback(
+    (itemId: string) => {
+      if (!database?.activeTripId) return;
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => ({
+          ...trip,
+          categories: trip.categories.map((c) => ({
+            ...c,
+            items: c.items.filter((item) => item.id !== itemId),
+          })),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const cycleItemStatus = useCallback(
+    (itemId: string) => {
+      if (!database?.activeTripId) return;
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => ({
+          ...trip,
+          categories: trip.categories.map((c) => ({
+            ...c,
+            items: c.items.map((item) =>
+              item.id === itemId ? { ...item, status: nextGearStatus(item.status) } : item,
+            ),
+          })),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
   const resetAllItems = useCallback(() => {
-    if (!database) {
-      return;
-    }
+    if (!database?.activeTripId) return;
 
     const confirmed = window.confirm(
       "Reset all items to Missing? This cannot be undone.",
@@ -162,15 +386,18 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const categories = database.categories.map((category) => ({
-      ...category,
-      items: category.items.map((item) => ({
-        ...item,
-        status: "missing" as GearItemStatus,
+    persist(
+      updateTripById(database, database.activeTripId, (trip) => ({
+        ...trip,
+        categories: trip.categories.map((category) => ({
+          ...category,
+          items: category.items.map((item) => ({
+            ...item,
+            status: "missing" as GearItemStatus,
+          })),
+        })),
       })),
-    }));
-
-    persist({ ...database, categories });
+    );
   }, [database, persist]);
 
   const value = useMemo<CampReadyContextValue | null>(() => {
@@ -182,26 +409,54 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       ready,
       database,
       activeTrip,
+      activeTripStats,
       activeTab,
       checklistFilter,
       collapsedCategories,
       setActiveTab,
       setChecklistFilter,
       toggleCategory,
+      selectTrip,
+      createNewTrip,
+      updateTrip,
+      deleteTrip,
+      createTemplateFromTrip,
+      updateTemplate,
+      deleteTemplate,
+      applyTemplateToActiveTrip,
+      addCategory,
+      updateCategory,
+      deleteCategory,
+      addItem,
+      updateItem,
+      deleteItem,
       cycleItemStatus,
-      applyTemplate,
       resetAllItems,
     };
   }, [
     ready,
     database,
     activeTrip,
+    activeTripStats,
     activeTab,
     checklistFilter,
     collapsedCategories,
     toggleCategory,
+    selectTrip,
+    createNewTrip,
+    updateTrip,
+    deleteTrip,
+    createTemplateFromTrip,
+    updateTemplate,
+    deleteTemplate,
+    applyTemplateToActiveTrip,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addItem,
+    updateItem,
+    deleteItem,
     cycleItemStatus,
-    applyTemplate,
     resetAllItems,
   ]);
 

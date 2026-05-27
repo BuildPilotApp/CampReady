@@ -1,4 +1,4 @@
-import type { CampReadyDatabase } from "@/types";
+import type { CampReadyDatabase, TripRecord } from "@/types";
 import { STORAGE_KEY } from "./constants";
 import { createEmptyDatabase } from "./defaults";
 import { ensureSeededDatabase } from "./seed";
@@ -23,17 +23,39 @@ function parseDatabase(raw: string): CampReadyDatabase | null {
       "version" in parsed &&
       parsed.version === 1 &&
       "trips" in parsed &&
-      Array.isArray(parsed.trips) &&
-      "categories" in parsed &&
-      Array.isArray(parsed.categories)
+      Array.isArray(parsed.trips)
     ) {
-      const record = parsed as CampReadyDatabase & { activeTripId?: string | null };
-      return {
-        version: 1,
-        trips: record.trips,
-        categories: record.categories,
-        activeTripId: record.activeTripId ?? record.trips[0]?.id ?? null,
+      const record = parsed as Partial<CampReadyDatabase> & {
+        activeTripId?: string | null;
+        categories?: unknown;
       };
+
+      // Migration path from earlier schema that stored a single global checklist.
+      const legacyCategories = Array.isArray(record.categories)
+        ? (record.categories as TripRecord["categories"])
+        : null;
+
+      const trips: TripRecord[] = (record.trips as TripRecord[]).map((trip, idx) => {
+        if ("categories" in trip && Array.isArray((trip as TripRecord).categories)) {
+          return trip as TripRecord;
+        }
+
+        const now = new Date().toISOString();
+        return {
+          ...(trip as any),
+          location: (trip as any).location,
+          categories: idx === 0 && legacyCategories ? legacyCategories : [],
+          createdAt: (trip as any).createdAt ?? now,
+          updatedAt: (trip as any).updatedAt ?? now,
+        } satisfies TripRecord;
+      });
+
+      return ensureSeededDatabase({
+        version: 1,
+        trips,
+        templates: Array.isArray((record as any).templates) ? ((record as any).templates as any) : [],
+        activeTripId: record.activeTripId ?? trips[0]?.id ?? null,
+      });
     }
   } catch {
     return null;

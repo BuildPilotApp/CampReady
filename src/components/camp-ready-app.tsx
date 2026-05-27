@@ -9,7 +9,7 @@ import { Fab } from "@/components/ui/fab";
 import { Tent, RotateCcw } from "lucide-react";
 
 function AppHeader() {
-  const { activeTab, activeTrip } = useCampReady();
+  const { activeTab, activeTrip, activeTripStats } = useCampReady();
 
   return (
     <div className="flex items-center gap-3 py-3">
@@ -23,6 +23,13 @@ function AppHeader() {
               ? `${activeTrip.name} checklist`
               : "Master checklist"}
         </p>
+        {activeTab === "checklist" && activeTripStats ? (
+          <p className="mt-1 text-xs font-bold text-foreground">
+            {activeTripStats.percentPacked}% Packed{" "}
+            <span className="font-semibold text-muted">|</span> Total Weight:{" "}
+            <span className="tabular-nums">{activeTripStats.totalWeightLbs.toFixed(1)}</span> lbs
+          </p>
+        ) : null}
       </div>
     </div>
   );
