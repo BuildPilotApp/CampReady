@@ -18,7 +18,7 @@ export function MobileShell({ children, header, footer }: MobileShellProps) {
           {header}
         </header>
       ) : null}
-      <main className="mobile-safe-x min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <main className="mobile-safe-x flex-1">
         {children}
       </main>
       {footer ? (
