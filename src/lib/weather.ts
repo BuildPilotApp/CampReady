@@ -1,3 +1,5 @@
+import { formatLocalIsoDate, parseIsoDate } from "@/lib/date-utils";
+
 export interface GeocodeResult {
   name: string;
   latitude: number;
@@ -14,6 +16,9 @@ export interface WeatherSummary {
 const GEOCODE_ENDPOINT = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
 const ARCHIVE_ENDPOINT = "https://archive-api.open-meteo.com/v1/archive";
+
+const DAILY_PARAMS =
+  "temperature_2m_max,temperature_2m_min,wind_speed_10m_max";
 
 function toF(c: number): number {
   return (c * 9) / 5 + 32;
@@ -45,57 +50,104 @@ function writeCache<T>(key: string, value: T): void {
   window.localStorage.setItem(key, JSON.stringify({ ts: Date.now(), value }));
 }
 
-export async function geocodeLocation(query: string): Promise<GeocodeResult | null> {
-  const q = query.trim();
-  if (!q) return null;
-
-  const key = cacheKey(["geocode", q.toLowerCase()]);
-  const cached = readCache<GeocodeResult>(key, 1000 * 60 * 60 * 24 * 30);
-  if (cached) return cached;
-
-  const url = new URL(GEOCODE_ENDPOINT);
-  url.searchParams.set("name", q);
-  url.searchParams.set("count", "1");
-  url.searchParams.set("language", "en");
-  url.searchParams.set("format", "json");
-
-  const res = await fetch(url.toString());
-  if (!res.ok) return null;
-  const data = (await res.json()) as any;
-  const first = data?.results?.[0];
-  if (!first) return null;
-
-  const result: GeocodeResult = {
+function mapGeocodeResult(first: {
+  name: string;
+  admin1?: string;
+  country?: string;
+  latitude: number;
+  longitude: number;
+}): GeocodeResult {
+  return {
     name: [first.name, first.admin1, first.country].filter(Boolean).join(", "),
     latitude: first.latitude,
     longitude: first.longitude,
   };
-  writeCache(key, result);
-  return result;
+}
+
+export async function geocodeLocation(query: string): Promise<GeocodeResult | null> {
+  const results = await searchGeocodeLocations(query, 1);
+  return results[0] ?? null;
+}
+
+export async function searchGeocodeLocations(
+  query: string,
+  count = 5,
+): Promise<GeocodeResult[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  const key = cacheKey(["geocode-search", q.toLowerCase(), String(count)]);
+  const cached = readCache<GeocodeResult[]>(key, 1000 * 60 * 60 * 24 * 7);
+  if (cached) return cached;
+
+  try {
+    const url = new URL(GEOCODE_ENDPOINT);
+    url.searchParams.set("name", q);
+    url.searchParams.set("count", String(count));
+    url.searchParams.set("language", "en");
+    url.searchParams.set("format", "json");
+
+    const res = await fetch(url.toString());
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as {
+      results?: Array<{
+        name: string;
+        admin1?: string;
+        country?: string;
+        latitude: number;
+        longitude: number;
+      }>;
+    };
+
+    const results = (data.results ?? []).map(mapGeocodeResult);
+    writeCache(key, results);
+    return results;
+  } catch {
+    return [];
+  }
 }
 
 function daysUntil(dateIso: string): number {
-  const start = new Date();
-  const target = new Date(`${dateIso}T12:00:00`);
-  const diff = target.getTime() - start.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  const today = parseIsoDate(formatLocalIsoDate(new Date()));
+  const target = parseIsoDate(dateIso);
+  const diff = target.getTime() - today.getTime();
+  return Math.round(diff / (1000 * 60 * 60 * 24));
 }
 
-function parseDailyResponse(data: any): Map<string, { maxC: number; minC: number; windKmh: number }> {
-  const daily = data?.daily;
-  const times: string[] = Array.isArray(daily?.time) ? daily.time : [];
-  const maxArr: number[] = Array.isArray(daily?.temperature_2m_max) ? daily.temperature_2m_max : [];
-  const minArr: number[] = Array.isArray(daily?.temperature_2m_min) ? daily.temperature_2m_min : [];
-  const windArr: number[] = Array.isArray(daily?.windspeed_10m_max) ? daily.windspeed_10m_max : [];
+function parseDailyResponse(
+  data: unknown,
+): Map<string, { maxC: number; minC: number; windKmh: number }> {
+  const daily = (data as { daily?: Record<string, unknown> })?.daily;
+  const times = Array.isArray(daily?.time) ? (daily.time as string[]) : [];
+  const maxArr = Array.isArray(daily?.temperature_2m_max)
+    ? (daily.temperature_2m_max as number[])
+    : [];
+  const minArr = Array.isArray(daily?.temperature_2m_min)
+    ? (daily.temperature_2m_min as number[])
+    : [];
+  const windArr = Array.isArray(daily?.wind_speed_10m_max)
+    ? (daily.wind_speed_10m_max as number[])
+    : Array.isArray(daily?.windspeed_10m_max)
+      ? (daily.windspeed_10m_max as number[])
+      : [];
 
   const map = new Map<string, { maxC: number; minC: number; windKmh: number }>();
   for (let i = 0; i < times.length; i++) {
     const t = times[i];
     const maxC = maxArr[i];
     const minC = minArr[i];
-    const windKmh = windArr[i];
-    if (typeof t === "string" && typeof maxC === "number" && typeof minC === "number" && typeof windKmh === "number") {
-      map.set(t, { maxC, minC, windKmh });
+    const windRaw = windArr[i];
+    if (
+      typeof t === "string" &&
+      typeof maxC === "number" &&
+      typeof minC === "number"
+    ) {
+      map.set(t, {
+        maxC,
+        minC,
+        windKmh: typeof windRaw === "number" ? windRaw : 0,
+      });
     }
   }
   return map;
@@ -111,7 +163,8 @@ function sortIsoAsc(dates: string[]): string[] {
   return [...dates].sort((a, b) => a.localeCompare(b));
 }
 
-function isWithinNext10(dateIso: string): boolean {
+/** Live forecast for today through the next 10 days. */
+function isLiveForecastDate(dateIso: string): boolean {
   const diffDays = daysUntil(dateIso);
   return diffDays >= 0 && diffDays <= 10;
 }
@@ -124,30 +177,32 @@ async function fetchDailyRange(input: {
   endIso: string;
 }): Promise<Map<string, { maxC: number; minC: number; windKmh: number }> | null> {
   const { endpoint, latitude, longitude, startIso, endIso } = input;
-  const url = new URL(endpoint);
-  url.searchParams.set("latitude", String(latitude));
-  url.searchParams.set("longitude", String(longitude));
-  url.searchParams.set(
-    "daily",
-    "temperature_2m_max,temperature_2m_min,windspeed_10m_max",
-  );
-  url.searchParams.set("timezone", "auto");
-  url.searchParams.set("temperature_unit", "celsius");
-  url.searchParams.set("wind_speed_unit", "kmh");
-  url.searchParams.set("start_date", startIso);
-  url.searchParams.set("end_date", endIso);
 
-  const res = await fetch(url.toString());
-  if (!res.ok) return null;
-  const data = (await res.json()) as any;
-  return parseDailyResponse(data);
+  try {
+    const url = new URL(endpoint);
+    url.searchParams.set("latitude", String(latitude));
+    url.searchParams.set("longitude", String(longitude));
+    url.searchParams.set("daily", DAILY_PARAMS);
+    url.searchParams.set("timezone", "auto");
+    url.searchParams.set("temperature_unit", "celsius");
+    url.searchParams.set("wind_speed_unit", "kmh");
+    url.searchParams.set("start_date", startIso);
+    url.searchParams.set("end_date", endIso);
+
+    const res = await fetch(url.toString());
+    if (!res.ok) return null;
+    const data = await res.json();
+    return parseDailyResponse(data);
+  } catch {
+    return null;
+  }
 }
 
 export async function getWeatherSummariesForDates(input: {
   latitude: number;
   longitude: number;
   datesIso: string[];
-}): Promise<Record<string, WeatherSummary> | null> {
+}): Promise<Record<string, WeatherSummary>> {
   const { latitude, longitude, datesIso } = input;
   const uniqueDates = sortIsoAsc(Array.from(new Set(datesIso)));
   if (uniqueDates.length === 0) return {};
@@ -158,11 +213,10 @@ export async function getWeatherSummariesForDates(input: {
   const archiveDates: string[] = [];
 
   for (const d of uniqueDates) {
-    if (isWithinNext10(d)) forecastDates.push(d);
+    if (isLiveForecastDate(d)) forecastDates.push(d);
     else archiveDates.push(d);
   }
 
-  // 1) Fill from cache when possible; collect the missing subsets.
   const missingForecast: string[] = [];
   const missingArchive: string[] = [];
 
@@ -181,23 +235,27 @@ export async function getWeatherSummariesForDates(input: {
     else missingArchive.push(d);
   }
 
-  const applyToResults = (dateIso: string, maxC: number, minC: number, windKmh: number) => {
+  const applyToResults = (
+    dateIso: string,
+    maxC: number,
+    minC: number,
+    windKmh: number,
+  ) => {
     const summary: WeatherSummary = {
       highF: Math.round(toF(maxC)),
       lowF: Math.round(toF(minC)),
       windMph: Math.round(toMph(windKmh)),
-      label: isWithinNext10(dateIso)
+      label: isLiveForecastDate(dateIso)
         ? "Live Forecast"
-        : `Historical Average (${new Date(isoDatePrevYear(dateIso)).getFullYear()})`,
+        : `Historical Avg (${isoDatePrevYear(dateIso).slice(0, 4)})`,
     };
     results[dateIso] = summary;
     return summary;
   };
 
-  // 2) Fetch forecast range for missing forecast dates.
   if (missingForecast.length > 0) {
-    const startIso = missingForecast[0];
-    const endIso = missingForecast[missingForecast.length - 1];
+    const startIso = missingForecast[0]!;
+    const endIso = missingForecast[missingForecast.length - 1]!;
     const dailyMap = await fetchDailyRange({
       endpoint: FORECAST_ENDPOINT,
       latitude,
@@ -206,22 +264,21 @@ export async function getWeatherSummariesForDates(input: {
       endIso,
     });
 
-    if (!dailyMap) return null;
-
-    for (const d of missingForecast) {
-      const row = dailyMap.get(d);
-      if (!row) continue;
-      const key = cacheKey(["forecast", String(latitude), String(longitude), d]);
-      const summary = applyToResults(d, row.maxC, row.minC, row.windKmh);
-      writeCache(key, summary);
+    if (dailyMap) {
+      for (const d of missingForecast) {
+        const row = dailyMap.get(d);
+        if (!row) continue;
+        const key = cacheKey(["forecast", String(latitude), String(longitude), d]);
+        const summary = applyToResults(d, row.maxC, row.minC, row.windKmh);
+        writeCache(key, summary);
+      }
     }
   }
 
-  // 3) Fetch archive range for missing archive dates (previous-year equivalents).
   if (missingArchive.length > 0) {
     const priorDates = sortIsoAsc(missingArchive.map(isoDatePrevYear));
-    const startIso = priorDates[0];
-    const endIso = priorDates[priorDates.length - 1];
+    const startIso = priorDates[0]!;
+    const endIso = priorDates[priorDates.length - 1]!;
 
     const dailyMap = await fetchDailyRange({
       endpoint: ARCHIVE_ENDPOINT,
@@ -231,24 +288,23 @@ export async function getWeatherSummariesForDates(input: {
       endIso,
     });
 
-    if (!dailyMap) return null;
-
-    for (const d of missingArchive) {
-      const priorIso = isoDatePrevYear(d);
-      const row = dailyMap.get(priorIso);
-      if (!row) continue;
-      const key = cacheKey([
-        "archive",
-        String(latitude),
-        String(longitude),
-        d,
-        priorIso,
-      ]);
-      const summary = applyToResults(d, row.maxC, row.minC, row.windKmh);
-      writeCache(key, summary);
+    if (dailyMap) {
+      for (const d of missingArchive) {
+        const priorIso = isoDatePrevYear(d);
+        const row = dailyMap.get(priorIso);
+        if (!row) continue;
+        const key = cacheKey([
+          "archive",
+          String(latitude),
+          String(longitude),
+          d,
+          priorIso,
+        ]);
+        const summary = applyToResults(d, row.maxC, row.minC, row.windKmh);
+        writeCache(key, summary);
+      }
     }
   }
 
   return results;
 }
-

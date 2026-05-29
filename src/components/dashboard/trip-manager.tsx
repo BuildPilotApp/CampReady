@@ -1,13 +1,11 @@
 "use client";
 
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { LocationInput } from "@/components/ui/location-input";
+import { todayIso } from "@/lib/date-utils";
+import type { TripLocation } from "@/types";
 import { CalendarDays, MapPin, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-
-function todayIso(): string {
-  const date = new Date();
-  return date.toISOString().slice(0, 10);
-}
 
 export function TripManager() {
   const {
@@ -17,12 +15,11 @@ export function TripManager() {
     createNewTrip,
     deleteTrip,
     updateTrip,
-  } =
-    useCampReady();
+  } = useCampReady();
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState<string>(todayIso());
   const [endDate, setEndDate] = useState<string>(todayIso());
-  const [location, setLocation] = useState("");
+  const [newLocation, setNewLocation] = useState<TripLocation | undefined>();
 
   const trips = useMemo(() => database.trips ?? [], [database.trips]);
 
@@ -52,7 +49,7 @@ export function TripManager() {
 
           <label className="flex flex-col gap-1">
             <span className="text-xs font-bold uppercase tracking-wide text-muted">
-              Date
+              Start date
             </span>
             <input
               type="date"
@@ -82,17 +79,7 @@ export function TripManager() {
             />
           </label>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">
-              Location (for weather)
-            </span>
-            <input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
-              placeholder="Yosemite"
-            />
-          </label>
+          <LocationInput value={newLocation} onChange={setNewLocation} />
 
           <button
             type="button"
@@ -101,12 +88,12 @@ export function TripManager() {
                 name,
                 startDate,
                 endDate,
-                locationQuery: location,
+                location: newLocation,
               });
               setName("");
               setStartDate(todayIso());
               setEndDate(todayIso());
-              setLocation("");
+              setNewLocation(undefined);
             }}
             className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90"
           >
@@ -134,18 +121,14 @@ export function TripManager() {
                   <span className="mt-1 flex flex-col gap-1 text-xs font-semibold text-muted">
                     <span className="inline-flex items-center gap-2">
                       <CalendarDays className="size-4 text-accent" aria-hidden />
-                        {trip.startDate === trip.endDate ? (
-                          trip.startDate
-                        ) : (
-                          <>
-                            {trip.startDate} - {trip.endDate}
-                          </>
-                        )}
+                      {trip.startDate === trip.endDate
+                        ? trip.startDate
+                        : `${trip.startDate} - ${trip.endDate}`}
                     </span>
                     {trip.location?.query ? (
                       <span className="inline-flex items-center gap-2">
                         <MapPin className="size-4 text-accent" aria-hidden />
-                        {trip.location.query}
+                        {trip.location.resolvedName ?? trip.location.query}
                       </span>
                     ) : null}
                   </span>
@@ -154,28 +137,17 @@ export function TripManager() {
 
               {selected ? (
                 <div className="border-t border-border px-4 py-3">
-                  <details>
+                  <details open>
                     <summary className="touch-target flex cursor-pointer list-none items-center justify-between font-bold text-foreground">
                       Edit trip details
                     </summary>
                     <div className="mt-3 flex flex-col gap-3">
-                      <label className="flex flex-col gap-1">
-                        <span className="text-xs font-bold uppercase tracking-wide text-muted">
-                          Location
-                        </span>
-                        <input
-                          value={trip.location?.query ?? ""}
-                          onChange={(e) =>
-                            updateTrip(trip.id, {
-                              location: e.target.value.trim()
-                                ? { query: e.target.value.trim() }
-                                : undefined,
-                            })
-                          }
-                          className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
-                          placeholder="Moab"
-                        />
-                      </label>
+                      <LocationInput
+                        value={trip.location}
+                        onChange={(location) =>
+                          updateTrip(trip.id, { location })
+                        }
+                      />
 
                       <div className="flex flex-col gap-3">
                         <label className="flex flex-col gap-1">
@@ -239,4 +211,3 @@ export function TripManager() {
     </section>
   );
 }
-

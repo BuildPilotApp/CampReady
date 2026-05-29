@@ -10,7 +10,7 @@ const TABS: { id: AppTab; label: string; icon: typeof LayoutDashboard }[] = [
 ];
 
 export function BottomNav() {
-  const { activeTab, setActiveTab } = useCampReady();
+  const { activeTab, setActiveTab, closeInfo } = useCampReady();
 
   return (
     <nav
@@ -25,7 +25,10 @@ export function BottomNav() {
           <button
             key={tab.id}
             type="button"
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              closeInfo();
+              setActiveTab(tab.id);
+            }}
             aria-current={selected ? "page" : undefined}
             className={`touch-target flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-semibold active:bg-background ${
               selected ? "text-accent" : "text-muted"

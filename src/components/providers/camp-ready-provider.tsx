@@ -18,6 +18,7 @@ import type {
   GearItem,
   GearItemStatus,
   ChecklistTemplate,
+  InfoView,
   TripRecord,
   TripLocation,
 } from "@/types";
@@ -41,9 +42,13 @@ interface CampReadyContextValue {
     percentPacked: number;
   } | null;
   activeTab: AppTab;
+  infoView: InfoView | null;
   checklistFilter: ChecklistFilter;
   collapsedCategories: Record<string, boolean>;
   setActiveTab: (tab: AppTab) => void;
+  setInfoView: (view: InfoView | null) => void;
+  openInfoMenu: () => void;
+  closeInfo: () => void;
   setChecklistFilter: (filter: ChecklistFilter) => void;
   toggleCategory: (categoryId: string) => void;
   selectTrip: (tripId: string) => void;
@@ -51,7 +56,7 @@ interface CampReadyContextValue {
     name: string;
     startDate: string;
     endDate: string;
-    locationQuery?: string;
+    location?: TripLocation;
   }) => void;
   updateTrip: (
     tripId: string,
@@ -111,6 +116,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [database, setDatabase] = useState<CampReadyDatabase | null>(null);
   const [activeTab, setActiveTab] = useState<AppTab>("dashboard");
+  const [infoView, setInfoView] = useState<InfoView | null>(null);
   const [checklistFilter, setChecklistFilter] =
     useState<ChecklistFilter>("all");
   const [collapsedCategories, setCollapsedCategories] = useState<
@@ -164,14 +170,29 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const openInfoMenu = useCallback(() => {
+    setInfoView("menu");
+  }, []);
+
+  const closeInfo = useCallback(() => {
+    setInfoView(null);
+  }, []);
+
   const createNewTrip = useCallback(
-    (input: { name: string; startDate: string; endDate: string; locationQuery?: string }) => {
+    (input: {
+      name: string;
+      startDate: string;
+      endDate: string;
+      location?: TripLocation;
+    }) => {
       if (!database) return;
       const trip = createTrip({
         name: input.name.trim() || "New Trip",
         startDate: input.startDate,
         endDate: input.endDate,
-        location: normalizeLocation(input.locationQuery),
+        location: input.location?.query?.trim()
+          ? input.location
+          : undefined,
       });
       const next = {
         ...database,
@@ -422,9 +443,13 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       activeTrip,
       activeTripStats,
       activeTab,
+      infoView,
       checklistFilter,
       collapsedCategories,
       setActiveTab,
+      setInfoView,
+      openInfoMenu,
+      closeInfo,
       setChecklistFilter,
       toggleCategory,
       selectTrip,
@@ -450,8 +475,11 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     activeTrip,
     activeTripStats,
     activeTab,
+    infoView,
     checklistFilter,
     collapsedCategories,
+    openInfoMenu,
+    closeInfo,
     toggleCategory,
     selectTrip,
     createNewTrip,

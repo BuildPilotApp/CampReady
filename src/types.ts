@@ -59,6 +59,9 @@ export interface TripRecord extends Trip {
 /** Primary app tab routes. */
 export type AppTab = "dashboard" | "checklist";
 
+/** Info screen sub-views (opened from dashboard header). */
+export type InfoView = "menu" | "about" | "guide" | "feedback" | "bug";
+
 /** Checklist filter mode for the master list. */
 export type ChecklistFilter = "all" | "remaining";
 
