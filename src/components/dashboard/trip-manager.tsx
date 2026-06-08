@@ -2,6 +2,7 @@
 
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { LocationInput } from "@/components/ui/location-input";
+import { TripDateRangeInput } from "@/components/ui/trip-date-range-input";
 import { todayIso } from "@/lib/date-utils";
 import type { TripLocation } from "@/types";
 import { CalendarDays, MapPin, Plus, Trash2 } from "lucide-react";
@@ -47,37 +48,14 @@ export function TripManager() {
             />
           </label>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">
-              Start date
-            </span>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => {
-                const next = e.target.value;
-                setStartDate(next);
-                setEndDate((current) => (current < next ? next : current));
-              }}
-              className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">
-              End date
-            </span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => {
-                const next = e.target.value;
-                setEndDate(next);
-                setStartDate((current) => (current > next ? next : current));
-              }}
-              className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
-            />
-          </label>
+          <TripDateRangeInput
+            startDate={startDate}
+            endDate={endDate}
+            onChange={({ startDate: nextStart, endDate: nextEnd }) => {
+              setStartDate(nextStart);
+              setEndDate(nextEnd);
+            }}
+          />
 
           <LocationInput value={newLocation} onChange={setNewLocation} />
 
@@ -149,44 +127,11 @@ export function TripManager() {
                         }
                       />
 
-                      <div className="flex flex-col gap-3">
-                        <label className="flex flex-col gap-1">
-                          <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
-                            Start
-                          </span>
-                          <input
-                            type="date"
-                            value={trip.startDate}
-                            onChange={(e) => {
-                              const next = e.target.value;
-                              updateTrip(trip.id, {
-                                startDate: next,
-                                endDate:
-                                  trip.endDate < next ? next : trip.endDate,
-                              });
-                            }}
-                            className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
-                          />
-                        </label>
-                        <label className="flex flex-col gap-1">
-                          <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
-                            End
-                          </span>
-                          <input
-                            type="date"
-                            value={trip.endDate}
-                            onChange={(e) => {
-                              const next = e.target.value;
-                              updateTrip(trip.id, {
-                                endDate: next,
-                                startDate:
-                                  trip.startDate > next ? next : trip.startDate,
-                              });
-                            }}
-                            className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
-                          />
-                        </label>
-                      </div>
+                      <TripDateRangeInput
+                        startDate={trip.startDate}
+                        endDate={trip.endDate}
+                        onChange={(range) => updateTrip(trip.id, range)}
+                      />
                     </div>
                   </details>
 
