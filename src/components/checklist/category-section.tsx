@@ -25,7 +25,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
       ? category.items.filter((item) => item.status !== "packed")
       : category.items;
 
-  if (visibleItems.length === 0) {
+  if (filter === "remaining" && visibleItems.length === 0) {
     return null;
   }
 

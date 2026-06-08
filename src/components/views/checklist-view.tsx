@@ -7,17 +7,22 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 
 export function ChecklistView() {
-  const { activeTrip, checklistFilter, addCategory } = useCampReady();
+  const { activeTrip, activeTripStats, checklistFilter, addCategory } = useCampReady();
   const [newCategoryName, setNewCategoryName] = useState("");
 
   const categories = activeTrip?.categories ?? [];
 
-  const hasVisibleCategories = categories.some((category) => {
-    if (checklistFilter === "remaining") {
-      return category.items.some((item) => item.status !== "packed");
-    }
-    return category.items.length > 0;
-  });
+  const hasVisibleCategories =
+    checklistFilter === "all"
+      ? categories.length > 0
+      : categories.some((category) =>
+          category.items.some((item) => item.status !== "packed"),
+        );
+
+  const allPacked =
+    activeTripStats !== null &&
+    activeTripStats.totalItems > 0 &&
+    activeTripStats.packedItems === activeTripStats.totalItems;
 
   return (
     <div className="relative min-h-full">
@@ -55,7 +60,7 @@ export function ChecklistView() {
               filter={checklistFilter}
             />
           ))
-        ) : (
+        ) : allPacked ? (
           <section className="rounded-xl border-2 border-border bg-surface px-4 py-8 text-center">
             <p className="text-base font-bold text-foreground">All packed!</p>
             <p className="mt-2 text-sm text-muted">
@@ -63,7 +68,7 @@ export function ChecklistView() {
               review.
             </p>
           </section>
-        )}
+        ) : null}
       </div>
     </div>
   );
