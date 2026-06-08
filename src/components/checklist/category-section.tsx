@@ -4,7 +4,7 @@ import { GearItemRow } from "@/components/checklist/gear-item-row";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { getCategoryPackCounts, isGearItemRemaining } from "@/lib/gear-items";
 import type { Category, ChecklistFilter } from "@/types";
-import { ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 interface CategorySectionProps {
@@ -20,8 +20,6 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   const [newItemName, setNewItemName] = useState("");
   const [newItemWeight, setNewItemWeight] = useState<string>("");
   const [newItemStorage, setNewItemStorage] = useState("");
-  const [newItemIsContainer, setNewItemIsContainer] = useState(false);
-  const [newSubItemNames, setNewSubItemNames] = useState<string[]>([""]);
 
   const visibleItems =
     filter === "remaining"
@@ -33,29 +31,6 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   }
 
   const { packed: packedCount, total: itemCount } = getCategoryPackCounts(category.items);
-
-  function resetAddItemForm() {
-    setNewItemName("");
-    setNewItemWeight("");
-    setNewItemStorage("");
-    setNewItemIsContainer(false);
-    setNewSubItemNames([""]);
-  }
-
-  function handleAddItem() {
-    const name = newItemName.trim();
-    if (!name) return;
-    const weight = Number.parseFloat(newItemWeight);
-    addItem({
-      categoryId: category.id,
-      name,
-      weight_lbs: Number.isFinite(weight) ? weight : undefined,
-      storageLocation: newItemStorage.trim() || undefined,
-      isContainer: newItemIsContainer,
-      subItemNames: newItemIsContainer ? newSubItemNames : undefined,
-    });
-    resetAddItemForm();
-  }
 
   return (
     <section className="overflow-hidden rounded-xl border-2 border-border bg-surface">
@@ -87,7 +62,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
             <div className="flex flex-col gap-3">
               <label className="flex flex-col gap-1">
                 <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
-                  Rename category
+                  Rename Category or Tote
                 </span>
                 <input
                   value={rename}
@@ -111,7 +86,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
                     value={newItemName}
                     onChange={(e) => setNewItemName(e.target.value)}
                     className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
-                    placeholder="Kitchen Tote"
+                    placeholder="Headlamp"
                   />
                 </label>
                 <div className="flex gap-3">
@@ -131,79 +106,22 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
                     aria-label="Storage location"
                   />
                 </div>
-
-                <label className="flex items-start gap-3 rounded-xl border-2 border-border bg-background px-3 py-3">
-                  <input
-                    type="checkbox"
-                    checked={newItemIsContainer}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setNewItemIsContainer(checked);
-                      if (checked && newSubItemNames.length === 0) {
-                        setNewSubItemNames([""]);
-                      }
-                    }}
-                    className="mt-1 size-5 shrink-0 accent-accent"
-                  />
-                  <span>
-                    <span className="block text-sm font-bold text-foreground">
-                      Container with sub-items
-                    </span>
-                    <span className="mt-0.5 block text-xs leading-relaxed text-muted">
-                      For totes, bins, or kits that hold multiple items inside.
-                    </span>
-                  </span>
-                </label>
-
-                {newItemIsContainer ? (
-                  <div className="rounded-xl border-2 border-border bg-background p-3">
-                    <p className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
-                      Sub-items in this container
-                    </p>
-                    <ul className="mt-2 flex flex-col gap-2">
-                      {newSubItemNames.map((subName, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                          <input
-                            value={subName}
-                            onChange={(e) => {
-                              const next = [...newSubItemNames];
-                              next[index] = e.target.value;
-                              setNewSubItemNames(next);
-                            }}
-                            className="touch-target min-w-0 flex-1 rounded-xl border-2 border-border bg-surface px-3 text-sm font-semibold text-foreground"
-                            placeholder="e.g. Pots & pans"
-                          />
-                          {newSubItemNames.length > 1 ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNewSubItemNames(
-                                  newSubItemNames.filter((_, i) => i !== index),
-                                );
-                              }}
-                              className="touch-target inline-flex size-11 shrink-0 items-center justify-center rounded-xl border-2 border-border bg-surface text-foreground active:opacity-90"
-                              aria-label="Remove sub-item field"
-                            >
-                              <X className="size-4 text-muted" aria-hidden />
-                            </button>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      onClick={() => setNewSubItemNames([...newSubItemNames, ""])}
-                      className="touch-target mt-3 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-border bg-surface px-3 text-sm font-bold text-foreground active:opacity-90"
-                    >
-                      <Plus className="size-4" aria-hidden />
-                      Add sub-item
-                    </button>
-                  </div>
-                ) : null}
-
                 <button
                   type="button"
-                  onClick={handleAddItem}
+                  onClick={() => {
+                    const name = newItemName.trim();
+                    if (!name) return;
+                    const weight = Number.parseFloat(newItemWeight);
+                    addItem({
+                      categoryId: category.id,
+                      name,
+                      weight_lbs: Number.isFinite(weight) ? weight : undefined,
+                      storageLocation: newItemStorage.trim() || undefined,
+                    });
+                    setNewItemName("");
+                    setNewItemWeight("");
+                    setNewItemStorage("");
+                  }}
                   className="touch-target inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90"
                 >
                   <Plus className="size-5" aria-hidden />
@@ -226,7 +144,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
             </div>
           </div>
           {visibleItems.map((item) => (
-            <GearItemRow key={item.id} item={item} filter={filter} />
+            <GearItemRow key={item.id} item={item} />
           ))}
         </div>
       ) : null}

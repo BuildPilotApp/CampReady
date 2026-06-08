@@ -6,7 +6,6 @@ import {
   hydrateDatabase,
   createCategory,
   createGearItem,
-  createGearSubItem,
   createTrip,
   getTripStats,
   touchTrip,
@@ -18,7 +17,6 @@ import type {
   ChecklistFilter,
   GearItem,
   GearItemStatus,
-  GearSubItem,
   ChecklistTemplate,
   InfoView,
   TripRecord,
@@ -87,20 +85,10 @@ interface CampReadyContextValue {
     name: string;
     weight_lbs?: number;
     storageLocation?: string;
-    isContainer?: boolean;
-    subItemNames?: string[];
   }) => void;
   updateItem: (itemId: string, patch: Partial<Omit<GearItem, "id" | "category">>) => void;
   deleteItem: (itemId: string) => void;
   cycleItemStatus: (itemId: string) => void;
-  addSubItem: (input: { itemId: string; name: string }) => void;
-  updateSubItem: (
-    itemId: string,
-    subItemId: string,
-    patch: Partial<Omit<GearSubItem, "id">>,
-  ) => void;
-  deleteSubItem: (itemId: string, subItemId: string) => void;
-  cycleSubItemStatus: (itemId: string, subItemId: string) => void;
   resetAllItems: () => void;
 }
 
@@ -352,30 +340,13 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addItem = useCallback(
-    (input: {
-      categoryId: string;
-      name: string;
-      weight_lbs?: number;
-      storageLocation?: string;
-      isContainer?: boolean;
-      subItemNames?: string[];
-    }) => {
+    (input: { categoryId: string; name: string; weight_lbs?: number; storageLocation?: string }) => {
       if (!database?.activeTripId) return;
-      const isContainer = Boolean(input.isContainer);
-      const subItems = isContainer
-        ? (input.subItemNames ?? [])
-            .map((name) => name.trim())
-            .filter(Boolean)
-            .map((name) => createGearSubItem({ name }))
-        : undefined;
-
       const item = createGearItem({
         name: input.name.trim() || "New Item",
         category: input.categoryId,
         weight_lbs: input.weight_lbs,
         storageLocation: input.storageLocation?.trim() || undefined,
-        isContainer: isContainer || undefined,
-        subItems: subItems?.length ? subItems : isContainer ? [] : undefined,
       });
       persist(
         updateTripById(database, database.activeTripId, (trip) => ({
@@ -439,112 +410,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
-  const addSubItem = useCallback(
-    (input: { itemId: string; name: string }) => {
-      if (!database?.activeTripId) return;
-      const subItem = createGearSubItem({
-        name: input.name.trim() || "New Sub-item",
-      });
-      persist(
-        updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
-          categories: trip.categories.map((c) => ({
-            ...c,
-            items: c.items.map((item) =>
-              item.id === input.itemId
-                ? {
-                    ...item,
-                    isContainer: true,
-                    subItems: [...(item.subItems ?? []), subItem],
-                  }
-                : item,
-            ),
-          })),
-        })),
-      );
-    },
-    [database, persist],
-  );
-
-  const updateSubItem = useCallback(
-    (
-      itemId: string,
-      subItemId: string,
-      patch: Partial<Omit<GearSubItem, "id">>,
-    ) => {
-      if (!database?.activeTripId) return;
-      persist(
-        updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
-          categories: trip.categories.map((c) => ({
-            ...c,
-            items: c.items.map((item) =>
-              item.id === itemId
-                ? {
-                    ...item,
-                    subItems: (item.subItems ?? []).map((sub) =>
-                      sub.id === subItemId ? { ...sub, ...patch } : sub,
-                    ),
-                  }
-                : item,
-            ),
-          })),
-        })),
-      );
-    },
-    [database, persist],
-  );
-
-  const deleteSubItem = useCallback(
-    (itemId: string, subItemId: string) => {
-      if (!database?.activeTripId) return;
-      persist(
-        updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
-          categories: trip.categories.map((c) => ({
-            ...c,
-            items: c.items.map((item) =>
-              item.id === itemId
-                ? {
-                    ...item,
-                    subItems: (item.subItems ?? []).filter((sub) => sub.id !== subItemId),
-                  }
-                : item,
-            ),
-          })),
-        })),
-      );
-    },
-    [database, persist],
-  );
-
-  const cycleSubItemStatus = useCallback(
-    (itemId: string, subItemId: string) => {
-      if (!database?.activeTripId) return;
-      persist(
-        updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
-          categories: trip.categories.map((c) => ({
-            ...c,
-            items: c.items.map((item) =>
-              item.id === itemId
-                ? {
-                    ...item,
-                    subItems: (item.subItems ?? []).map((sub) =>
-                      sub.id === subItemId
-                        ? { ...sub, status: nextGearStatus(sub.status) }
-                        : sub,
-                    ),
-                  }
-                : item,
-            ),
-          })),
-        })),
-      );
-    },
-    [database, persist],
-  );
-
   const resetAllItems = useCallback(() => {
     if (!database?.activeTripId) return;
 
@@ -563,10 +428,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
           items: category.items.map((item) => ({
             ...item,
             status: "missing" as GearItemStatus,
-            subItems: item.subItems?.map((sub) => ({
-              ...sub,
-              status: "missing" as GearItemStatus,
-            })),
           })),
         })),
       })),
@@ -608,10 +469,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       updateItem,
       deleteItem,
       cycleItemStatus,
-      addSubItem,
-      updateSubItem,
-      deleteSubItem,
-      cycleSubItemStatus,
       resetAllItems,
     };
   }, [
@@ -641,10 +498,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     updateItem,
     deleteItem,
     cycleItemStatus,
-    addSubItem,
-    updateSubItem,
-    deleteSubItem,
-    cycleSubItemStatus,
     resetAllItems,
   ]);
 
