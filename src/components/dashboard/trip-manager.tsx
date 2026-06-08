@@ -9,11 +9,11 @@ import { todayIso } from "@/lib/date-utils";
 import { getTripStats } from "@/lib/storage";
 import {
   CUSTOM_TEMPLATE_ID,
-  TRIP_CHECKLIST_OPTIONS,
-  type TripChecklistTemplateId,
+  getSelectableTemplateOptions,
+  getTemplateOptionLabel,
 } from "@/lib/templates";
 import type { TripLocation, TripRecord } from "@/types";
-import { CalendarDays, ChevronDown, MapPin, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronDown, Layers, MapPin, Plus, Save, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 function formatTripDate(isoDate: string): string {
@@ -43,18 +43,29 @@ export function TripManager() {
     createNewTrip,
     deleteTrip,
     updateTrip,
+    createTemplateFromTrip,
   } = useCampReady();
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState<string>(todayIso());
   const [endDate, setEndDate] = useState<string>(todayIso());
   const [newLocation, setNewLocation] = useState<TripLocation | undefined>();
-  const [templateId, setTemplateId] = useState<TripChecklistTemplateId>(
-    CUSTOM_TEMPLATE_ID,
-  );
+  const [templateId, setTemplateId] = useState<string>(CUSTOM_TEMPLATE_ID);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
 
   const trips = useMemo(
     () => sortTripsChronologically(database.trips ?? []),
     [database.trips],
+  );
+
+  const templateOptions = useMemo(
+    () => getSelectableTemplateOptions(database.templates ?? []),
+    [database.templates],
+  );
+
+  const selectedTemplateLabel = getTemplateOptionLabel(
+    templateId,
+    database.templates ?? [],
   );
 
   return (
@@ -92,36 +103,108 @@ export function TripManager() {
 
           <LocationInput value={newLocation} onChange={setNewLocation} />
 
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">
-              Checklist template
-            </span>
-            <div className="flex flex-col gap-2">
-              {TRIP_CHECKLIST_OPTIONS.map((option) => {
-                const selected = templateId === option.id;
-                return (
+          <details className="group rounded-xl border-2 border-border bg-background">
+            <summary className="touch-target flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-bold text-foreground active:opacity-90">
+              <span className="inline-flex min-w-0 items-center gap-2">
+                <Layers className="size-5 shrink-0 text-accent" aria-hidden />
+                <span className="truncate">
+                  Inventory template
+                  <span className="font-semibold text-muted"> · {selectedTemplateLabel}</span>
+                </span>
+              </span>
+              <ChevronDown
+                className="size-5 shrink-0 text-muted transition-transform duration-200 group-open:rotate-180"
+                aria-hidden
+              />
+            </summary>
+
+            <div className="flex flex-col gap-3 border-t border-border px-4 py-3">
+              <p className="text-sm leading-snug text-muted">
+                Choose a checklist for your new trip, or save one from a selected
+                trip below.
+              </p>
+
+              <div className="flex flex-col gap-2">
+                {templateOptions.map((option) => {
+                  const selected = templateId === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setTemplateId(option.id)}
+                      aria-pressed={selected}
+                      className={`touch-target rounded-xl border-2 px-4 py-3 text-left active:opacity-90 ${
+                        selected
+                          ? "border-accent bg-accent/10"
+                          : "border-border bg-surface"
+                      }`}
+                    >
+                      <span className="block text-base font-bold text-foreground">
+                        {option.name}
+                      </span>
+                      <span className="mt-1 block text-sm leading-snug text-muted">
+                        {option.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {activeTrip ? (
+                <div className="rounded-xl border-2 border-border bg-surface p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted">
+                    Add inventory template
+                  </p>
+                  <p className="mt-1 text-sm leading-snug text-muted">
+                    Save the selected trip&apos;s checklist for future trips.
+                  </p>
+                  <label className="mt-3 flex flex-col gap-1">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
+                      Template name
+                    </span>
+                    <input
+                      value={templateName}
+                      onChange={(e) => setTemplateName(e.target.value)}
+                      className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
+                      placeholder="My Camp Setup"
+                    />
+                  </label>
+                  <label className="mt-3 flex flex-col gap-1">
+                    <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
+                      Description
+                    </span>
+                    <input
+                      value={templateDescription}
+                      onChange={(e) => setTemplateDescription(e.target.value)}
+                      className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
+                      placeholder="Saved from a trip checklist"
+                    />
+                  </label>
                   <button
-                    key={option.id}
                     type="button"
-                    onClick={() => setTemplateId(option.id)}
-                    aria-pressed={selected}
-                    className={`touch-target rounded-xl border-2 px-4 py-3 text-left active:opacity-90 ${
-                      selected
-                        ? "border-accent bg-accent/10"
-                        : "border-border bg-background"
-                    }`}
+                    onClick={() => {
+                      createTemplateFromTrip({
+                        tripId: activeTrip.id,
+                        name: templateName,
+                        description: templateDescription,
+                      });
+                      setTemplateName("");
+                      setTemplateDescription("");
+                    }}
+                    className="touch-target mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90"
                   >
-                    <span className="block text-base font-bold text-foreground">
-                      {option.name}
-                    </span>
-                    <span className="mt-1 block text-sm leading-snug text-muted">
-                      {option.description}
-                    </span>
+                    <Save className="size-5" aria-hidden />
+                    Save inventory template
                   </button>
-                );
-              })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted">
+                  Select a trip below to save its checklist as a new inventory
+                  template.
+                </p>
+              )}
             </div>
-          </div>
+          </details>
 
           <button
             type="button"

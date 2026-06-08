@@ -61,6 +61,44 @@ export const TRIP_CHECKLIST_OPTIONS = [
 export type TripChecklistTemplateId =
   (typeof TRIP_CHECKLIST_OPTIONS)[number]["id"];
 
+export interface TemplateOption {
+  id: string;
+  name: string;
+  description: string;
+}
+
+/** All checklist options available when creating a trip. */
+export function getSelectableTemplateOptions(
+  savedTemplates: ChecklistTemplate[],
+): TemplateOption[] {
+  const builtIn: TemplateOption[] = TRIP_CHECKLIST_OPTIONS.map((option) => ({
+    id: option.id,
+    name: option.name,
+    description: option.description,
+  }));
+
+  const customSaved = savedTemplates
+    .filter((template) => template.id !== SAMPLE_TEMPLATE_ID)
+    .map((template) => ({
+      id: template.id,
+      name: template.name,
+      description: template.description,
+    }));
+
+  return [...builtIn, ...customSaved];
+}
+
+export function getTemplateOptionLabel(
+  templateId: string,
+  savedTemplates: ChecklistTemplate[],
+): string {
+  return (
+    getSelectableTemplateOptions(savedTemplates).find(
+      (option) => option.id === templateId,
+    )?.name ?? "Custom"
+  );
+}
+
 /** Built-in templates stored in the database (sample only). */
 export const CHECKLIST_TEMPLATES: ChecklistTemplate[] = [SAMPLE_CHECKLIST_TEMPLATE];
 

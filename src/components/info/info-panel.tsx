@@ -20,8 +20,8 @@ const USER_GUIDE = [
   {
     title: "Checklist templates",
     items: [
-      "Choose Custom for a blank checklist or the sample template when creating a trip.",
-      "The sample includes starter categories for shelter, kitchen, and tools.",
+      "When creating a trip, open Inventory template to pick Custom, the sample list, or a saved template.",
+      "Save a selected trip's checklist as a new inventory template for reuse.",
       "Add your own categories and items anytime from the Checklist tab.",
     ],
   },
