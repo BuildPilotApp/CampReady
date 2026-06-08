@@ -317,6 +317,8 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
           categories: [category, ...trip.categories],
         })),
       );
+      setChecklistFilter("all");
+      setCollapsedCategories((current) => ({ ...current, [category.id]: false }));
     },
     [database, persist],
   );

@@ -13,12 +13,10 @@ export function ChecklistView() {
 
   const categories = activeTrip?.categories ?? [];
 
-  const hasVisibleCategories =
-    checklistFilter === "all"
-      ? categories.length > 0
-      : categories.some((category) =>
-          category.items.some(isGearItemRemaining),
-        );
+  const hasRemainingWork = categories.some(
+    (category) =>
+      category.items.length === 0 || category.items.some(isGearItemRemaining),
+  );
 
   const allPacked =
     activeTripStats !== null &&
@@ -53,15 +51,14 @@ export function ChecklistView() {
         </div>
       </div>
       <div className="flex flex-col gap-3 pb-32 pt-3">
-        {hasVisibleCategories ? (
-          categories.map((category) => (
-            <CategorySection
-              key={category.id}
-              category={category}
-              filter={checklistFilter}
-            />
-          ))
-        ) : allPacked ? (
+        {categories.map((category) => (
+          <CategorySection
+            key={category.id}
+            category={category}
+            filter={checklistFilter}
+          />
+        ))}
+        {checklistFilter === "remaining" && allPacked && !hasRemainingWork ? (
           <section className="rounded-xl border-2 border-border bg-surface px-4 py-8 text-center">
             <p className="text-base font-bold text-foreground">All packed!</p>
             <p className="mt-2 text-sm text-muted">

@@ -28,7 +28,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
       ? category.items.filter(isGearItemRemaining)
       : category.items;
 
-  if (filter === "remaining" && visibleItems.length === 0) {
+  if (filter === "remaining" && category.items.length > 0 && visibleItems.length === 0) {
     return null;
   }
 
