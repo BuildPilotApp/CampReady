@@ -11,6 +11,48 @@ export function parseIsoDate(iso: string): Date {
   return new Date(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0, 0);
 }
 
+export function formatShortDate(iso: string): string {
+  return parseIsoDate(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function formatMonthYear(year: number, month: number): string {
+  return new Date(year, month, 1, 12, 0, 0, 0).toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** Sunday-based month grid with leading empty cells. */
+export function getCalendarMonthDays(year: number, month: number): Array<string | null> {
+  const first = new Date(year, month, 1, 12, 0, 0, 0);
+  const lastDay = new Date(year, month + 1, 0, 12, 0, 0, 0).getDate();
+  const padding = first.getDay();
+  const days: Array<string | null> = Array.from({ length: padding }, () => null);
+
+  for (let day = 1; day <= lastDay; day++) {
+    days.push(formatLocalIsoDate(new Date(year, month, day, 12, 0, 0, 0)));
+  }
+
+  return days;
+}
+
+export function normalizeDateRange(
+  startIso: string,
+  endIso: string,
+): { startDate: string; endDate: string } {
+  if (startIso <= endIso) {
+    return { startDate: startIso, endDate: endIso };
+  }
+  return { startDate: endIso, endDate: startIso };
+}
+
+export function tripDurationDays(startIso: string, endIso: string): number {
+  return enumerateDateRange(startIso, endIso).length;
+}
+
 export function enumerateDateRange(startIso: string, endIso: string): string[] {
   const start = parseIsoDate(startIso);
   const end = parseIsoDate(endIso);
