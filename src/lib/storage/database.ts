@@ -1,4 +1,4 @@
-import type { CampReadyDatabase, TripRecord } from "@/types";
+import type { CampReadyDatabase, GearItem, TripRecord } from "@/types";
 import { STORAGE_KEY } from "./constants";
 import { createEmptyDatabase } from "./defaults";
 import { ensureSeededDatabase } from "./seed";
@@ -95,8 +95,40 @@ function defaultTripDate(): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** Drop removed container/sub-item fields from persisted gear records. */
+function sanitizeGearItem(item: GearItem): GearItem {
+  return {
+    id: item.id,
+    name: item.name,
+    category: item.category,
+    status: item.status,
+    weight_lbs: item.weight_lbs,
+    storageLocation: item.storageLocation,
+  };
+}
+
+function sanitizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
+  return {
+    ...data,
+    trips: data.trips.map((trip) => ({
+      ...trip,
+      categories: trip.categories.map((category) => ({
+        ...category,
+        items: category.items.map(sanitizeGearItem),
+      })),
+    })),
+    templates: data.templates.map((template) => ({
+      ...template,
+      categories: template.categories.map((category) => ({
+        ...category,
+        items: category.items.map(sanitizeGearItem),
+      })),
+    })),
+  };
+}
+
 function finalizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
-  const seeded = ensureSeededDatabase(data);
+  const seeded = ensureSeededDatabase(sanitizeDatabase(data));
   memoryCache = seeded;
   return seeded;
 }
