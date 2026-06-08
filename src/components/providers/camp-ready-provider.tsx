@@ -11,7 +11,7 @@ import {
   touchTrip,
   writeDatabaseSync,
 } from "@/lib/storage";
-import { CUSTOM_TEMPLATE_ID, getTemplateById } from "@/lib/templates";
+import { CUSTOM_TEMPLATE_ID, getTemplateById, getTemplateOptionLabel } from "@/lib/templates";
 import type {
   AppTab,
   CampReadyDatabase,
@@ -71,6 +71,8 @@ interface CampReadyContextValue {
     name: string;
     description: string;
   }) => void;
+
+  applyChecklistTemplateToTrip: (tripId: string, templateId: string) => void;
 
   addCategory: (name: string) => void;
   updateCategory: (categoryId: string, name: string) => void;
@@ -265,13 +267,47 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
 
       const template: ChecklistTemplate = {
         id: crypto.randomUUID(),
-        name: input.name.trim() || "My Inventory Template",
+        name: input.name.trim() || "My Custom Checklist",
         description:
           input.description.trim() || "Saved checklist for new trips.",
         categories: cloneCategories(trip.categories),
       };
 
       persist({ ...database, templates: [template, ...database.templates] });
+    },
+    [database, persist],
+  );
+
+  const applyChecklistTemplateToTrip = useCallback(
+    (tripId: string, templateId: string) => {
+      if (!database) return;
+      const trip = database.trips.find((t) => t.id === tripId);
+      if (!trip) return;
+
+      const templateName = getTemplateOptionLabel(
+        templateId,
+        database.templates,
+      );
+      const message =
+        templateId === CUSTOM_TEMPLATE_ID
+          ? "Clear this trip's checklist? All categories and items will be removed."
+          : `Replace this trip's checklist with "${templateName}"? Current items and pack status will be lost.`;
+
+      if (!window.confirm(message)) {
+        return;
+      }
+
+      const template = resolveChecklistTemplate(database, templateId);
+      const categories = template ? cloneCategories(template.categories) : [];
+
+      persist(
+        updateTripById(database, tripId, (currentTrip) => ({
+          ...currentTrip,
+          categories,
+        })),
+      );
+      setCollapsedCategories({});
+      setChecklistFilter("all");
     },
     [database, persist],
   );
@@ -440,6 +476,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       updateTrip,
       deleteTrip,
       createTemplateFromTrip,
+      applyChecklistTemplateToTrip,
       addCategory,
       updateCategory,
       deleteCategory,
@@ -466,6 +503,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     updateTrip,
     deleteTrip,
     createTemplateFromTrip,
+    applyChecklistTemplateToTrip,
     addCategory,
     updateCategory,
     deleteCategory,

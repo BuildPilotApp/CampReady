@@ -2,6 +2,7 @@
 
 import { CategorySection } from "@/components/checklist/category-section";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
+import { SaveChecklistTemplate } from "@/components/checklist/save-checklist-template";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { isGearItemRemaining } from "@/lib/gear-items";
 import { Plus } from "lucide-react";
@@ -26,6 +27,9 @@ export function ChecklistView() {
   return (
     <div className="relative min-h-full">
       <FilterToggle />
+      <div className="mt-3">
+        <SaveChecklistTemplate />
+      </div>
       <div className="mt-3 rounded-xl border-2 border-border bg-surface p-4">
         <p className="text-sm font-bold text-foreground">Add Category or Tote</p>
         <div className="mt-2 flex gap-3">

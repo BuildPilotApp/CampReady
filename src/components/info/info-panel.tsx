@@ -18,11 +18,11 @@ const USER_GUIDE = [
     ],
   },
   {
-    title: "Checklist templates",
+    title: "Custom checklists",
     items: [
-      "When creating a trip, open Inventory template to pick Custom, the sample list, or a saved template.",
-      "Save a selected trip's checklist as a new inventory template for reuse.",
-      "Add your own categories and items anytime from the Checklist tab.",
+      "On the Checklist tab, open Save custom checklist to store your current list with a name.",
+      "When creating or editing a trip, open Checklist to pick Custom, the sample list, or a saved checklist.",
+      "Applying a checklist while editing replaces the trip's current items after you confirm.",
     ],
   },
   {
