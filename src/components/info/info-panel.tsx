@@ -12,9 +12,9 @@ const USER_GUIDE = [
   {
     title: "Getting started",
     items: [
-      "Open the Dashboard to view your active trip, packing progress, and weather.",
+      "Open the Dashboard to view your trips, packing progress, and weather.",
       "Create a new trip with a name, dates, location, and checklist template.",
-      "Select a trip from the list to make it active.",
+      "Tap a trip to select it and open its checklist.",
     ],
   },
   {
