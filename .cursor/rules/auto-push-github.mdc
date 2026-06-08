@@ -1,0 +1,20 @@
+---
+description: Push completed work to GitHub automatically without asking
+alwaysApply: true
+---
+
+# Auto-push to GitHub
+
+After completing any code change task in this repo:
+
+1. Verify the build passes when the change affects app code (`npm run build`).
+2. Commit all relevant changes with a concise message focused on why.
+3. Push to `origin main` immediately — do not ask the user for confirmation first.
+4. Mention the commit hash and that GitHub Actions will redeploy to https://buildpilotapp.github.io/CampReady/
+
+Skip commit/push only when:
+- The user explicitly says not to push.
+- There are no file changes to commit.
+- The task is question-only or review-only with no code edits.
+
+Do not push secrets (`.env`, credentials, etc.).
