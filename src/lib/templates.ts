@@ -1,6 +1,9 @@
 import type { ChecklistTemplate } from "@/types";
 import { createCategory, createGearItem } from "@/lib/storage";
 
+export const CUSTOM_TEMPLATE_ID = "custom";
+export const SAMPLE_TEMPLATE_ID = "weekend-car-camping";
+
 function buildCategories(
   groups: { name: string; items: string[] }[],
 ): ChecklistTemplate["categories"] {
@@ -15,91 +18,55 @@ function buildCategories(
   });
 }
 
-export const CHECKLIST_TEMPLATES: ChecklistTemplate[] = [
+export const SAMPLE_CHECKLIST_TEMPLATE: ChecklistTemplate = {
+  id: SAMPLE_TEMPLATE_ID,
+  name: "Weekend Car Camping",
+  description: "Suggested starter list with shelter, kitchen, and camp essentials.",
+  categories: buildCategories([
+    {
+      name: "Shelter",
+      items: ["Tent", "Rain fly", "Sleeping bags", "Sleeping pads", "Pillows"],
+    },
+    {
+      name: "Kitchen",
+      items: [
+        "Camp stove",
+        "Fuel canister",
+        "Cookset",
+        "Cooler",
+        "Water jug",
+        "Utensils",
+      ],
+    },
+    {
+      name: "Tools",
+      items: ["Headlamps", "Multi-tool", "Duct tape", "First aid kit"],
+    },
+  ]),
+};
+
+export const TRIP_CHECKLIST_OPTIONS = [
   {
-    id: "weekend-car-camping",
-    name: "Weekend Car Camping",
-    description: "Shelter, kitchen, and camp comfort essentials.",
-    categories: buildCategories([
-      {
-        name: "Shelter",
-        items: ["Tent", "Rain fly", "Sleeping bags", "Sleeping pads", "Pillows"],
-      },
-      {
-        name: "Kitchen",
-        items: [
-          "Camp stove",
-          "Fuel canister",
-          "Cookset",
-          "Cooler",
-          "Water jug",
-          "Utensils",
-        ],
-      },
-      {
-        name: "Tools",
-        items: ["Headlamps", "Multi-tool", "Duct tape", "First aid kit"],
-      },
-    ]),
+    id: CUSTOM_TEMPLATE_ID,
+    name: "Custom",
+    description: "Start with a blank checklist and build your own categories.",
   },
   {
-    id: "backpacking-lite",
-    name: "Backpacking Lite",
-    description: "Ultralight shelter, food, and safety basics.",
-    categories: buildCategories([
-      {
-        name: "Shelter",
-        items: ["Backpacking tent", "Trekking poles", "Bivy sack"],
-      },
-      {
-        name: "Kitchen",
-        items: ["Canister stove", "Spork", "Water filter", "Meal bags"],
-      },
-      {
-        name: "Tools",
-        items: ["Headlamp", "Fire starter", "Map & compass", "Whistle"],
-      },
-    ]),
+    id: SAMPLE_TEMPLATE_ID,
+    name: SAMPLE_CHECKLIST_TEMPLATE.name,
+    description: SAMPLE_CHECKLIST_TEMPLATE.description,
   },
-  {
-    id: "family-basecamp",
-    name: "Family Basecamp",
-    description: "Roomy setup with extra comfort and kid-friendly gear.",
-    categories: buildCategories([
-      {
-        name: "Shelter",
-        items: [
-          "Large tent",
-          "Tent footprint",
-          "Camp chairs",
-          "Lantern",
-          "Screen house",
-        ],
-      },
-      {
-        name: "Kitchen",
-        items: [
-          "Two-burner stove",
-          "Propane",
-          "Dutch oven",
-          "Coffee kit",
-          "Trash bags",
-        ],
-      },
-      {
-        name: "Tools",
-        items: [
-          "Axe / hatchet",
-          "Rope & carabiners",
-          "Bug spray",
-          "Sunscreen",
-          "First aid kit",
-        ],
-      },
-    ]),
-  },
-];
+] as const;
+
+export type TripChecklistTemplateId =
+  (typeof TRIP_CHECKLIST_OPTIONS)[number]["id"];
+
+/** Built-in templates stored in the database (sample only). */
+export const CHECKLIST_TEMPLATES: ChecklistTemplate[] = [SAMPLE_CHECKLIST_TEMPLATE];
 
 export function getTemplateById(id: string): ChecklistTemplate | undefined {
+  if (id === CUSTOM_TEMPLATE_ID) {
+    return undefined;
+  }
   return CHECKLIST_TEMPLATES.find((template) => template.id === id);
 }

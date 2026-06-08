@@ -13,16 +13,16 @@ const USER_GUIDE = [
     title: "Getting started",
     items: [
       "Open the Dashboard to view your active trip, packing progress, and weather.",
-      "Create a new trip with a name, start/end dates, and location for weather.",
+      "Create a new trip with a name, dates, location, and checklist template.",
       "Select a trip from the list to make it active.",
     ],
   },
   {
-    title: "Templates",
+    title: "Checklist templates",
     items: [
-      "Browse templates on the Dashboard to load a starter checklist.",
-      "Save your current trip checklist as a new template for reuse.",
-      "Applying a template replaces the active trip checklist.",
+      "Choose Custom for a blank checklist or the sample template when creating a trip.",
+      "The sample includes starter categories for shelter, kitchen, and tools.",
+      "Add your own categories and items anytime from the Checklist tab.",
     ],
   },
   {

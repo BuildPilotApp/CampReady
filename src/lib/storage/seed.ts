@@ -1,8 +1,6 @@
 import type { CampReadyDatabase, Category, ChecklistTemplate, TripRecord } from "@/types";
-import { CHECKLIST_TEMPLATES, getTemplateById } from "@/lib/templates";
+import { CHECKLIST_TEMPLATES, getTemplateById, SAMPLE_TEMPLATE_ID } from "@/lib/templates";
 import { createTrip } from "./defaults";
-
-const DEFAULT_TEMPLATE_ID = "weekend-car-camping";
 
 export function cloneCategories(categories: Category[]): Category[] {
   return categories.map((category) => {
@@ -21,7 +19,7 @@ export function cloneCategories(categories: Category[]): Category[] {
 }
 
 export function createSeedDatabase(): CampReadyDatabase {
-  const template = getTemplateById(DEFAULT_TEMPLATE_ID);
+  const template = getTemplateById(SAMPLE_TEMPLATE_ID);
   const trip = createTrip({
     name: "Yosemite Weekend",
     startDate: defaultTripDate(),

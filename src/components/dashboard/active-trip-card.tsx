@@ -22,7 +22,7 @@ export function ActiveTripCard() {
       <section className="rounded-2xl border-2 border-border bg-surface p-5">
         <p className="text-base font-semibold text-foreground">No active trip</p>
         <p className="mt-2 text-sm text-muted">
-          Apply a template below to start packing.
+          Create a new trip below to start packing.
         </p>
       </section>
     );

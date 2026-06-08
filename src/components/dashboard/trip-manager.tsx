@@ -4,8 +4,13 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { LocationInput } from "@/components/ui/location-input";
 import { TripDateRangeInput } from "@/components/ui/trip-date-range-input";
 import { todayIso } from "@/lib/date-utils";
+import {
+  CUSTOM_TEMPLATE_ID,
+  TRIP_CHECKLIST_OPTIONS,
+  type TripChecklistTemplateId,
+} from "@/lib/templates";
 import type { TripLocation } from "@/types";
-import { CalendarDays, MapPin, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronDown, MapPin, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export function TripManager() {
@@ -21,6 +26,9 @@ export function TripManager() {
   const [startDate, setStartDate] = useState<string>(todayIso());
   const [endDate, setEndDate] = useState<string>(todayIso());
   const [newLocation, setNewLocation] = useState<TripLocation | undefined>();
+  const [templateId, setTemplateId] = useState<TripChecklistTemplateId>(
+    CUSTOM_TEMPLATE_ID,
+  );
 
   const trips = useMemo(() => database.trips ?? [], [database.trips]);
 
@@ -59,6 +67,37 @@ export function TripManager() {
 
           <LocationInput value={newLocation} onChange={setNewLocation} />
 
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-muted">
+              Checklist template
+            </span>
+            <div className="flex flex-col gap-2">
+              {TRIP_CHECKLIST_OPTIONS.map((option) => {
+                const selected = templateId === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setTemplateId(option.id)}
+                    aria-pressed={selected}
+                    className={`touch-target rounded-xl border-2 px-4 py-3 text-left active:opacity-90 ${
+                      selected
+                        ? "border-accent bg-accent/10"
+                        : "border-border bg-background"
+                    }`}
+                  >
+                    <span className="block text-base font-bold text-foreground">
+                      {option.name}
+                    </span>
+                    <span className="mt-1 block text-sm leading-snug text-muted">
+                      {option.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <button
             type="button"
             onClick={() => {
@@ -67,11 +106,13 @@ export function TripManager() {
                 startDate,
                 endDate,
                 location: newLocation,
+                templateId,
               });
               setName("");
               setStartDate(todayIso());
               setEndDate(todayIso());
               setNewLocation(undefined);
+              setTemplateId(CUSTOM_TEMPLATE_ID);
             }}
             className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90"
           >
@@ -114,12 +155,16 @@ export function TripManager() {
               </button>
 
               {selected ? (
-                <div className="border-t border-border px-4 py-3">
-                  <details open>
-                    <summary className="touch-target flex cursor-pointer list-none items-center justify-between font-bold text-foreground">
-                      Edit trip details
+                <div className="border-t border-border">
+                  <details className="group">
+                    <summary className="touch-target flex cursor-pointer list-none items-center justify-between px-4 py-3 font-bold text-foreground active:bg-background">
+                      <span>Edit trip details</span>
+                      <ChevronDown
+                        className="size-5 shrink-0 text-muted transition-transform duration-200 group-open:rotate-180"
+                        aria-hidden
+                      />
                     </summary>
-                    <div className="mt-3 flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 px-4 pb-3">
                       <LocationInput
                         value={trip.location}
                         onChange={(location) =>
@@ -135,18 +180,20 @@ export function TripManager() {
                     </div>
                   </details>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (window.confirm("Delete this trip?")) {
-                        deleteTrip(trip.id);
-                      }
-                    }}
-                    className="touch-target mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-border bg-background px-4 text-base font-bold text-foreground active:opacity-90"
-                  >
-                    <Trash2 className="size-5 text-muted" aria-hidden />
-                    Delete trip
-                  </button>
+                  <div className="border-t border-border px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm("Delete this trip?")) {
+                          deleteTrip(trip.id);
+                        }
+                      }}
+                      className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-border bg-background px-4 text-base font-bold text-foreground active:opacity-90"
+                    >
+                      <Trash2 className="size-5 text-muted" aria-hidden />
+                      Delete trip
+                    </button>
+                  </div>
                 </div>
               ) : null}
             </li>

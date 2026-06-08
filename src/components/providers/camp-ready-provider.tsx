@@ -11,13 +11,13 @@ import {
   touchTrip,
   writeDatabaseSync,
 } from "@/lib/storage";
+import { CUSTOM_TEMPLATE_ID, getTemplateById } from "@/lib/templates";
 import type {
   AppTab,
   CampReadyDatabase,
   ChecklistFilter,
   GearItem,
   GearItemStatus,
-  ChecklistTemplate,
   InfoView,
   TripRecord,
   TripLocation,
@@ -57,24 +57,13 @@ interface CampReadyContextValue {
     startDate: string;
     endDate: string;
     location?: TripLocation;
+    templateId: string;
   }) => void;
   updateTrip: (
     tripId: string,
     patch: Partial<Pick<TripRecord, "name" | "startDate" | "endDate" | "location">>,
   ) => void;
   deleteTrip: (tripId: string) => void;
-
-  createTemplateFromTrip: (input: {
-    tripId: string;
-    name: string;
-    description: string;
-  }) => void;
-  updateTemplate: (
-    templateId: string,
-    patch: Partial<Pick<ChecklistTemplate, "name" | "description">>,
-  ) => void;
-  deleteTemplate: (templateId: string) => void;
-  applyTemplateToActiveTrip: (templateId: string) => void;
 
   addCategory: (name: string) => void;
   updateCategory: (categoryId: string, name: string) => void;
@@ -184,16 +173,28 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       startDate: string;
       endDate: string;
       location?: TripLocation;
+      templateId: string;
     }) => {
       if (!database) return;
-      const trip = createTrip({
-        name: input.name.trim() || "New Trip",
-        startDate: input.startDate,
-        endDate: input.endDate,
-        location: input.location?.query?.trim()
-          ? input.location
-          : undefined,
-      });
+
+      const template =
+        input.templateId === CUSTOM_TEMPLATE_ID
+          ? undefined
+          : getTemplateById(input.templateId);
+      const categories = template ? cloneCategories(template.categories) : [];
+
+      const trip: TripRecord = {
+        ...createTrip({
+          name: input.name.trim() || "New Trip",
+          startDate: input.startDate,
+          endDate: input.endDate,
+          location: input.location?.query?.trim()
+            ? input.location
+            : undefined,
+        }),
+        categories,
+      };
+
       const next = {
         ...database,
         trips: [trip, ...database.trips],
@@ -234,63 +235,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       persist({ ...database, trips, activeTripId });
       setCollapsedCategories({});
       setChecklistFilter("all");
-    },
-    [database, persist],
-  );
-
-  const createTemplateFromTrip = useCallback(
-    (input: { tripId: string; name: string; description: string }) => {
-      if (!database) return;
-      const trip = database.trips.find((t) => t.id === input.tripId);
-      if (!trip) return;
-      const template: ChecklistTemplate = {
-        id: crypto.randomUUID(),
-        name: input.name.trim() || "My Template",
-        description: input.description.trim() || "Saved from a trip checklist.",
-        categories: trip.categories,
-      };
-      persist({ ...database, templates: [template, ...database.templates] });
-    },
-    [database, persist],
-  );
-
-  const updateTemplate = useCallback(
-    (templateId: string, patch: Partial<Pick<ChecklistTemplate, "name" | "description">>) => {
-      if (!database) return;
-      const templates = database.templates.map((t) =>
-        t.id === templateId ? { ...t, ...patch } : t,
-      );
-      persist({ ...database, templates });
-    },
-    [database, persist],
-  );
-
-  const deleteTemplate = useCallback(
-    (templateId: string) => {
-      if (!database) return;
-      persist({
-        ...database,
-        templates: database.templates.filter((t) => t.id !== templateId),
-      });
-    },
-    [database, persist],
-  );
-
-  const applyTemplateToActiveTrip = useCallback(
-    (templateId: string) => {
-      if (!database?.activeTripId) return;
-      const template = database.templates.find((t) => t.id === templateId);
-      if (!template) return;
-      const categories = cloneCategories(template.categories);
-      persist(
-        updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
-          categories,
-        })),
-      );
-      setActiveTab("checklist");
-      setChecklistFilter("all");
-      setCollapsedCategories({});
     },
     [database, persist],
   );
@@ -458,10 +402,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       createNewTrip,
       updateTrip,
       deleteTrip,
-      createTemplateFromTrip,
-      updateTemplate,
-      deleteTemplate,
-      applyTemplateToActiveTrip,
       addCategory,
       updateCategory,
       deleteCategory,
@@ -487,10 +427,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     createNewTrip,
     updateTrip,
     deleteTrip,
-    createTemplateFromTrip,
-    updateTemplate,
-    deleteTemplate,
-    applyTemplateToActiveTrip,
     addCategory,
     updateCategory,
     deleteCategory,
