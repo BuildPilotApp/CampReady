@@ -27,7 +27,7 @@ export function ChecklistView() {
     <div className="relative min-h-full">
       <FilterToggle />
       <div className="mt-3 rounded-xl border-2 border-border bg-surface p-4">
-        <p className="text-sm font-bold text-foreground">Add category</p>
+        <p className="text-sm font-bold text-foreground">Add Category or Tote</p>
         <div className="mt-2 flex gap-3">
           <input
             value={newCategoryName}
@@ -44,7 +44,7 @@ export function ChecklistView() {
               setNewCategoryName("");
             }}
             className="touch-target inline-flex w-14 items-center justify-center rounded-xl bg-accent text-accent-foreground active:opacity-90"
-            aria-label="Add category"
+            aria-label="Add category or tote"
           >
             <Plus className="size-6" aria-hidden />
           </button>
