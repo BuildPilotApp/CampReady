@@ -1,7 +1,9 @@
+import { flattenGearEntries } from "@/lib/gear-items";
 import type {
   CampReadyDatabase,
   Category,
   GearItem,
+  GearSubItem,
   Trip,
   TripRecord,
 } from "@/types";
@@ -43,9 +45,27 @@ export function createCategory(
   };
 }
 
+export function createGearSubItem(
+  partial: Pick<GearSubItem, "name"> &
+    Partial<Pick<GearSubItem, "id" | "status" | "weight_lbs" | "storageLocation">>,
+): GearSubItem {
+  return {
+    id: partial.id ?? crypto.randomUUID(),
+    name: partial.name,
+    status: partial.status ?? "missing",
+    weight_lbs: partial.weight_lbs,
+    storageLocation: partial.storageLocation,
+  };
+}
+
 export function createGearItem(
   partial: Pick<GearItem, "name" | "category"> &
-    Partial<Pick<GearItem, "id" | "status" | "weight_lbs" | "storageLocation">>,
+    Partial<
+      Pick<
+        GearItem,
+        "id" | "status" | "weight_lbs" | "storageLocation" | "isContainer" | "subItems"
+      >
+    >,
 ): GearItem {
   return {
     id: partial.id ?? crypto.randomUUID(),
@@ -54,6 +74,8 @@ export function createGearItem(
     status: partial.status ?? "missing",
     weight_lbs: partial.weight_lbs,
     storageLocation: partial.storageLocation,
+    isContainer: partial.isContainer,
+    subItems: partial.subItems,
   };
 }
 
@@ -64,12 +86,16 @@ export function getTripStats(trip: TripRecord): {
   percentPacked: number;
 } {
   const items = trip.categories.flatMap((category) => category.items);
-  const totalItems = items.length;
-  const packedItems = items.filter((item) => item.status === "packed").length;
-  const totalWeightLbs = items.reduce(
-    (sum, item) => sum + (typeof item.weight_lbs === "number" ? item.weight_lbs : 0),
-    0,
-  );
+  const entries = flattenGearEntries(items);
+  const totalItems = entries.length;
+  const packedItems = entries.filter((entry) => {
+    const status = entry.subItem?.status ?? entry.item.status;
+    return status === "packed";
+  }).length;
+  const totalWeightLbs = entries.reduce((sum, entry) => {
+    const weight = entry.subItem?.weight_lbs ?? entry.item.weight_lbs;
+    return sum + (typeof weight === "number" ? weight : 0);
+  }, 0);
   const percentPacked = totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0;
 
   return { totalItems, packedItems, totalWeightLbs, percentPacked };

@@ -4,6 +4,7 @@ export {
   createTrip,
   createCategory,
   createGearItem,
+  createGearSubItem,
   getTripStats,
   touchTrip,
 } from "./defaults";

@@ -22,6 +22,15 @@ export interface Trip {
   location?: TripLocation;
 }
 
+/** A line item stored inside a container (tote, bin, etc.). */
+export interface GearSubItem {
+  id: string;
+  name: string;
+  status: GearItemStatus;
+  weight_lbs?: number;
+  storageLocation?: string;
+}
+
 /** One line item in a checklist, with weight for load planning. */
 export interface GearItem {
   id: string;
@@ -32,6 +41,9 @@ export interface GearItem {
   weight_lbs?: number;
   /** Where the item lives when not packed (e.g. "Bin 1"). */
   storageLocation?: string;
+  /** When true, this item is a container that holds {@link GearItem.subItems}. */
+  isContainer?: boolean;
+  subItems?: GearSubItem[];
 }
 
 /** Grouped checklist section containing gear line items. */

@@ -15,6 +15,11 @@ export function cloneCategories(categories: Category[]): Category[] {
         id: crypto.randomUUID(),
         category: categoryId,
         status: "missing" as const,
+        subItems: item.subItems?.map((subItem) => ({
+          ...subItem,
+          id: crypto.randomUUID(),
+          status: "missing" as const,
+        })),
       })),
     };
   });

@@ -3,6 +3,7 @@
 import { CategorySection } from "@/components/checklist/category-section";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { isGearItemRemaining } from "@/lib/gear-items";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
@@ -16,7 +17,7 @@ export function ChecklistView() {
     checklistFilter === "all"
       ? categories.length > 0
       : categories.some((category) =>
-          category.items.some((item) => item.status !== "packed"),
+          category.items.some(isGearItemRemaining),
         );
 
   const allPacked =
