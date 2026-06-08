@@ -1,4 +1,5 @@
 import type { CampReadyDatabase, GearItem, TripRecord } from "@/types";
+import { filterUserSavedTemplates } from "@/lib/templates";
 import { STORAGE_KEY } from "./constants";
 import { createEmptyDatabase } from "./defaults";
 import { ensureSeededDatabase } from "./seed";
@@ -117,7 +118,7 @@ function sanitizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
         items: category.items.map(sanitizeGearItem),
       })),
     })),
-    templates: data.templates.map((template) => ({
+    templates: filterUserSavedTemplates(data.templates).map((template) => ({
       ...template,
       categories: template.categories.map((category) => ({
         ...category,

@@ -41,7 +41,7 @@ function TripChecklistTemplateEditor({ tripId }: { tripId: string }) {
       templateId={templateId}
       onTemplateIdChange={setTemplateId}
       savedTemplates={database.templates ?? []}
-      hint="Replace this trip's checklist with a built-in or saved custom list."
+      hint="Replace this trip's checklist with Custom or a saved checklist."
       footer={
         <button
           type="button"
@@ -114,7 +114,7 @@ export function TripManager() {
             templateId={templateId}
             onTemplateIdChange={setTemplateId}
             savedTemplates={database.templates ?? []}
-            hint="Choose a built-in or saved custom checklist for your new trip."
+            hint="Choose Custom or a saved checklist for your new trip."
           />
 
           <button

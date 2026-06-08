@@ -21,7 +21,7 @@ const USER_GUIDE = [
     title: "Custom checklists",
     items: [
       "On the Checklist tab, open Save custom checklist to store your current list with a name.",
-      "When creating or editing a trip, open Checklist to pick Custom, the sample list, or a saved checklist.",
+      "When creating or editing a trip, open Checklist to pick Custom or a saved checklist.",
       "Applying a checklist while editing replaces the trip's current items after you confirm.",
     ],
   },

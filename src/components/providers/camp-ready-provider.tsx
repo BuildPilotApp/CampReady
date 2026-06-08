@@ -11,7 +11,10 @@ import {
   touchTrip,
   writeDatabaseSync,
 } from "@/lib/storage";
-import { CUSTOM_TEMPLATE_ID, getTemplateById, getTemplateOptionLabel } from "@/lib/templates";
+import {
+  CUSTOM_TEMPLATE_ID,
+  getTemplateOptionLabel,
+} from "@/lib/templates";
 import type {
   AppTab,
   CampReadyDatabase,
@@ -106,10 +109,7 @@ function resolveChecklistTemplate(
     return undefined;
   }
 
-  return (
-    getTemplateById(templateId) ??
-    database.templates.find((template) => template.id === templateId)
-  );
+  return database.templates.find((template) => template.id === templateId);
 }
 
 function updateTripById(
