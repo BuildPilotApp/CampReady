@@ -72,7 +72,7 @@ interface CampReadyContextValue {
   editingTemplateId: string | null;
   editingTemplate: ChecklistTemplate | null;
   setEditingTemplate: (templateId: string | null) => void;
-  createBlankTemplate: (name: string) => void;
+  createBlankTemplate: (name: string) => string | undefined;
 
   createTemplateFromTrip: (input: {
     tripId: string;
@@ -80,7 +80,11 @@ interface CampReadyContextValue {
     description: string;
   }) => void;
 
-  applyChecklistTemplateToTrip: (tripId: string, templateId: string) => void;
+  applyChecklistTemplateToTrip: (
+    tripId: string,
+    templateId: string,
+    options?: { skipConfirm?: boolean },
+  ) => void;
 
   updateTemplate: (
     templateId: string,
@@ -326,7 +330,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
 
   const createBlankTemplate = useCallback(
     (name: string) => {
-      if (!database) return;
+      if (!database) return undefined;
 
       const template: ChecklistTemplate = {
         id: crypto.randomUUID(),
@@ -337,6 +341,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
 
       persist({ ...database, templates: [template, ...database.templates] });
       setEditingTemplateId(template.id);
+      return template.id;
     },
     [database, persist],
   );
@@ -361,33 +366,40 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   );
 
   const applyChecklistTemplateToTrip = useCallback(
-    (tripId: string, templateId: string) => {
+    (
+      tripId: string,
+      templateId: string,
+      options?: { skipConfirm?: boolean },
+    ) => {
       if (!database) return;
       const trip = database.trips.find((t) => t.id === tripId);
       if (!trip) return;
 
-      const templateName = getTemplateOptionLabel(
-        templateId,
-        database.templates,
-      );
-      const message =
-        templateId === CUSTOM_TEMPLATE_ID
-          ? "Clear this trip's gear checklist? All categories and items will be removed."
-          : `Load "${templateName}" onto this trip? Current items and pack status will be replaced.`;
+      if (!options?.skipConfirm) {
+        const templateName = getTemplateOptionLabel(
+          templateId,
+          database.templates,
+        );
+        const message =
+          templateId === CUSTOM_TEMPLATE_ID
+            ? "Clear this trip's gear checklist? All categories and items will be removed."
+            : `Load "${templateName}" onto this trip? Current items and pack status will be replaced.`;
 
-      if (!window.confirm(message)) {
-        return;
+        if (!window.confirm(message)) {
+          return;
+        }
       }
 
       const template = resolveChecklistTemplate(database, templateId);
       const categories = template ? cloneCategories(template.categories) : [];
 
-      persist(
-        updateTripById(database, tripId, (currentTrip) => ({
+      persist({
+        ...updateTripById(database, tripId, (currentTrip) => ({
           ...currentTrip,
           categories,
         })),
-      );
+        activeTripId: tripId,
+      });
       setCollapsedCategories({});
       setChecklistFilter("all");
     },

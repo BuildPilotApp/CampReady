@@ -2,9 +2,7 @@
 
 import { CategorySection } from "@/components/checklist/category-section";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
-import { GearInventoryBuilder } from "@/components/checklist/gear-inventory-builder";
-import { SaveChecklistTemplate } from "@/components/checklist/save-checklist-template";
-import { SavedChecklistsPanel } from "@/components/checklist/saved-checklists-panel";
+import { GearInventoryPanel } from "@/components/checklist/gear-inventory-panel";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import {
   NO_ACTIVE_TRIP_MESSAGE,
@@ -31,11 +29,7 @@ export function ChecklistView() {
 
   return (
     <div className="relative min-h-full">
-      <section className="flex flex-col gap-3">
-        <SavedChecklistsPanel />
-        <GearInventoryBuilder />
-        <SaveChecklistTemplate />
-      </section>
+      <GearInventoryPanel />
 
       {activeTrip ? (
         <section className="mt-5 flex flex-col gap-3">

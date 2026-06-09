@@ -9,7 +9,7 @@ export const PACK_TRIP_HINT =
   "Tap an item to stage it, then tap again when it is packed in your vehicle.";
 
 export const BUILD_GEAR_CHECKLIST_HINT =
-  "Add categories and gear items to build your inventory. Saved checklists can be loaded when creating or editing trips.";
+  "Add categories and gear items to build your inventory. When trips exist, you can load a checklist onto a trip from here.";
 
 export const CREATE_GEAR_CHECKLIST_HINT =
   "Save this trip's gear list to your inventory so you can load it onto future trips.";

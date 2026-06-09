@@ -22,11 +22,11 @@ const USER_GUIDE = [
     title: "Saved gear checklists (your inventory)",
     items: [
       "Saved checklists are reusable lists of the gear you own, organized by category.",
-      "On the Gear Checklist tab, use Build gear checklist to name a new list, add categories, and add gear items—no trip required.",
+      "On the Gear Checklist tab, expand Gear inventory to manage saved lists and build new ones. It stays collapsed by default so packing stays front and center.",
       "Each gear item has optional weight (lbs) and storage fields—for example tote, bin, or shelf.",
-      "Tap Edit on a saved checklist to keep building your inventory.",
-      "Saved checklists appear when creating or editing a trip under Gear checklist.",
-      "You can also copy a trip's packed list into inventory with Save trip list to inventory.",
+      "When you edit or create a checklist and trips exist, CampReady asks whether to load it onto a trip or edit inventory only—you pick which trip to replace.",
+      "Saved checklists also appear when creating or editing a trip on the Dashboard.",
+      "You can copy a trip's packed list into inventory with Save trip list to inventory inside Gear inventory.",
     ],
   },
   {
