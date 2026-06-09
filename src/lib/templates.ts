@@ -56,3 +56,15 @@ export function filterUserSavedTemplates(
 ): ChecklistTemplate[] {
   return templates.filter((template) => template.id !== SAMPLE_TEMPLATE_ID);
 }
+
+export function getTemplateStats(template: ChecklistTemplate): {
+  categoryCount: number;
+  itemCount: number;
+} {
+  const categoryCount = template.categories.length;
+  const itemCount = template.categories.reduce(
+    (total, category) => total + category.items.length,
+    0,
+  );
+  return { categoryCount, itemCount };
+}

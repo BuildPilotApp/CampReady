@@ -3,6 +3,7 @@
 import { CategorySection } from "@/components/checklist/category-section";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
 import { SaveChecklistTemplate } from "@/components/checklist/save-checklist-template";
+import { SavedChecklistsPanel } from "@/components/checklist/saved-checklists-panel";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { isGearItemRemaining } from "@/lib/gear-items";
 import { Plus } from "lucide-react";
@@ -27,6 +28,9 @@ export function ChecklistView() {
   return (
     <div className="relative min-h-full">
       <FilterToggle />
+      <div className="mt-3">
+        <SavedChecklistsPanel />
+      </div>
       <div className="mt-3">
         <SaveChecklistTemplate />
       </div>

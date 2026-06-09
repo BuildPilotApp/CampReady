@@ -201,8 +201,8 @@ export function TripManager() {
                     <ProgressRing
                       packed={stats.packedItems}
                       total={stats.totalItems}
-                      size={72}
-                      strokeWidth={8}
+                      size={80}
+                      strokeWidth={6}
                     />
                   ) : null}
                 </button>

@@ -11,6 +11,7 @@ export function ProgressRing({
   size = 120,
   strokeWidth = 10,
 }: ProgressRingProps) {
+  const compact = size < 100;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = total > 0 ? packed / total : 0;
@@ -28,6 +29,7 @@ export function ProgressRing({
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         className="-rotate-90"
+        aria-hidden
       >
         <circle
           cx={size / 2}
@@ -49,16 +51,34 @@ export function ProgressRing({
           strokeDashoffset={offset}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-2xl font-bold leading-none tabular-nums text-foreground">
-          {packed}
-        </span>
-        <span className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-muted">
-          of {total}
-        </span>
-        <span className="mt-1 text-[0.65rem] font-bold uppercase tracking-wider text-accent">
-          Packed
-        </span>
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-center text-center ${
+          compact ? "px-1.5" : "px-2"
+        }`}
+      >
+        {compact ? (
+          <>
+            <span className="text-sm font-bold leading-none tabular-nums text-foreground">
+              {packed}
+              <span className="text-[0.6rem] font-semibold text-muted">/{total}</span>
+            </span>
+            <span className="mt-0.5 text-[0.5rem] font-bold uppercase leading-none tracking-wide text-accent">
+              packed
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="text-2xl font-bold leading-none tabular-nums text-foreground">
+              {packed}
+            </span>
+            <span className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-muted">
+              of {total}
+            </span>
+            <span className="mt-1 text-[0.65rem] font-bold uppercase tracking-wider text-accent">
+              Packed
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

@@ -20,9 +20,9 @@ const USER_GUIDE = [
   {
     title: "Custom checklists",
     items: [
-      "On the Checklist tab, open Save custom checklist to store your current list with a name.",
-      "When creating or editing a trip, open Checklist to pick Custom or a saved checklist.",
-      "Applying a checklist while editing replaces the trip's current items after you confirm.",
+      "On the Checklist tab, open Saved checklists to view, rename, edit, or delete your saved lists.",
+      "Expand a checklist to edit categories and items, or delete the whole list.",
+      "Save a trip checklist with Save custom checklist, then pick it when creating or editing a trip.",
     ],
   },
   {

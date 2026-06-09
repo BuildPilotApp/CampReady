@@ -77,6 +77,30 @@ interface CampReadyContextValue {
 
   applyChecklistTemplateToTrip: (tripId: string, templateId: string) => void;
 
+  updateTemplate: (
+    templateId: string,
+    patch: Partial<Pick<ChecklistTemplate, "name" | "description">>,
+  ) => void;
+  deleteTemplate: (templateId: string) => void;
+  addTemplateCategory: (templateId: string, name: string) => void;
+  updateTemplateCategory: (
+    templateId: string,
+    categoryId: string,
+    name: string,
+  ) => void;
+  deleteTemplateCategory: (templateId: string, categoryId: string) => void;
+  addTemplateItem: (input: {
+    templateId: string;
+    categoryId: string;
+    name: string;
+  }) => void;
+  updateTemplateItem: (
+    templateId: string,
+    itemId: string,
+    patch: Partial<Pick<GearItem, "name" | "weight_lbs" | "storageLocation">>,
+  ) => void;
+  deleteTemplateItem: (templateId: string, itemId: string) => void;
+
   addCategory: (name: string) => void;
   updateCategory: (categoryId: string, name: string) => void;
   deleteCategory: (categoryId: string) => void;
@@ -122,6 +146,18 @@ function updateTripById(
   const trips = [...database.trips];
   trips[idx] = touchTrip(updater(trips[idx]!));
   return { ...database, trips };
+}
+
+function updateTemplateById(
+  database: CampReadyDatabase,
+  templateId: string,
+  updater: (template: ChecklistTemplate) => ChecklistTemplate,
+): CampReadyDatabase {
+  const idx = database.templates.findIndex((template) => template.id === templateId);
+  if (idx === -1) return database;
+  const templates = [...database.templates];
+  templates[idx] = updater(templates[idx]!);
+  return { ...database, templates };
 }
 
 export function CampReadyProvider({ children }: { children: React.ReactNode }) {
@@ -312,6 +348,138 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const updateTemplate = useCallback(
+    (
+      templateId: string,
+      patch: Partial<Pick<ChecklistTemplate, "name" | "description">>,
+    ) => {
+      if (!database) return;
+      persist(
+        updateTemplateById(database, templateId, (template) => ({
+          ...template,
+          ...patch,
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const deleteTemplate = useCallback(
+    (templateId: string) => {
+      if (!database) return;
+      persist({
+        ...database,
+        templates: database.templates.filter(
+          (template) => template.id !== templateId,
+        ),
+      });
+    },
+    [database, persist],
+  );
+
+  const addTemplateCategory = useCallback(
+    (templateId: string, name: string) => {
+      if (!database) return;
+      const category = createCategory({ name: name.trim() || "New Category" });
+      persist(
+        updateTemplateById(database, templateId, (template) => ({
+          ...template,
+          categories: [category, ...template.categories],
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const updateTemplateCategory = useCallback(
+    (templateId: string, categoryId: string, name: string) => {
+      if (!database) return;
+      persist(
+        updateTemplateById(database, templateId, (template) => ({
+          ...template,
+          categories: template.categories.map((category) =>
+            category.id === categoryId ? { ...category, name } : category,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const deleteTemplateCategory = useCallback(
+    (templateId: string, categoryId: string) => {
+      if (!database) return;
+      persist(
+        updateTemplateById(database, templateId, (template) => ({
+          ...template,
+          categories: template.categories.filter(
+            (category) => category.id !== categoryId,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const addTemplateItem = useCallback(
+    (input: { templateId: string; categoryId: string; name: string }) => {
+      if (!database) return;
+      const item = createGearItem({
+        name: input.name.trim() || "New Item",
+        category: input.categoryId,
+      });
+      persist(
+        updateTemplateById(database, input.templateId, (template) => ({
+          ...template,
+          categories: template.categories.map((category) =>
+            category.id === input.categoryId
+              ? { ...category, items: [item, ...category.items] }
+              : category,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const updateTemplateItem = useCallback(
+    (
+      templateId: string,
+      itemId: string,
+      patch: Partial<Pick<GearItem, "name" | "weight_lbs" | "storageLocation">>,
+    ) => {
+      if (!database) return;
+      persist(
+        updateTemplateById(database, templateId, (template) => ({
+          ...template,
+          categories: template.categories.map((category) => ({
+            ...category,
+            items: category.items.map((item) =>
+              item.id === itemId ? { ...item, ...patch } : item,
+            ),
+          })),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const deleteTemplateItem = useCallback(
+    (templateId: string, itemId: string) => {
+      if (!database) return;
+      persist(
+        updateTemplateById(database, templateId, (template) => ({
+          ...template,
+          categories: template.categories.map((category) => ({
+            ...category,
+            items: category.items.filter((item) => item.id !== itemId),
+          })),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
   const addCategory = useCallback(
     (name: string) => {
       if (!database?.activeTripId) return;
@@ -477,6 +645,14 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       deleteTrip,
       createTemplateFromTrip,
       applyChecklistTemplateToTrip,
+      updateTemplate,
+      deleteTemplate,
+      addTemplateCategory,
+      updateTemplateCategory,
+      deleteTemplateCategory,
+      addTemplateItem,
+      updateTemplateItem,
+      deleteTemplateItem,
       addCategory,
       updateCategory,
       deleteCategory,
@@ -504,6 +680,14 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     deleteTrip,
     createTemplateFromTrip,
     applyChecklistTemplateToTrip,
+    updateTemplate,
+    deleteTemplate,
+    addTemplateCategory,
+    updateTemplateCategory,
+    deleteTemplateCategory,
+    addTemplateItem,
+    updateTemplateItem,
+    deleteTemplateItem,
     addCategory,
     updateCategory,
     deleteCategory,
