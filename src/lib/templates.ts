@@ -7,8 +7,8 @@ export const SAMPLE_TEMPLATE_ID = "weekend-car-camping";
 
 export const CUSTOM_CHECKLIST_OPTION = {
   id: CUSTOM_TEMPLATE_ID,
-  name: "Custom",
-  description: "Start with a blank checklist and build your own categories.",
+  name: "New",
+  description: "Start with a blank gear checklist and add your own categories.",
 } as const;
 
 export interface TemplateOption {
@@ -17,7 +17,7 @@ export interface TemplateOption {
   description: string;
 }
 
-/** Checklist options when creating or editing a trip: Custom plus user-saved lists. */
+/** Checklist options when creating or editing a trip: New plus user-saved lists. */
 export function getSelectableTemplateOptions(
   savedTemplates: ChecklistTemplate[],
 ): TemplateOption[] {

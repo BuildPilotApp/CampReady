@@ -21,7 +21,7 @@ export function SaveChecklistTemplate() {
       <summary className="touch-target flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-bold text-foreground active:opacity-90">
         <span className="inline-flex min-w-0 items-center gap-2">
           <Save className="size-5 shrink-0 text-accent" aria-hidden />
-          Save custom checklist
+          Create new gear checklist
         </span>
         <ChevronDown
           className="size-5 shrink-0 text-muted transition-transform duration-200 group-open:rotate-180"
@@ -31,13 +31,13 @@ export function SaveChecklistTemplate() {
 
       <div className="flex flex-col gap-3 border-t border-border px-4 py-3">
         <p className="text-sm leading-snug text-muted">
-          Save this trip&apos;s categories and items as a reusable checklist you
-          can pick when creating or editing a trip.
+          Name and save this trip&apos;s gear list so you can reuse it on future
+          trips.
         </p>
 
         {!hasChecklistContent ? (
           <p className="text-sm text-muted">
-            Add at least one item before saving a custom checklist.
+            Add at least one item before creating a new gear checklist.
           </p>
         ) : (
           <>
@@ -66,7 +66,7 @@ export function SaveChecklistTemplate() {
               className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save className="size-5" aria-hidden />
-              Save checklist
+              Save gear checklist
             </button>
           </>
         )}

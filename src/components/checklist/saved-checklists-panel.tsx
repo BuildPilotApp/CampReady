@@ -298,8 +298,8 @@ export function SavedChecklistsPanel() {
       <div className="flex flex-col gap-3 p-4">
         {templates.length === 0 ? (
           <p className="text-sm leading-snug text-muted">
-            No saved checklists yet. Build a gear checklist on a trip and use Save
-            custom checklist below, or save one from a trip on the Dashboard.
+            No saved checklists yet. Build a gear list on a trip and use Create
+            new gear checklist below, or save one from a trip on the Dashboard.
           </p>
         ) : (
           templates.map((template) => (

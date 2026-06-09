@@ -303,7 +303,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
 
       const template: ChecklistTemplate = {
         id: crypto.randomUUID(),
-        name: input.name.trim() || "My Custom Checklist",
+        name: input.name.trim() || "My Gear Checklist",
         description:
           input.description.trim() || "Saved checklist for new trips.",
         categories: cloneCategories(trip.categories),

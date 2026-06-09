@@ -18,11 +18,11 @@ const USER_GUIDE = [
     ],
   },
   {
-    title: "Custom checklists",
+    title: "Saved gear checklists",
     items: [
       "On the Gear Checklist tab, open Saved checklists to view, rename, edit, or delete your saved lists.",
       "Expand a checklist to edit categories and items, or delete the whole list.",
-      "Save a gear checklist with Save custom checklist, then pick it when creating or editing a trip.",
+      "Use Create new gear checklist to name and save a list, then pick it when creating or editing a trip.",
     ],
   },
   {
