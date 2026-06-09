@@ -5,6 +5,11 @@ import {
   modalInputClassName,
   modalTextareaClassName,
 } from "@/components/ui/modal-field-styles";
+import {
+  FEEDBACK_SUCCESS_SAVED,
+  FEEDBACK_SUCCESS_SENT,
+  submitFeedback,
+} from "@/lib/feedback-submission";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import type { InfoView } from "@/types";
 import { ChevronLeft } from "lucide-react";
@@ -100,28 +105,31 @@ function FeedbackForm({
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit() {
-    const entry = {
-      type,
-      message: message.trim(),
-      email: email.trim(),
-      at: new Date().toISOString(),
-    };
-    const key = "campready:submissions";
-    let existing: unknown[] = [];
-    try {
-      existing = JSON.parse(localStorage.getItem(key) ?? "[]") as unknown[];
-      if (!Array.isArray(existing)) {
-        existing = [];
-      }
-    } catch {
-      existing = [];
+  async function handleSubmit() {
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage || submitting) {
+      return;
     }
-    localStorage.setItem(key, JSON.stringify([entry, ...existing]));
-    setSubmitted(true);
-    setMessage("");
-    setEmail("");
+
+    setSubmitting(true);
+    try {
+      const outcome = await submitFeedback({
+        type,
+        message: trimmedMessage,
+        email: email.trim(),
+      });
+      setSuccessMessage(
+        outcome === "sent" ? FEEDBACK_SUCCESS_SENT : FEEDBACK_SUCCESS_SAVED,
+      );
+      setSubmitted(true);
+      setMessage("");
+      setEmail("");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -132,7 +140,7 @@ function FeedbackForm({
           onBack={onBack}
         />
         <p className="mt-4 text-base leading-relaxed text-foreground">
-          Thank you. Your message was saved on this device.
+          {successMessage}
         </p>
       </>
     );
@@ -171,11 +179,13 @@ function FeedbackForm({
       <div className="mt-4 flex flex-col gap-3">
         <button
           type="button"
-          onClick={handleSubmit}
-          disabled={!message.trim()}
+          onClick={() => {
+            void handleSubmit();
+          }}
+          disabled={!message.trim() || submitting}
           className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90 disabled:opacity-50"
         >
-          Submit
+          {submitting ? "Sending…" : "Submit"}
         </button>
         <button
           type="button"
