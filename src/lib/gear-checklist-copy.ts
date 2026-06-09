@@ -6,7 +6,7 @@ export const SAVED_CHECKLISTS_HEADER_SUBTITLE =
   "Reusable gear inventory for your trips";
 
 export const PACK_TRIP_HINT =
-  "Tap any item to stage it, then check it off when it is packed in your vehicle. Use categories to group your gear.";
+  "Tap an item to stage it, then tap again when it is packed in your vehicle.";
 
 export const BUILD_GEAR_CHECKLIST_HINT =
   "Add categories and gear items to build your inventory. Saved checklists can be loaded when creating or editing trips.";

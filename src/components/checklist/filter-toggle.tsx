@@ -4,8 +4,8 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import type { ChecklistFilter } from "@/types";
 
 const OPTIONS: { id: ChecklistFilter; label: string }[] = [
-  { id: "all", label: "All Items" },
-  { id: "remaining", label: "Remaining to Pack" },
+  { id: "all", label: "All" },
+  { id: "remaining", label: "To pack" },
 ];
 
 export function FilterToggle() {

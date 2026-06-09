@@ -40,60 +40,69 @@ export function ChecklistView() {
 
       {activeTrip ? (
         <section className="mt-5 flex flex-col gap-3">
-          <div className="rounded-xl border-2 border-border bg-surface px-4 py-3">
-            <h2 className="text-base font-bold text-foreground">
-              Pack for {activeTrip.name}
-            </h2>
-            <p className="mt-2 text-sm leading-snug text-muted">{PACK_TRIP_HINT}</p>
+          <div className="flex items-end justify-between gap-3 px-1">
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-foreground">
+                Pack for {activeTrip.name}
+              </h2>
+              <p className="mt-1 text-xs leading-snug text-muted">{PACK_TRIP_HINT}</p>
+            </div>
           </div>
 
           <FilterToggle />
 
-          <div className="rounded-xl border-2 border-border bg-surface p-4">
-            <p className="text-sm font-bold text-foreground">Add category or tote</p>
-            <p className="mt-1 text-xs leading-snug text-muted">
-              Group gear by category for one-tap staging and checkoff.
-            </p>
-            <div className="mt-2 flex gap-3">
-              <input
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="touch-target flex-1 rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
-                placeholder="Kitchen"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const name = newCategoryName.trim();
-                  if (!name) return;
-                  addCategory(name);
-                  setNewCategoryName("");
-                }}
-                className="touch-target inline-flex w-14 items-center justify-center rounded-xl bg-accent text-accent-foreground active:opacity-90"
-                aria-label="Add category or tote"
-              >
-                <Plus className="size-6" aria-hidden />
-              </button>
-            </div>
-          </div>
+          <div className="flex flex-col gap-2.5 pb-32">
+            {categories.length === 0 ? (
+              <section className="rounded-xl border-2 border-border bg-surface px-4 py-6 text-center">
+                <p className="text-sm text-muted">
+                  Add a category below to start your packing list.
+                </p>
+              </section>
+            ) : (
+              categories.map((category) => (
+                <CategorySection
+                  key={category.id}
+                  category={category}
+                  filter={checklistFilter}
+                />
+              ))
+            )}
 
-          <div className="flex flex-col gap-3 pb-32">
-            {categories.map((category) => (
-              <CategorySection
-                key={category.id}
-                category={category}
-                filter={checklistFilter}
-              />
-            ))}
             {checklistFilter === "remaining" && allPacked && !hasRemainingWork ? (
               <section className="rounded-xl border-2 border-border bg-surface px-4 py-8 text-center">
                 <p className="text-base font-bold text-foreground">All packed!</p>
                 <p className="mt-2 text-sm text-muted">
-                  Every item is in the vehicle. Switch to &ldquo;All Items&rdquo; to
-                  review.
+                  Switch to &ldquo;All&rdquo; to review everything in the vehicle.
                 </p>
               </section>
             ) : null}
+
+            <details className="rounded-xl border border-dashed border-border bg-surface/60">
+              <summary className="touch-target cursor-pointer list-none px-4 py-3 text-sm font-semibold text-muted active:text-foreground">
+                Add category or tote
+              </summary>
+              <div className="flex gap-2 border-t border-border/60 px-4 py-3">
+                <input
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground"
+                  placeholder="Kitchen"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = newCategoryName.trim();
+                    if (!name) return;
+                    addCategory(name);
+                    setNewCategoryName("");
+                  }}
+                  className="touch-target inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground active:opacity-90"
+                  aria-label="Add category or tote"
+                >
+                  <Plus className="size-5" aria-hidden />
+                </button>
+              </div>
+            </details>
           </div>
         </section>
       ) : (

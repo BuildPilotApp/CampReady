@@ -1,126 +1,134 @@
 "use client";
 
-import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  PackStatusIndicator,
+  packStatusLabel,
+} from "@/components/checklist/pack-status-indicator";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import type { GearItem } from "@/types";
-import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface GearItemRowProps {
   item: GearItem;
 }
 
+function ItemMetaLine({ item }: { item: GearItem }) {
+  const parts: string[] = [];
+  if (item.storageLocation) {
+    parts.push(item.storageLocation);
+  }
+  if (typeof item.weight_lbs === "number" && item.weight_lbs > 0) {
+    parts.push(`${item.weight_lbs} lb`);
+  }
+
+  if (parts.length === 0) {
+    return null;
+  }
+
+  return (
+    <span className="mt-0.5 block truncate text-xs text-muted">{parts.join(" · ")}</span>
+  );
+}
+
 export function GearItemRow({ item }: GearItemRowProps) {
   const { cycleItemStatus, updateItem, deleteItem } = useCampReady();
   const packed = item.status === "packed";
-  const [editing, setEditing] = useState(false);
+  const staged = item.status === "staged";
   const [name, setName] = useState(item.name);
   const [weight, setWeight] = useState(
     typeof item.weight_lbs === "number" ? String(item.weight_lbs) : "",
   );
   const [storageLocation, setStorageLocation] = useState(item.storageLocation ?? "");
 
+  useEffect(() => {
+    setName(item.name);
+    setWeight(typeof item.weight_lbs === "number" ? String(item.weight_lbs) : "");
+    setStorageLocation(item.storageLocation ?? "");
+  }, [item.id, item.name, item.weight_lbs, item.storageLocation]);
+
+  const saveDetails = () => {
+    const weightValue = Number.parseFloat(weight);
+    updateItem(item.id, {
+      name: name.trim() || item.name,
+      weight_lbs: Number.isFinite(weightValue) ? weightValue : undefined,
+      storageLocation: storageLocation.trim() || undefined,
+    });
+  };
+
   return (
-    <div className="bg-surface">
-      <div className="flex items-stretch gap-3 px-4 py-3">
-        <button
-          type="button"
-          onClick={() => cycleItemStatus(item.id)}
-          aria-label={`${item.name}, ${item.status}. Tap to stage or check off.`}
-          className="flex min-h-14 flex-1 items-center gap-3 text-left active:opacity-90"
-        >
-          <span className="min-w-0 flex-1">
-            <span
-              className={`block text-base font-semibold leading-snug text-foreground ${
-                packed ? "line-through opacity-70" : ""
-              }`}
-            >
-              {item.name}
-            </span>
-            {item.storageLocation ? (
-              <span className="mt-0.5 block text-xs font-semibold text-muted">
-                {item.storageLocation}
-              </span>
-            ) : null}
-            {typeof item.weight_lbs === "number" && item.weight_lbs > 0 ? (
-              <span className="mt-0.5 block text-xs font-medium text-muted">
-                {item.weight_lbs} lb
-              </span>
-            ) : null}
+    <div
+      className={`border-b border-border/60 last:border-b-0 ${
+        packed ? "bg-background/40" : staged ? "bg-status-staged-bg/30" : "bg-surface"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => cycleItemStatus(item.id)}
+        aria-label={`${item.name}, ${packStatusLabel(item.status)}. Tap to update.`}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:opacity-90"
+      >
+        <PackStatusIndicator status={item.status} />
+        <span className="min-w-0 flex-1">
+          <span
+            className={`block text-base font-semibold leading-snug ${
+              packed
+                ? "text-muted line-through decoration-border"
+                : "text-foreground"
+            }`}
+          >
+            {item.name}
           </span>
-          <StatusBadge status={item.status} />
-        </button>
+          <ItemMetaLine item={item} />
+        </span>
+      </button>
 
-        <button
-          type="button"
-          onClick={() => setEditing((v) => !v)}
-          className="touch-target inline-flex w-14 items-center justify-center rounded-xl border-2 border-border bg-background text-foreground active:opacity-90"
-          aria-label="Edit item"
-        >
-          <Pencil className="size-5 text-muted" aria-hidden />
-        </button>
-      </div>
-
-      {editing ? (
-        <div className="border-t border-border px-4 py-3">
-          <div className="flex flex-col gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
-                Item name
-              </span>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
-              />
-            </label>
-            <div className="flex gap-3">
-              <input
-                inputMode="decimal"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                className="touch-target w-28 rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
-                placeholder="lbs"
-                aria-label="Weight (lbs)"
-              />
-              <input
-                value={storageLocation}
-                onChange={(e) => setStorageLocation(e.target.value)}
-                className="touch-target flex-1 rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
-                placeholder="Tote, bin, shelf…"
-                aria-label="Storage location"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const weightValue = Number.parseFloat(weight);
-                updateItem(item.id, {
-                  name: name.trim() || item.name,
-                  weight_lbs: Number.isFinite(weightValue) ? weightValue : undefined,
-                  storageLocation: storageLocation.trim() || undefined,
-                });
-                setEditing(false);
-              }}
-              className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm(`Delete "${item.name}"?`)) {
-                  deleteItem(item.id);
-                }
-              }}
-              className="touch-target inline-flex items-center justify-center gap-2 rounded-xl border-2 border-border bg-background px-4 text-base font-bold text-foreground active:opacity-90"
-            >
-              <Trash2 className="size-5 text-muted" aria-hidden />
-              Delete item
-            </button>
+      <details className="group/details border-t border-border/40">
+        <summary className="touch-target cursor-pointer list-none px-4 py-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-muted/70 active:text-muted">
+          <span className="group-open/details:hidden">Edit item</span>
+          <span className="hidden group-open/details:inline">Close</span>
+        </summary>
+        <div className="space-y-2 border-t border-border/40 bg-background/50 px-4 py-3">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={saveDetails}
+            className="touch-target w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground"
+            placeholder="Item name"
+          />
+          <div className="flex gap-2">
+            <input
+              inputMode="decimal"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              onBlur={saveDetails}
+              className="touch-target w-16 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-foreground"
+              placeholder="lbs"
+              aria-label="Weight (lbs)"
+            />
+            <input
+              value={storageLocation}
+              onChange={(e) => setStorageLocation(e.target.value)}
+              onBlur={saveDetails}
+              className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-foreground"
+              placeholder="Tote, bin, shelf…"
+              aria-label="Storage location"
+            />
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(`Delete "${item.name}"?`)) {
+                deleteItem(item.id);
+              }
+            }}
+            className="touch-target inline-flex items-center gap-1.5 text-xs font-semibold text-muted active:text-foreground"
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Delete item
+          </button>
         </div>
-      ) : null}
+      </details>
     </div>
   );
 }
