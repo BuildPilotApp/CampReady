@@ -69,6 +69,11 @@ interface CampReadyContextValue {
   ) => void;
   deleteTrip: (tripId: string) => void;
 
+  editingTemplateId: string | null;
+  editingTemplate: ChecklistTemplate | null;
+  setEditingTemplate: (templateId: string | null) => void;
+  createBlankTemplate: (name: string) => void;
+
   createTemplateFromTrip: (input: {
     tripId: string;
     name: string;
@@ -170,6 +175,9 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   const [collapsedCategories, setCollapsedCategories] = useState<
     Record<string, boolean>
   >({});
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -200,6 +208,24 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     if (!activeTrip) return null;
     return getTripStats(activeTrip);
   }, [activeTrip]);
+
+  const editingTemplate = useMemo<ChecklistTemplate | null>(() => {
+    if (!database?.templates || !editingTemplateId) return null;
+    return (
+      database.templates.find((template) => template.id === editingTemplateId) ??
+      null
+    );
+  }, [database, editingTemplateId]);
+
+  useEffect(() => {
+    if (editingTemplateId && !editingTemplate) {
+      setEditingTemplateId(null);
+    }
+  }, [editingTemplateId, editingTemplate]);
+
+  const setEditingTemplate = useCallback((templateId: string | null) => {
+    setEditingTemplateId(templateId);
+  }, []);
 
   const toggleCategory = useCallback((categoryId: string) => {
     setCollapsedCategories((current) => ({
@@ -295,6 +321,23 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const createBlankTemplate = useCallback(
+    (name: string) => {
+      if (!database) return;
+
+      const template: ChecklistTemplate = {
+        id: crypto.randomUUID(),
+        name: name.trim() || "New Gear Checklist",
+        description: "Reusable gear inventory for trips.",
+        categories: [],
+      };
+
+      persist({ ...database, templates: [template, ...database.templates] });
+      setEditingTemplateId(template.id);
+    },
+    [database, persist],
+  );
+
   const createTemplateFromTrip = useCallback(
     (input: { tripId: string; name: string; description: string }) => {
       if (!database) return;
@@ -310,6 +353,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       };
 
       persist({ ...database, templates: [template, ...database.templates] });
+      setEditingTemplateId(template.id);
     },
     [database, persist],
   );
@@ -373,6 +417,9 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
           (template) => template.id !== templateId,
         ),
       });
+      setEditingTemplateId((current) =>
+        current === templateId ? null : current,
+      );
     },
     [database, persist],
   );
@@ -633,6 +680,8 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       infoView,
       checklistFilter,
       collapsedCategories,
+      editingTemplateId,
+      editingTemplate,
       setActiveTab,
       setInfoView,
       openInfoMenu,
@@ -643,6 +692,8 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       createNewTrip,
       updateTrip,
       deleteTrip,
+      setEditingTemplate,
+      createBlankTemplate,
       createTemplateFromTrip,
       applyChecklistTemplateToTrip,
       updateTemplate,
@@ -671,6 +722,8 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     infoView,
     checklistFilter,
     collapsedCategories,
+    editingTemplateId,
+    editingTemplate,
     openInfoMenu,
     closeInfo,
     toggleCategory,
@@ -678,6 +731,8 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     createNewTrip,
     updateTrip,
     deleteTrip,
+    setEditingTemplate,
+    createBlankTemplate,
     createTemplateFromTrip,
     applyChecklistTemplateToTrip,
     updateTemplate,

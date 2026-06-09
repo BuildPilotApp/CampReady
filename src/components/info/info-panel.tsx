@@ -22,9 +22,10 @@ const USER_GUIDE = [
     title: "Saved gear checklists (your inventory)",
     items: [
       "Saved checklists are reusable lists of the gear you own, organized by category.",
-      "On the Gear Checklist tab, Saved checklists shows your inventory. Expand a list to view, rename, edit categories and items, or delete it.",
-      "Build a gear list on a trip, then use Create new gear checklist to name and save it to your inventory.",
+      "On the Gear Checklist tab, use Build gear checklist to name a new list, add categories, and add gear items—no trip required.",
+      "Tap Edit on a saved checklist to keep building your inventory.",
       "Saved checklists appear when creating or editing a trip under Gear checklist.",
+      "You can also copy a trip's packed list into inventory with Save trip list to inventory.",
     ],
   },
   {

@@ -2,6 +2,7 @@
 
 import { CategorySection } from "@/components/checklist/category-section";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
+import { GearInventoryBuilder } from "@/components/checklist/gear-inventory-builder";
 import { SaveChecklistTemplate } from "@/components/checklist/save-checklist-template";
 import { SavedChecklistsPanel } from "@/components/checklist/saved-checklists-panel";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
@@ -33,6 +34,7 @@ export function ChecklistView() {
     <div className="relative min-h-full">
       <section className="flex flex-col gap-3">
         <SavedChecklistsPanel />
+        <GearInventoryBuilder />
         <SaveChecklistTemplate />
       </section>
 
@@ -95,8 +97,8 @@ export function ChecklistView() {
           </div>
         </section>
       ) : (
-        <section className="mt-5 rounded-xl border-2 border-border bg-surface px-4 py-8 text-center">
-          <p className="text-base font-semibold text-foreground">No trip selected</p>
+        <section className="mt-5 rounded-xl border-2 border-border bg-surface px-4 py-6 text-center">
+          <p className="text-sm font-semibold text-foreground">Trip packing</p>
           <p className="mt-2 text-sm leading-snug text-muted">{NO_ACTIVE_TRIP_MESSAGE}</p>
         </section>
       )}

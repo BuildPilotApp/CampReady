@@ -22,7 +22,7 @@ export function SaveChecklistTemplate() {
       <summary className="touch-target flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-bold text-foreground active:opacity-90">
         <span className="inline-flex min-w-0 items-center gap-2">
           <Save className="size-5 shrink-0 text-accent" aria-hidden />
-          Create new gear checklist
+          Save trip list to inventory
         </span>
         <ChevronDown
           className="size-5 shrink-0 text-muted transition-transform duration-200 group-open:rotate-180"
