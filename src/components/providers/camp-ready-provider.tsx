@@ -239,6 +239,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   const selectTrip = useCallback(
     (tripId: string) => {
       if (!database) return;
+      if (database.activeTripId === tripId) return;
       persist({ ...database, activeTripId: tripId });
       setCollapsedCategories({});
       setChecklistFilter("all");
@@ -355,7 +356,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       };
 
       persist({ ...database, templates: [template, ...database.templates] });
-      setEditingTemplateId(template.id);
     },
     [database, persist],
   );
@@ -577,6 +577,11 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
           categories: trip.categories.filter((c) => c.id !== categoryId),
         })),
       );
+      setCollapsedCategories((current) => {
+        const next = { ...current };
+        delete next[categoryId];
+        return next;
+      });
     },
     [database, persist],
   );

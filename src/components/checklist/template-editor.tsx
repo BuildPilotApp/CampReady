@@ -53,7 +53,11 @@ function TemplateItemFields({
         />
         <button
           type="button"
-          onClick={() => deleteTemplateItem(templateId, item.id)}
+          onClick={() => {
+            if (window.confirm(`Delete "${item.name}" from this checklist?`)) {
+              deleteTemplateItem(templateId, item.id);
+            }
+          }}
           className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted active:bg-background"
           aria-label={`Delete ${item.name}`}
         >
@@ -100,6 +104,10 @@ export function TemplateCategorySection({
   const [newItemWeight, setNewItemWeight] = useState("");
   const [newItemStorage, setNewItemStorage] = useState("");
 
+  useEffect(() => {
+    setCategoryName(category.name);
+  }, [category.id, category.name]);
+
   const handleAddItem = () => {
     const name = newItemName.trim();
     if (!name) return;
@@ -144,6 +152,8 @@ export function TemplateCategorySection({
               const next = categoryName.trim();
               if (next && next !== category.name) {
                 updateTemplateCategory(templateId, category.id, next);
+              } else {
+                setCategoryName(category.name);
               }
             }}
             className="touch-target rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground"

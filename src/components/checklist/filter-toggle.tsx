@@ -13,8 +13,8 @@ export function FilterToggle() {
 
   return (
     <div
-      className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm"
-      role="tablist"
+      className="-mx-4 border-b border-border bg-background px-4 py-3"
+      role="radiogroup"
       aria-label="Gear packing filter"
     >
       <div className="flex rounded-xl border-2 border-border bg-surface p-1">
@@ -25,8 +25,8 @@ export function FilterToggle() {
             <button
               key={option.id}
               type="button"
-              role="tab"
-              aria-selected={selected}
+              role="radio"
+              aria-checked={selected}
               onClick={() => setChecklistFilter(option.id)}
               className={`touch-target flex flex-1 items-center justify-center rounded-lg px-2 text-sm font-bold active:opacity-90 ${
                 selected

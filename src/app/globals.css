@@ -121,6 +121,15 @@ body {
   animation: trip-range-duration-pop 300ms ease-out;
 }
 
+summary::-webkit-details-marker,
+summary::marker {
+  display: none;
+}
+
+summary {
+  list-style: none;
+}
+
 /* No hover-dependent UI — outdoor / touch only */
 @media (hover: hover) {
   a:hover,

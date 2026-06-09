@@ -11,7 +11,7 @@ import { getTripStats } from "@/lib/storage";
 import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
 import type { TripLocation, TripRecord } from "@/types";
 import { CalendarDays, ChevronDown, MapPin, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 function formatTripDate(isoDate: string): string {
   const date = new Date(`${isoDate}T12:00:00`);
@@ -30,6 +30,36 @@ function sortTripsChronologically(trips: TripRecord[]): TripRecord[] {
     }
     return a.endDate.localeCompare(b.endDate);
   });
+}
+
+function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
+  const { updateTrip } = useCampReady();
+  const [value, setValue] = useState(name);
+
+  useEffect(() => {
+    setValue(name);
+  }, [tripId, name]);
+
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-xs font-bold uppercase tracking-wide text-muted">
+        Trip name
+      </span>
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => {
+          const next = value.trim();
+          if (next && next !== name) {
+            updateTrip(tripId, { name: next });
+          } else {
+            setValue(name);
+          }
+        }}
+        className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
+      />
+    </label>
+  );
 }
 
 function TripChecklistTemplateEditor({ tripId }: { tripId: string }) {
@@ -119,6 +149,7 @@ export function TripManager() {
 
           <button
             type="button"
+            disabled={!name.trim()}
             onClick={() => {
               createNewTrip({
                 name,
@@ -133,7 +164,7 @@ export function TripManager() {
               setNewLocation(undefined);
               setTemplateId(CUSTOM_TEMPLATE_ID);
             }}
-            className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90"
+            className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Create trip
           </button>
@@ -237,6 +268,8 @@ export function TripManager() {
                       />
                     </summary>
                     <div className="flex flex-col gap-3 px-4 pb-3">
+                      <TripNameInput tripId={trip.id} name={trip.name} />
+
                       <LocationInput
                         value={trip.location}
                         onChange={(location) =>

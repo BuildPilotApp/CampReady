@@ -20,9 +20,8 @@ export function ChecklistView() {
 
   const categories = activeTrip?.categories ?? [];
 
-  const hasRemainingWork = categories.some(
-    (category) =>
-      category.items.length === 0 || category.items.some(isGearItemRemaining),
+  const hasRemainingWork = categories.some((category) =>
+    category.items.some(isGearItemRemaining),
   );
 
   const allPacked =

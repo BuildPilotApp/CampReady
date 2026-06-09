@@ -111,7 +111,6 @@ export function TripDateRangeInput({
     setDraftStart(iso);
     setPreviewEnd(iso);
     setAwaitingEnd(true);
-    onChange({ startDate: iso, endDate: iso });
   }
 
   function handleDayPreview(iso: string | null) {

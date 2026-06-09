@@ -120,9 +120,9 @@ function sanitizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
     })),
     templates: filterUserSavedTemplates(data.templates).map((template) => ({
       ...template,
-      categories: template.categories.map((category) => ({
+      categories: (template.categories ?? []).map((category) => ({
         ...category,
-        items: category.items.map(sanitizeGearItem),
+        items: (category.items ?? []).map(sanitizeGearItem),
       })),
     })),
   };
@@ -198,6 +198,7 @@ export async function hydrateDatabase(): Promise<CampReadyDatabase> {
     if (localData) {
       return finalizeDatabase(localData);
     }
+    window.localStorage.removeItem(STORAGE_KEY);
   }
 
   const remoteRaw = await readFromLocalForage();

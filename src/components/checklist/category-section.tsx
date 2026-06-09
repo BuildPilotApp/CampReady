@@ -5,7 +5,7 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { getCategoryPackCounts, isGearItemRemaining } from "@/lib/gear-items";
 import type { Category, ChecklistFilter } from "@/types";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface CategorySectionProps {
   category: Category;
@@ -20,6 +20,10 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   const [newItemName, setNewItemName] = useState("");
   const [newItemWeight, setNewItemWeight] = useState<string>("");
   const [newItemStorage, setNewItemStorage] = useState("");
+
+  useEffect(() => {
+    setRename(category.name);
+  }, [category.id, category.name]);
 
   const visibleItems =
     filter === "remaining"
@@ -89,6 +93,8 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
                   const next = rename.trim();
                   if (next && next !== category.name) {
                     updateCategory(category.id, next);
+                  } else {
+                    setRename(category.name);
                   }
                 }}
                 className="touch-target w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground"

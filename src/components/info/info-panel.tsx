@@ -106,7 +106,15 @@ function FeedbackForm({
       at: new Date().toISOString(),
     };
     const key = "campready:submissions";
-    const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as unknown[];
+    let existing: unknown[] = [];
+    try {
+      existing = JSON.parse(localStorage.getItem(key) ?? "[]") as unknown[];
+      if (!Array.isArray(existing)) {
+        existing = [];
+      }
+    } catch {
+      existing = [];
+    }
     localStorage.setItem(key, JSON.stringify([entry, ...existing]));
     setSubmitted(true);
     setMessage("");

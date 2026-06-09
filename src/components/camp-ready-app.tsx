@@ -25,7 +25,7 @@ function AppHeader() {
         <button
           type="button"
           onClick={closeInfo}
-          aria-label="Back to dashboard"
+          aria-label="Close information"
           className="touch-target inline-flex items-center justify-center rounded-xl border-2 border-border bg-surface text-foreground active:opacity-90"
         >
           <ChevronLeft className="size-6" strokeWidth={2.25} aria-hidden />
@@ -78,7 +78,7 @@ function AppHeader() {
 }
 
 function CampReadyFooter() {
-  const { activeTab, infoView, resetAllItems } = useCampReady();
+  const { activeTab, activeTrip, infoView, resetAllItems } = useCampReady();
 
   if (infoView) {
     return null;
@@ -86,7 +86,7 @@ function CampReadyFooter() {
 
   return (
     <div className="relative">
-      {activeTab === "checklist" ? (
+      {activeTab === "checklist" && activeTrip ? (
         <Fab
           label="Reset or uncheck all items"
           text="Reset All"
