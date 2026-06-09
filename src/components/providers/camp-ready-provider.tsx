@@ -661,7 +661,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     if (!database?.activeTripId) return;
 
     const confirmed = window.confirm(
-      "Reset all items to Missing? This cannot be undone.",
+      "Reset all items to Needed? This cannot be undone.",
     );
     if (!confirmed) {
       return;

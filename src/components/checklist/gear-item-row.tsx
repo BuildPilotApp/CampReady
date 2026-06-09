@@ -5,12 +5,14 @@ import {
   packStatusLabel,
 } from "@/components/checklist/pack-status-indicator";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { StatusBadge } from "@/components/ui/status-badge";
 import type { GearItem } from "@/types";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface GearItemRowProps {
   item: GearItem;
+  isEditing?: boolean;
 }
 
 function ItemMetaLine({ item }: { item: GearItem }) {
@@ -31,7 +33,7 @@ function ItemMetaLine({ item }: { item: GearItem }) {
   );
 }
 
-export function GearItemRow({ item }: GearItemRowProps) {
+export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
   const { cycleItemStatus, updateItem, deleteItem } = useCampReady();
   const packed = item.status === "packed";
   const staged = item.status === "staged";
@@ -56,17 +58,62 @@ export function GearItemRow({ item }: GearItemRowProps) {
     });
   };
 
+  if (isEditing) {
+    return (
+      <div className="border-b border-border/60 bg-background/40 px-4 py-2.5 last:border-b-0">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={saveDetails}
+          className="touch-target w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground"
+          placeholder="Item name"
+        />
+        <div className="mt-1.5 flex gap-2">
+          <input
+            inputMode="decimal"
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            onBlur={saveDetails}
+            className="touch-target w-16 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-foreground"
+            placeholder="lbs"
+            aria-label="Weight (lbs)"
+          />
+          <input
+            value={storageLocation}
+            onChange={(e) => setStorageLocation(e.target.value)}
+            onBlur={saveDetails}
+            className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-foreground"
+            placeholder="Tote, bin, shelf…"
+            aria-label="Storage location"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(`Delete "${item.name}"?`)) {
+                deleteItem(item.id);
+              }
+            }}
+            className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted active:text-foreground"
+            aria-label={`Delete ${item.name}`}
+          >
+            <Trash2 className="size-4" aria-hidden />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`border-b border-border/60 last:border-b-0 ${
-        packed ? "bg-background/40" : staged ? "bg-status-staged-bg/30" : "bg-surface"
+        packed ? "bg-background/40" : staged ? "bg-status-staged-bg/25" : "bg-surface"
       }`}
     >
       <button
         type="button"
         onClick={() => cycleItemStatus(item.id)}
         aria-label={`${item.name}, ${packStatusLabel(item.status)}. Tap to update.`}
-        className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:opacity-90"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left active:opacity-90"
       >
         <PackStatusIndicator status={item.status} />
         <span className="min-w-0 flex-1">
@@ -81,54 +128,8 @@ export function GearItemRow({ item }: GearItemRowProps) {
           </span>
           <ItemMetaLine item={item} />
         </span>
+        <StatusBadge status={item.status} compact />
       </button>
-
-      <details className="group/details border-t border-border/40">
-        <summary className="touch-target cursor-pointer list-none px-4 py-1.5 text-[0.65rem] font-semibold uppercase tracking-wide text-muted/70 active:text-muted">
-          <span className="group-open/details:hidden">Edit item</span>
-          <span className="hidden group-open/details:inline">Close</span>
-        </summary>
-        <div className="space-y-2 border-t border-border/40 bg-background/50 px-4 py-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={saveDetails}
-            className="touch-target w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground"
-            placeholder="Item name"
-          />
-          <div className="flex gap-2">
-            <input
-              inputMode="decimal"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              onBlur={saveDetails}
-              className="touch-target w-16 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-foreground"
-              placeholder="lbs"
-              aria-label="Weight (lbs)"
-            />
-            <input
-              value={storageLocation}
-              onChange={(e) => setStorageLocation(e.target.value)}
-              onBlur={saveDetails}
-              className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-foreground"
-              placeholder="Tote, bin, shelf…"
-              aria-label="Storage location"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm(`Delete "${item.name}"?`)) {
-                deleteItem(item.id);
-              }
-            }}
-            className="touch-target inline-flex items-center gap-1.5 text-xs font-semibold text-muted active:text-foreground"
-          >
-            <Trash2 className="size-3.5" aria-hidden />
-            Delete item
-          </button>
-        </div>
-      </details>
     </div>
   );
 }

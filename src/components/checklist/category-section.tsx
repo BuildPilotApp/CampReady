@@ -2,9 +2,14 @@
 
 import { GearItemRow } from "@/components/checklist/gear-item-row";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
-import { getCategoryPackCounts, isGearItemRemaining } from "@/lib/gear-items";
+import {
+  getCategoryPackCounts,
+  getCategoryStatus,
+  getCategoryStatusStyles,
+  isGearItemRemaining,
+} from "@/lib/gear-items";
 import type { Category, ChecklistFilter } from "@/types";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface CategorySectionProps {
@@ -16,6 +21,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   const { collapsedCategories, toggleCategory, updateCategory, deleteCategory, addItem } =
     useCampReady();
   const collapsed = collapsedCategories[category.id] ?? false;
+  const [isEditing, setIsEditing] = useState(false);
   const [rename, setRename] = useState(category.name);
   const [newItemName, setNewItemName] = useState("");
   const [newItemWeight, setNewItemWeight] = useState<string>("");
@@ -24,6 +30,12 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   useEffect(() => {
     setRename(category.name);
   }, [category.id, category.name]);
+
+  useEffect(() => {
+    if (collapsed) {
+      setIsEditing(false);
+    }
+  }, [collapsed]);
 
   const visibleItems =
     filter === "remaining"
@@ -35,17 +47,18 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   }
 
   const { packed: packedCount, total: itemCount } = getCategoryPackCounts(category.items);
-  const allPacked = itemCount > 0 && packedCount === itemCount;
+  const categoryStatus = getCategoryStatus(category.items);
+  const statusStyles = getCategoryStatusStyles(categoryStatus);
 
   return (
-    <section className="overflow-hidden rounded-xl border-2 border-border bg-surface">
+    <section
+      className={`overflow-hidden rounded-xl border-2 bg-surface ${statusStyles.border}`}
+    >
       <button
         type="button"
         onClick={() => toggleCategory(category.id)}
         aria-expanded={!collapsed}
-        className={`flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left active:opacity-90 ${
-          allPacked ? "bg-status-packed-bg/40" : "bg-accent/8"
-        }`}
+        className={`flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left active:opacity-90 ${statusStyles.header}`}
       >
         <ChevronDown
           className={`size-5 shrink-0 text-accent transition-transform ${
@@ -57,11 +70,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
           <span className="block text-base font-bold text-foreground">
             {category.name}
           </span>
-          <span
-            className={`text-xs font-semibold ${
-              allPacked ? "text-status-packed-fg" : "text-muted"
-            }`}
-          >
+          <span className={`text-xs font-semibold ${statusStyles.subtitle}`}>
             {packedCount} / {itemCount} packed
           </span>
         </span>
@@ -69,22 +78,19 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
 
       {!collapsed ? (
         <div>
-          {visibleItems.length > 0 ? (
-            <div>
-              {visibleItems.map((item) => (
-                <GearItemRow key={item.id} item={item} />
-              ))}
-            </div>
-          ) : (
-            <p className="border-t border-border/60 px-4 py-4 text-sm text-muted">
-              No items in this category yet.
-            </p>
-          )}
+          <div className="flex justify-end border-t border-border/50 px-4 py-1.5">
+            <button
+              type="button"
+              onClick={() => setIsEditing((open) => !open)}
+              aria-expanded={isEditing}
+              className="touch-target inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-muted active:text-foreground"
+            >
+              <Pencil className="size-3.5" aria-hidden />
+              {isEditing ? "Done" : "Edit"}
+            </button>
+          </div>
 
-          <details className="group/manage border-t border-border/60">
-            <summary className="touch-target cursor-pointer list-none px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-wide text-muted/70 active:text-muted">
-              Manage category
-            </summary>
+          {isEditing ? (
             <div className="space-y-3 border-t border-border/40 bg-background/50 px-4 py-3">
               <input
                 value={rename}
@@ -165,7 +171,19 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
                 Delete category
               </button>
             </div>
-          </details>
+          ) : null}
+
+          {visibleItems.length > 0 ? (
+            <div className="border-t border-border/60">
+              {visibleItems.map((item) => (
+                <GearItemRow key={item.id} item={item} isEditing={isEditing} />
+              ))}
+            </div>
+          ) : (
+            <p className="border-t border-border/60 px-4 py-4 text-sm text-muted">
+              No items in this category yet.
+            </p>
+          )}
         </div>
       ) : null}
     </section>

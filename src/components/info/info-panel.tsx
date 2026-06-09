@@ -34,9 +34,10 @@ const USER_GUIDE = [
     items: [
       "With a trip selected, the Pack for section lists that trip's gear checklist.",
       "Add categories or totes to group gear—for example Kitchen, Shelter, or Tools.",
-      "Add items under each category. Optional weight and storage location fields help you plan load and find gear.",
-      "Tap an item to stage it, then tap again when packed. Use All or To pack to filter.",
-      "Reset All (floating button) sets every item back to Missing.",
+      "Category headers use a soft color tint—red for Needed, yellow for Staged, green when fully Packed—so you can spot what still needs attention.",
+      "Each item shows a Needed, Staged, or Packed badge that matches its status color. Tap an item to advance: Needed → Staged → Packed.",
+      "Use Edit at the top of a category to rename the category, add or remove items, or adjust weight and storage details.",
+      "Use All or To pack to filter the list. Reset All (floating button) sets every item back to Needed.",
     ],
   },
   {

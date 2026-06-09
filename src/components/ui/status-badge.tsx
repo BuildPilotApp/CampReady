@@ -23,17 +23,26 @@ const STATUS_STYLES: Record<
 
 interface StatusBadgeProps {
   status: GearItemStatus;
+  compact?: boolean;
 }
 
-export function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status, compact = false }: StatusBadgeProps) {
   const style = STATUS_STYLES[status];
 
   return (
     <span
-      className={`inline-flex min-h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-xs font-bold uppercase tracking-wide ${style.className}`}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full border font-semibold ${style.className} ${
+        compact
+          ? "min-h-6 px-2 text-[0.65rem]"
+          : "min-h-7 px-2.5 text-xs"
+      }`}
     >
       {style.showCheck ? (
-        <Check className="size-3.5 shrink-0" strokeWidth={3} aria-hidden />
+        <Check
+          className={`shrink-0 ${compact ? "size-3" : "size-3.5"}`}
+          strokeWidth={3}
+          aria-hidden
+        />
       ) : null}
       {STATUS_LABELS[status]}
     </span>

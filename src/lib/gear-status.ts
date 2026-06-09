@@ -9,7 +9,7 @@ export function nextGearStatus(current: GearItemStatus): GearItemStatus {
 }
 
 export const STATUS_LABELS: Record<GearItemStatus, string> = {
-  missing: "Missing",
+  missing: "Needed",
   staged: "Staged",
-  packed: "Packed in Vehicle",
+  packed: "Packed",
 };
