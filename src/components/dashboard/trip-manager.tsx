@@ -41,14 +41,14 @@ function TripChecklistTemplateEditor({ tripId }: { tripId: string }) {
       templateId={templateId}
       onTemplateIdChange={setTemplateId}
       savedTemplates={database.templates ?? []}
-      hint="Replace this trip's gear checklist with New or a saved list."
+      hint="Load a saved gear checklist from your inventory, or choose New to build as you pack."
       footer={
         <button
           type="button"
           onClick={() => applyChecklistTemplateToTrip(tripId, templateId)}
           className="touch-target rounded-xl bg-accent px-4 py-3 text-base font-bold text-accent-foreground active:opacity-90"
         >
-          Apply checklist
+          Apply gear checklist
         </button>
       }
     />
@@ -114,7 +114,7 @@ export function TripManager() {
             templateId={templateId}
             onTemplateIdChange={setTemplateId}
             savedTemplates={database.templates ?? []}
-            hint="Choose New for a blank gear checklist, or pick one you've saved."
+            hint="Load a saved gear checklist from your inventory, or choose New to build as you pack."
           />
 
           <button
@@ -144,7 +144,7 @@ export function TripManager() {
         <section className="rounded-xl border-2 border-border bg-surface px-4 py-8 text-center">
           <p className="text-base font-semibold text-foreground">No trips yet</p>
           <p className="mt-2 text-sm text-muted">
-            Create a trip above to start building your checklist.
+            Create a trip above, then build and pack your gear checklist.
           </p>
         </section>
       ) : (

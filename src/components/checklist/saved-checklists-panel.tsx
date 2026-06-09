@@ -1,6 +1,10 @@
 "use client";
 
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import {
+  SAVED_CHECKLISTS_EMPTY_MESSAGE,
+  SAVED_CHECKLISTS_HEADER_SUBTITLE,
+} from "@/lib/gear-checklist-copy";
 import { getTemplateStats } from "@/lib/templates";
 import type { Category, ChecklistTemplate } from "@/types";
 import { ChevronDown, Layers, Plus, Trash2 } from "lucide-react";
@@ -290,16 +294,20 @@ export function SavedChecklistsPanel() {
 
   return (
     <section className="rounded-xl border-2 border-border bg-surface">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <Layers className="size-5 text-accent" aria-hidden />
-        <h2 className="text-base font-bold text-foreground">Saved checklists</h2>
+      <div className="border-b border-border px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Layers className="size-5 shrink-0 text-accent" aria-hidden />
+          <h2 className="text-base font-bold text-foreground">Saved checklists</h2>
+        </div>
+        <p className="mt-1 pl-7 text-xs leading-snug text-muted">
+          {SAVED_CHECKLISTS_HEADER_SUBTITLE}
+        </p>
       </div>
 
       <div className="flex flex-col gap-3 p-4">
         {templates.length === 0 ? (
-          <p className="text-sm leading-snug text-muted">
-            No saved checklists yet. Build a gear list on a trip and use Create
-            new gear checklist below, or save one from a trip on the Dashboard.
+          <p className="text-sm leading-relaxed text-muted">
+            {SAVED_CHECKLISTS_EMPTY_MESSAGE}
           </p>
         ) : (
           templates.map((template) => (

@@ -305,7 +305,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
         id: crypto.randomUUID(),
         name: input.name.trim() || "My Gear Checklist",
         description:
-          input.description.trim() || "Saved checklist for new trips.",
+          input.description.trim() || "Reusable gear inventory for trips.",
         categories: cloneCategories(trip.categories),
       };
 
@@ -326,8 +326,8 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       );
       const message =
         templateId === CUSTOM_TEMPLATE_ID
-          ? "Clear this trip's checklist? All categories and items will be removed."
-          : `Replace this trip's checklist with "${templateName}"? Current items and pack status will be lost.`;
+          ? "Clear this trip's gear checklist? All categories and items will be removed."
+          : `Load "${templateName}" onto this trip? Current items and pack status will be replaced.`;
 
       if (!window.confirm(message)) {
         return;

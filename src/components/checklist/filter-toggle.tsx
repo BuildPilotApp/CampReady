@@ -15,7 +15,7 @@ export function FilterToggle() {
     <div
       className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm"
       role="tablist"
-      aria-label="Checklist filter"
+      aria-label="Gear packing filter"
     >
       <div className="flex rounded-xl border-2 border-border bg-surface p-1">
         {OPTIONS.map((option) => {

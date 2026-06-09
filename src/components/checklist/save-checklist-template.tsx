@@ -1,5 +1,6 @@
 "use client";
 
+import { CREATE_GEAR_CHECKLIST_HINT } from "@/lib/gear-checklist-copy";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { ChevronDown, Save } from "lucide-react";
 import { useState } from "react";
@@ -30,14 +31,11 @@ export function SaveChecklistTemplate() {
       </summary>
 
       <div className="flex flex-col gap-3 border-t border-border px-4 py-3">
-        <p className="text-sm leading-snug text-muted">
-          Name and save this trip&apos;s gear list so you can reuse it on future
-          trips.
-        </p>
+        <p className="text-sm leading-snug text-muted">{CREATE_GEAR_CHECKLIST_HINT}</p>
 
         {!hasChecklistContent ? (
           <p className="text-sm text-muted">
-            Add at least one item before creating a new gear checklist.
+            Add categories and gear items below before saving to your inventory.
           </p>
         ) : (
           <>
@@ -59,7 +57,7 @@ export function SaveChecklistTemplate() {
                 createTemplateFromTrip({
                   tripId: activeTrip.id,
                   name: name.trim(),
-                  description: `Saved from ${activeTrip.name}.`,
+                  description: `Gear inventory from ${activeTrip.name}.`,
                 });
                 setName("");
               }}

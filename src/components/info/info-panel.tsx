@@ -6,37 +6,42 @@ import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
 
 const ABOUT_TEXT =
-  "The sole purpose of CampReady is to provide a simple, interactive checklist for your camping gear and anything else you need to bring along. Create custom categories or use the ones already included in the app. Once a location is added, real-time weather will appear on the active trip card. Be sure to read through the User Guide to familiarize yourself with everything the app has to offer. Just remember, CampReady isn’t meant to be an overbloated, feature-packed widget on your phone. It’s designed to be a simple, easy-to-scan tool that helps prevent you from leaving things behind. From firewood to important medications, CampReady helps you check items off as you pack them into your rig, so you can enjoy your time off the grid without the constant “Did I forget something?” feeling.";
+  "CampReady is a simple gear checklist for camping and road trips. Build a reusable inventory of the gear you own, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. CampReady is designed to be easy to scan with one hand—so you can focus on getting out the door without wondering what you left behind.";
 
 const USER_GUIDE = [
   {
     title: "Getting started",
     items: [
-      "Open the Dashboard to view your trips, packing progress, and weather.",
-      "Create a new trip with a name, dates, location, and gear checklist.",
-      "Tap a trip to select it and open its gear checklist.",
+      "Open the Dashboard to create trips, track packing progress, and view weather.",
+      "The app starts with no trips—tap Create new trip to add your first one.",
+      "When creating or editing a trip, open Gear checklist to choose New or a saved checklist from your inventory.",
+      "Select a trip on the Dashboard, then switch to the Gear Checklist tab to pack.",
     ],
   },
   {
-    title: "Saved gear checklists",
+    title: "Saved gear checklists (your inventory)",
     items: [
-      "On the Gear Checklist tab, open Saved checklists to view, rename, edit, or delete your saved lists.",
-      "Expand a checklist to edit categories and items, or delete the whole list.",
-      "Use Create new gear checklist to name and save a list, then pick it when creating or editing a trip.",
+      "Saved checklists are reusable lists of the gear you own, organized by category.",
+      "On the Gear Checklist tab, Saved checklists shows your inventory. Expand a list to view, rename, edit categories and items, or delete it.",
+      "Build a gear list on a trip, then use Create new gear checklist to name and save it to your inventory.",
+      "Saved checklists appear when creating or editing a trip under Gear checklist.",
     ],
   },
   {
-    title: "Gear checklist",
+    title: "Packing a trip",
     items: [
-      "Use the Gear Checklist tab to pack gear item-by-item.",
-      "Toggle All Items vs Remaining to Pack to focus on what’s left.",
-      "Tap a row to cycle status: Missing → Staged → Packed in Vehicle.",
-      "Expand categories to add, rename, or delete items and categories.",
+      "With a trip selected, the Pack for section lists that trip's gear checklist.",
+      "Add categories or totes to group gear—for example Kitchen, Shelter, or Tools.",
+      "Add items under each category. Optional weight and storage location fields help you plan load and find gear.",
+      "Tap an item to cycle status: Missing → Staged → Packed in Vehicle.",
+      "Use All Items vs Remaining to Pack to focus on what is left.",
+      "Reset All (floating button) sets every item back to Missing.",
     ],
   },
   {
     title: "Trip details & weather",
     items: [
+      "Expand Edit trip details on a trip card to change dates, location, or load a different saved checklist.",
       "Add a location using suggestions or press Enter to match coordinates.",
       "Weather shows daily high/low temps and wind for each trip day.",
       "Within 10 days: Live Forecast. Beyond that: Historical Average.",
@@ -45,10 +50,9 @@ const USER_GUIDE = [
   {
     title: "Tips",
     items: [
-      "Use weight fields to track total load in the gear checklist header.",
-      "Storage location fields help you find gear before you pack.",
-      "Reset All (Gear Checklist FAB) sets every item back to Missing.",
-      "Data saves automatically on this device—no account required.",
+      "Choose New when creating a trip if you want to build a fresh checklist as you pack.",
+      "Save a checklist once you have your gear inventory set up—reuse it on every trip.",
+      "Data saves automatically on this device. No account required.",
     ],
   },
 ];

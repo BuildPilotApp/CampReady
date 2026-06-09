@@ -26,7 +26,7 @@ export function GearItemRow({ item }: GearItemRowProps) {
         <button
           type="button"
           onClick={() => cycleItemStatus(item.id)}
-          aria-label={`${item.name}, ${item.status}. Tap to change status.`}
+          aria-label={`${item.name}, ${item.status}. Tap to stage or check off.`}
           className="flex min-h-14 flex-1 items-center gap-3 text-left active:opacity-90"
         >
           <span className="min-w-0 flex-1">

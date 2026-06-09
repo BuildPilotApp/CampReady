@@ -8,7 +8,7 @@ export const SAMPLE_TEMPLATE_ID = "weekend-car-camping";
 export const CUSTOM_CHECKLIST_OPTION = {
   id: CUSTOM_TEMPLATE_ID,
   name: "New",
-  description: "Start with a blank gear checklist and add your own categories.",
+  description: "Start fresh and build categories as you pack.",
 } as const;
 
 export interface TemplateOption {
