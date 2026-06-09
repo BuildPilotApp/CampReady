@@ -2,7 +2,7 @@ import type { CampReadyDatabase, GearItem, TripRecord } from "@/types";
 import { filterUserSavedTemplates } from "@/lib/templates";
 import { STORAGE_KEY } from "./constants";
 import { createEmptyDatabase } from "./defaults";
-import { ensureSeededDatabase } from "./seed";
+import { ensureSeededDatabase, isSampleTrip } from "./seed";
 import {
   clearLocalForage,
   readFromLocalForage,
@@ -129,8 +129,17 @@ function sanitizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
 }
 
 function finalizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
-  const seeded = ensureSeededDatabase(sanitizeDatabase(data));
+  const sanitized = sanitizeDatabase(data);
+  const hadSampleTrip = sanitized.trips.some(isSampleTrip);
+  const seeded = ensureSeededDatabase(sanitized);
   memoryCache = seeded;
+
+  if (isBrowser() && hadSampleTrip) {
+    const serialized = serializeDatabase(seeded);
+    window.localStorage.setItem(STORAGE_KEY, serialized);
+    void writeToLocalForage(serialized);
+  }
+
   return seeded;
 }
 

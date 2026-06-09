@@ -36,7 +36,7 @@ export function InventoryTemplatePicker({
         <span className="inline-flex min-w-0 items-center gap-2">
           <Layers className="size-5 shrink-0 text-accent" aria-hidden />
           <span className="truncate">
-            Checklist
+            Gear checklist
             <span className="font-semibold text-muted"> · {selectedTemplateLabel}</span>
           </span>
         </span>

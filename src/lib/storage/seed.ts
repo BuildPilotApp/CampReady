@@ -1,5 +1,13 @@
-import type { CampReadyDatabase, Category } from "@/types";
+import type { CampReadyDatabase, Category, TripRecord } from "@/types";
 import { DATABASE_VERSION } from "./constants";
+
+/** Legacy seed trip — removed from stored data on load. */
+export const SAMPLE_TRIP_NAME = "Yosemite Weekend";
+
+export function isSampleTrip(trip: TripRecord): boolean {
+  const location = trip.location?.query?.trim().toLowerCase() ?? "";
+  return trip.name === SAMPLE_TRIP_NAME && location === "yosemite";
+}
 
 export function cloneCategories(categories: Category[]): Category[] {
   return categories.map((category) => {
@@ -21,7 +29,7 @@ export function cloneCategories(categories: Category[]): Category[] {
 export function ensureSeededDatabase(
   data: CampReadyDatabase,
 ): CampReadyDatabase {
-  const trips = data.trips ?? [];
+  const trips = (data.trips ?? []).filter((trip) => !isSampleTrip(trip));
 
   return {
     version: DATABASE_VERSION,

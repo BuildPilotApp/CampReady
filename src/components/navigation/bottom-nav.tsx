@@ -6,7 +6,7 @@ import { ClipboardList, LayoutDashboard } from "lucide-react";
 
 const TABS: { id: AppTab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "checklist", label: "Checklist", icon: ClipboardList },
+  { id: "checklist", label: "Gear Checklist", icon: ClipboardList },
 ];
 
 export function BottomNav() {

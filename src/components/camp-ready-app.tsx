@@ -49,8 +49,8 @@ function AppHeader() {
           {activeTab === "dashboard"
             ? "Trip dashboard"
             : activeTrip
-              ? `${activeTrip.name} checklist`
-              : "Master checklist"}
+              ? `${activeTrip.name} · Gear checklist`
+              : "Gear checklist"}
         </p>
         {activeTab === "checklist" && activeTripStats ? (
           <p className="mt-1 text-xs font-bold text-foreground">

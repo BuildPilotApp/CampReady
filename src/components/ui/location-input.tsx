@@ -15,7 +15,7 @@ interface LocationInputProps {
 export function LocationInput({
   value,
   onChange,
-  placeholder = "Yosemite",
+  placeholder = "Moab",
   label = "Location (for weather)",
 }: LocationInputProps) {
   const listId = useId();

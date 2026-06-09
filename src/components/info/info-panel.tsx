@@ -13,22 +13,22 @@ const USER_GUIDE = [
     title: "Getting started",
     items: [
       "Open the Dashboard to view your trips, packing progress, and weather.",
-      "Create a new trip with a name, dates, location, and checklist template.",
-      "Tap a trip to select it and open its checklist.",
+      "Create a new trip with a name, dates, location, and gear checklist.",
+      "Tap a trip to select it and open its gear checklist.",
     ],
   },
   {
     title: "Custom checklists",
     items: [
-      "On the Checklist tab, open Saved checklists to view, rename, edit, or delete your saved lists.",
+      "On the Gear Checklist tab, open Saved checklists to view, rename, edit, or delete your saved lists.",
       "Expand a checklist to edit categories and items, or delete the whole list.",
-      "Save a trip checklist with Save custom checklist, then pick it when creating or editing a trip.",
+      "Save a gear checklist with Save custom checklist, then pick it when creating or editing a trip.",
     ],
   },
   {
-    title: "Master checklist",
+    title: "Gear checklist",
     items: [
-      "Use the Checklist tab to pack item-by-item.",
+      "Use the Gear Checklist tab to pack gear item-by-item.",
       "Toggle All Items vs Remaining to Pack to focus on what’s left.",
       "Tap a row to cycle status: Missing → Staged → Packed in Vehicle.",
       "Expand categories to add, rename, or delete items and categories.",
@@ -45,9 +45,9 @@ const USER_GUIDE = [
   {
     title: "Tips",
     items: [
-      "Use weight fields to track total load in the checklist header.",
+      "Use weight fields to track total load in the gear checklist header.",
       "Storage location fields help you find gear before you pack.",
-      "Reset All (checklist FAB) sets every item back to Missing.",
+      "Reset All (Gear Checklist FAB) sets every item back to Missing.",
       "Data saves automatically on this device—no account required.",
     ],
   },
