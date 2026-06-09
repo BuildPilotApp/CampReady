@@ -23,6 +23,7 @@ const USER_GUIDE = [
     items: [
       "Saved checklists are reusable lists of the gear you own, organized by category.",
       "On the Gear Checklist tab, use Build gear checklist to name a new list, add categories, and add gear items—no trip required.",
+      "Each gear item has optional weight (lbs) and storage fields—for example tote, bin, or shelf.",
       "Tap Edit on a saved checklist to keep building your inventory.",
       "Saved checklists appear when creating or editing a trip under Gear checklist.",
       "You can also copy a trip's packed list into inventory with Save trip list to inventory.",

@@ -102,8 +102,8 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
                     value={newItemStorage}
                     onChange={(e) => setNewItemStorage(e.target.value)}
                     className="touch-target flex-1 rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
-                    placeholder="Storage (Bin 1)"
-                    aria-label="Storage location"
+                placeholder="Tote, bin, shelf…"
+                aria-label="Storage location"
                   />
                 </div>
                 <button

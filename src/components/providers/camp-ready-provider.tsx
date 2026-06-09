@@ -98,6 +98,8 @@ interface CampReadyContextValue {
     templateId: string;
     categoryId: string;
     name: string;
+    weight_lbs?: number;
+    storageLocation?: string;
   }) => void;
   updateTemplateItem: (
     templateId: string,
@@ -469,11 +471,19 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addTemplateItem = useCallback(
-    (input: { templateId: string; categoryId: string; name: string }) => {
+    (input: {
+      templateId: string;
+      categoryId: string;
+      name: string;
+      weight_lbs?: number;
+      storageLocation?: string;
+    }) => {
       if (!database) return;
       const item = createGearItem({
         name: input.name.trim() || "New Item",
         category: input.categoryId,
+        weight_lbs: input.weight_lbs,
+        storageLocation: input.storageLocation,
       });
       persist(
         updateTemplateById(database, input.templateId, (template) => ({

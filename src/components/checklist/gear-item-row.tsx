@@ -87,7 +87,7 @@ export function GearItemRow({ item }: GearItemRowProps) {
                 value={storageLocation}
                 onChange={(e) => setStorageLocation(e.target.value)}
                 className="touch-target flex-1 rounded-xl border-2 border-border bg-background px-3 text-base font-medium text-foreground"
-                placeholder="Storage (Bin 1)"
+                placeholder="Tote, bin, shelf…"
                 aria-label="Storage location"
               />
             </div>

@@ -1,43 +1,84 @@
 "use client";
 
 import { useCampReady } from "@/components/providers/camp-ready-provider";
-import type { Category } from "@/types";
+import type { Category, GearItem } from "@/types";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export function TemplateItemRow({
+function parseWeightLbs(value: string): number | undefined {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function TemplateItemFields({
   templateId,
-  itemId,
-  name,
+  item,
 }: {
   templateId: string;
-  itemId: string;
-  name: string;
+  item: GearItem;
 }) {
   const { updateTemplateItem, deleteTemplateItem } = useCampReady();
-  const [itemName, setItemName] = useState(name);
+  const [itemName, setItemName] = useState(item.name);
+  const [weight, setWeight] = useState(
+    typeof item.weight_lbs === "number" ? String(item.weight_lbs) : "",
+  );
+  const [storageLocation, setStorageLocation] = useState(
+    item.storageLocation ?? "",
+  );
+
+  useEffect(() => {
+    setItemName(item.name);
+    setWeight(typeof item.weight_lbs === "number" ? String(item.weight_lbs) : "");
+    setStorageLocation(item.storageLocation ?? "");
+  }, [item.id, item.name, item.weight_lbs, item.storageLocation]);
+
+  const saveItem = () => {
+    const nextName = itemName.trim() || item.name;
+    updateTemplateItem(templateId, item.id, {
+      name: nextName,
+      weight_lbs: parseWeightLbs(weight),
+      storageLocation: storageLocation.trim() || undefined,
+    });
+  };
 
   return (
-    <div className="flex items-center gap-2 py-2">
-      <input
-        value={itemName}
-        onChange={(e) => setItemName(e.target.value)}
-        onBlur={() => {
-          const next = itemName.trim();
-          if (next && next !== name) {
-            updateTemplateItem(templateId, itemId, { name: next });
-          }
-        }}
-        className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground"
-      />
-      <button
-        type="button"
-        onClick={() => deleteTemplateItem(templateId, itemId)}
-        className="touch-target inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-border text-muted active:bg-background"
-        aria-label={`Delete ${name}`}
-      >
-        <Trash2 className="size-4" aria-hidden />
-      </button>
+    <div className="py-2">
+      <div className="flex items-center gap-2">
+        <input
+          value={itemName}
+          onChange={(e) => setItemName(e.target.value)}
+          onBlur={saveItem}
+          className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground"
+          placeholder="Gear item"
+        />
+        <button
+          type="button"
+          onClick={() => deleteTemplateItem(templateId, item.id)}
+          className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted active:bg-background"
+          aria-label={`Delete ${item.name}`}
+        >
+          <Trash2 className="size-4" aria-hidden />
+        </button>
+      </div>
+      <div className="mt-1.5 flex gap-2">
+        <input
+          inputMode="decimal"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+          onBlur={saveItem}
+          className="touch-target w-[4.25rem] rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground"
+          placeholder="lbs"
+          aria-label={`Weight for ${item.name}`}
+        />
+        <input
+          value={storageLocation}
+          onChange={(e) => setStorageLocation(e.target.value)}
+          onBlur={saveItem}
+          className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground"
+          placeholder="Tote, bin, shelf…"
+          aria-label={`Storage for ${item.name}`}
+        />
+      </div>
     </div>
   );
 }
@@ -56,6 +97,23 @@ export function TemplateCategorySection({
   } = useCampReady();
   const [categoryName, setCategoryName] = useState(category.name);
   const [newItemName, setNewItemName] = useState("");
+  const [newItemWeight, setNewItemWeight] = useState("");
+  const [newItemStorage, setNewItemStorage] = useState("");
+
+  const handleAddItem = () => {
+    const name = newItemName.trim();
+    if (!name) return;
+    addTemplateItem({
+      templateId,
+      categoryId: category.id,
+      name,
+      weight_lbs: parseWeightLbs(newItemWeight),
+      storageLocation: newItemStorage.trim() || undefined,
+    });
+    setNewItemName("");
+    setNewItemWeight("");
+    setNewItemStorage("");
+  };
 
   return (
     <details className="group/category overflow-hidden rounded-xl border border-border bg-background" open>
@@ -92,42 +150,52 @@ export function TemplateCategorySection({
           />
         </label>
 
-        <ul className="mt-3 divide-y divide-border">
-          {category.items.map((item) => (
-            <li key={item.id}>
-              <TemplateItemRow
-                templateId={templateId}
-                itemId={item.id}
-                name={item.name}
-              />
-            </li>
-          ))}
-        </ul>
+        {category.items.length > 0 ? (
+          <ul className="mt-3 divide-y divide-border">
+            {category.items.map((item) => (
+              <li key={item.id}>
+                <TemplateItemFields templateId={templateId} item={item} />
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 rounded-lg border border-dashed border-border bg-surface/50 p-2.5">
+          <p className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
+            Add gear item
+          </p>
           <input
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
-            className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground"
-            placeholder="Add gear item"
+            className="touch-target mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground"
+            placeholder="Headlamp"
           />
-          <button
-            type="button"
-            onClick={() => {
-              const next = newItemName.trim();
-              if (!next) return;
-              addTemplateItem({
-                templateId,
-                categoryId: category.id,
-                name: next,
-              });
-              setNewItemName("");
-            }}
-            className="touch-target inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground active:opacity-90"
-            aria-label="Add gear item"
-          >
-            <Plus className="size-4" aria-hidden />
-          </button>
+          <div className="mt-1.5 flex gap-2">
+            <input
+              inputMode="decimal"
+              value={newItemWeight}
+              onChange={(e) => setNewItemWeight(e.target.value)}
+              className="touch-target w-[4.25rem] rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground"
+              placeholder="lbs"
+              aria-label="Weight (lbs)"
+            />
+            <input
+              value={newItemStorage}
+              onChange={(e) => setNewItemStorage(e.target.value)}
+              className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground"
+              placeholder="Tote, bin, shelf…"
+              aria-label="Storage location"
+            />
+            <button
+              type="button"
+              onClick={handleAddItem}
+              disabled={!newItemName.trim()}
+              className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground active:opacity-90 disabled:opacity-50"
+              aria-label="Add gear item"
+            >
+              <Plus className="size-4" aria-hidden />
+            </button>
+          </div>
         </div>
 
         <button
