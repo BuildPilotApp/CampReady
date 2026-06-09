@@ -50,46 +50,60 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   const categoryStatus = getCategoryStatus(category.items);
   const statusStyles = getCategoryStatusStyles(categoryStatus);
 
+  const handleEditClick = () => {
+    if (collapsed) {
+      toggleCategory(category.id);
+      setIsEditing(true);
+      return;
+    }
+    setIsEditing((open) => !open);
+  };
+
   return (
     <section
       className={`overflow-hidden rounded-xl border-2 bg-surface ${statusStyles.border}`}
     >
-      <button
-        type="button"
-        onClick={() => toggleCategory(category.id)}
-        aria-expanded={!collapsed}
-        className={`flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left active:opacity-90 ${statusStyles.header}`}
+      <div
+        className={`flex min-h-11 w-full items-center gap-2 px-4 py-2.5 ${statusStyles.header}`}
       >
-        <ChevronDown
-          className={`size-5 shrink-0 text-accent transition-transform ${
-            collapsed ? "-rotate-90" : ""
+        <button
+          type="button"
+          onClick={() => toggleCategory(category.id)}
+          aria-expanded={!collapsed}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left active:opacity-90"
+        >
+          <ChevronDown
+            className={`size-5 shrink-0 text-accent transition-transform ${
+              collapsed ? "-rotate-90" : ""
+            }`}
+            aria-hidden
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-bold text-foreground">
+              {category.name}
+            </span>
+            <span className={`text-xs font-semibold ${statusStyles.subtitle}`}>
+              {packedCount} / {itemCount} packed
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={handleEditClick}
+          aria-expanded={isEditing}
+          className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-sm font-semibold active:opacity-90 ${
+            isEditing
+              ? "border-accent bg-accent/15 text-foreground"
+              : "border-border/60 text-muted active:text-foreground"
           }`}
-          aria-hidden
-        />
-        <span className="min-w-0 flex-1">
-          <span className="block text-base font-bold text-foreground">
-            {category.name}
-          </span>
-          <span className={`text-xs font-semibold ${statusStyles.subtitle}`}>
-            {packedCount} / {itemCount} packed
-          </span>
-        </span>
-      </button>
+        >
+          <Pencil className="size-3.5" aria-hidden />
+          {isEditing ? "Done" : "Edit"}
+        </button>
+      </div>
 
       {!collapsed ? (
         <div>
-          <div className="flex justify-end border-t border-border/50 px-4 py-1.5">
-            <button
-              type="button"
-              onClick={() => setIsEditing((open) => !open)}
-              aria-expanded={isEditing}
-              className="touch-target inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-muted active:text-foreground"
-            >
-              <Pencil className="size-3.5" aria-hidden />
-              {isEditing ? "Done" : "Edit"}
-            </button>
-          </div>
-
           {isEditing ? (
             <div className="space-y-3 border-t border-border/40 bg-background/50 px-4 py-3">
               <input
