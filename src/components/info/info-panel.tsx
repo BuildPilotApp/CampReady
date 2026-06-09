@@ -1,5 +1,6 @@
 "use client";
 
+import { OverlayModal } from "@/components/ui/overlay-modal";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import type { InfoView } from "@/types";
 import { ChevronLeft } from "lucide-react";
@@ -59,18 +60,16 @@ const USER_GUIDE = [
   },
 ];
 
-function PanelBox({
+function PanelHeader({
   title,
-  children,
   onBack,
 }: {
   title: string;
-  children: React.ReactNode;
-  onBack: () => void;
+  onBack?: () => void;
 }) {
   return (
-    <section className="rounded-2xl border-2 border-border bg-surface p-5">
-      <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3">
+      {onBack ? (
         <button
           type="button"
           onClick={onBack}
@@ -79,10 +78,9 @@ function PanelBox({
           <ChevronLeft className="size-5" aria-hidden />
           Back
         </button>
-        <h2 className="text-lg font-bold text-foreground">{title}</h2>
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
+      ) : null}
+      <h2 className="text-lg font-bold text-foreground">{title}</h2>
+    </div>
   );
 }
 
@@ -124,17 +122,25 @@ function FeedbackForm({
 
   if (submitted) {
     return (
-      <PanelBox title={type === "feedback" ? "Feedback" : "Report Bug"} onBack={onBack}>
-        <p className="text-base leading-relaxed text-foreground">
+      <>
+        <PanelHeader
+          title={type === "feedback" ? "Feedback" : "Report Bug"}
+          onBack={onBack}
+        />
+        <p className="mt-4 text-base leading-relaxed text-foreground">
           Thank you. Your message was saved on this device.
         </p>
-      </PanelBox>
+      </>
     );
   }
 
   return (
-    <PanelBox title={type === "feedback" ? "Feedback" : "Report Bug"} onBack={onBack}>
-      <p className="text-base leading-relaxed text-muted">{prompt}</p>
+    <>
+      <PanelHeader
+        title={type === "feedback" ? "Feedback" : "Report Bug"}
+        onBack={onBack}
+      />
+      <p className="mt-4 text-base leading-relaxed text-muted">{prompt}</p>
       <label className="mt-4 flex flex-col gap-1">
         <span className="text-xs font-bold uppercase tracking-wide text-muted">
           Message
@@ -175,12 +181,12 @@ function FeedbackForm({
           Back
         </button>
       </div>
-    </PanelBox>
+    </>
   );
 }
 
 export function InfoPanel() {
-  const { infoView, setInfoView } = useCampReady();
+  const { infoView, setInfoView, closeInfo } = useCampReady();
 
   if (!infoView) return null;
 
@@ -195,77 +201,70 @@ export function InfoPanel() {
     ];
 
     return (
-      <div className="flex flex-col gap-3 py-4">
-        <h2 className="text-xl font-bold text-foreground">Information</h2>
-        <ul className="flex flex-col gap-3">
+      <OverlayModal title="Information" onClose={closeInfo}>
+        <ul className="mt-4 flex flex-col gap-3">
           {buttons.map((b) => (
             <li key={b.id}>
               <button
                 type="button"
                 onClick={() => setInfoView(b.id)}
-                className="touch-target flex min-h-14 w-full items-center justify-center rounded-xl border-2 border-border bg-surface px-4 text-base font-bold text-foreground active:bg-background"
+                className="touch-target flex min-h-14 w-full items-center justify-center rounded-xl border-2 border-border bg-background px-4 text-base font-bold text-foreground active:bg-surface"
               >
                 {b.label}
               </button>
             </li>
           ))}
         </ul>
-      </div>
+      </OverlayModal>
     );
   }
 
   if (infoView === "about") {
     return (
-      <div className="py-4">
-        <PanelBox title="About" onBack={goMenu}>
-          <p className="text-base leading-relaxed text-foreground">{ABOUT_TEXT}</p>
-        </PanelBox>
-      </div>
+      <OverlayModal onClose={closeInfo}>
+        <PanelHeader title="About" onBack={goMenu} />
+        <p className="mt-4 text-base leading-relaxed text-foreground">{ABOUT_TEXT}</p>
+      </OverlayModal>
     );
   }
 
   if (infoView === "guide") {
     return (
-      <div className="py-4">
-        <PanelBox title="User Guide" onBack={goMenu}>
-          <ul className="flex flex-col gap-5">
-            {USER_GUIDE.map((section) => (
-              <li key={section.title}>
-                <p className="text-base font-bold text-foreground">{section.title}</p>
-                <ul className="mt-2 list-disc space-y-2 pl-5">
-                  {section.items.map((item) => (
-                    <li key={item} className="text-sm leading-relaxed text-muted">
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        </PanelBox>
-      </div>
+      <OverlayModal onClose={closeInfo}>
+        <PanelHeader title="User Guide" onBack={goMenu} />
+        <ul className="mt-4 flex flex-col gap-5">
+          {USER_GUIDE.map((section) => (
+            <li key={section.title}>
+              <p className="text-base font-bold text-foreground">{section.title}</p>
+              <ul className="mt-2 list-disc space-y-2 pl-5">
+                {section.items.map((item) => (
+                  <li key={item} className="text-sm leading-relaxed text-muted">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </OverlayModal>
     );
   }
 
   if (infoView === "feedback") {
     return (
-      <div className="py-4">
+      <OverlayModal onClose={closeInfo}>
         <FeedbackForm
           type="feedback"
           prompt="Let us know how this app can make your life easier."
           onBack={goMenu}
         />
-      </div>
+      </OverlayModal>
     );
   }
 
   return (
-    <div className="py-4">
-      <FeedbackForm
-        type="bug"
-        prompt="Tell us what’s broken."
-        onBack={goMenu}
-      />
-    </div>
+    <OverlayModal onClose={closeInfo}>
+      <FeedbackForm type="bug" prompt="Tell us what's broken." onBack={goMenu} />
+    </OverlayModal>
   );
 }

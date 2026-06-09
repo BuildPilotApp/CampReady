@@ -2,7 +2,7 @@
 
 import { InventoryTemplatePicker } from "@/components/dashboard/inventory-template-picker";
 import { ProgressRing } from "@/components/ui/progress-ring";
-import { LocationInput } from "@/components/ui/location-input";
+import { LocationInput, type LocationInputHandle } from "@/components/ui/location-input";
 import { TripDateRangeInput } from "@/components/ui/trip-date-range-input";
 import { WeatherBanner } from "@/components/weather/weather-banner";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
@@ -11,7 +11,7 @@ import { getTripStats } from "@/lib/storage";
 import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
 import type { TripLocation, TripRecord } from "@/types";
 import { CalendarDays, ChevronDown, MapPin, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function formatTripDate(isoDate: string): string {
   const date = new Date(`${isoDate}T12:00:00`);
@@ -99,6 +99,7 @@ export function TripManager() {
   const [endDate, setEndDate] = useState<string>(todayIso());
   const [newLocation, setNewLocation] = useState<TripLocation | undefined>();
   const [templateId, setTemplateId] = useState<string>(CUSTOM_TEMPLATE_ID);
+  const newLocationRef = useRef<LocationInputHandle>(null);
 
   const trips = useMemo(
     () => sortTripsChronologically(database.trips ?? []),
@@ -138,7 +139,11 @@ export function TripManager() {
             }}
           />
 
-          <LocationInput value={newLocation} onChange={setNewLocation} />
+          <LocationInput
+            ref={newLocationRef}
+            value={newLocation}
+            onChange={setNewLocation}
+          />
 
           <InventoryTemplatePicker
             templateId={templateId}
@@ -150,12 +155,14 @@ export function TripManager() {
           <button
             type="button"
             disabled={!name.trim()}
-            onClick={() => {
+            onClick={async () => {
+              const location =
+                (await newLocationRef.current?.commitQuery()) ?? newLocation;
               createNewTrip({
                 name,
                 startDate,
                 endDate,
-                location: newLocation,
+                location,
                 templateId,
               });
               setName("");

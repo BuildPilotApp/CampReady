@@ -672,13 +672,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   const resetAllItems = useCallback(() => {
     if (!database?.activeTripId) return;
 
-    const confirmed = window.confirm(
-      "Reset all items to Needed? This cannot be undone.",
-    );
-    if (!confirmed) {
-      return;
-    }
-
     persist(
       updateTripById(database, database.activeTripId, (trip) => ({
         ...trip,

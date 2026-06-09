@@ -1,11 +1,13 @@
 "use client";
 
 import { GearItemRow } from "@/components/checklist/gear-item-row";
+import { AddItemDialog } from "@/components/ui/add-item-dialog";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import {
   getCategoryPackCounts,
   getCategoryStatus,
   getCategoryStatusStyles,
+  getCategoryTotalWeightLbs,
   isGearItemRemaining,
 } from "@/lib/gear-items";
 import type { Category, ChecklistFilter } from "@/types";
@@ -23,9 +25,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   const collapsed = collapsedCategories[category.id] ?? false;
   const [isEditing, setIsEditing] = useState(false);
   const [rename, setRename] = useState(category.name);
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemWeight, setNewItemWeight] = useState<string>("");
-  const [newItemStorage, setNewItemStorage] = useState("");
+  const [addItemOpen, setAddItemOpen] = useState(false);
 
   useEffect(() => {
     setRename(category.name);
@@ -34,6 +34,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   useEffect(() => {
     if (collapsed) {
       setIsEditing(false);
+      setAddItemOpen(false);
     }
   }, [collapsed]);
 
@@ -47,6 +48,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   }
 
   const { packed: packedCount, total: itemCount } = getCategoryPackCounts(category.items);
+  const totalWeightLbs = getCategoryTotalWeightLbs(category.items);
   const categoryStatus = getCategoryStatus(category.items);
   const statusStyles = getCategoryStatusStyles(categoryStatus);
 
@@ -58,6 +60,11 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
     }
     setIsEditing((open) => !open);
   };
+
+  const weightLabel =
+    totalWeightLbs > 0
+      ? `${itemCount} item${itemCount === 1 ? "" : "s"} · ${totalWeightLbs % 1 === 0 ? totalWeightLbs : totalWeightLbs.toFixed(1)} lbs`
+      : `${itemCount} item${itemCount === 1 ? "" : "s"}`;
 
   return (
     <section
@@ -79,8 +86,11 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
             aria-hidden
           />
           <span className="min-w-0 flex-1">
-            <span className="block text-base font-bold text-foreground">
-              {category.name}
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-base font-bold text-foreground">{category.name}</span>
+              <span className="inline-flex rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-[0.65rem] font-semibold text-muted">
+                {weightLabel}
+              </span>
             </span>
             <span className={`text-xs font-semibold ${statusStyles.subtitle}`}>
               {packedCount} / {itemCount} packed
@@ -122,55 +132,25 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
                 aria-label="Rename category"
               />
 
-              <div className="rounded-lg border border-dashed border-border p-2.5">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
-                  Add item
-                </p>
-                <input
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                  className="touch-target mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground"
-                  placeholder="Headlamp"
-                />
-                <div className="mt-1.5 flex gap-2">
-                  <input
-                    inputMode="decimal"
-                    value={newItemWeight}
-                    onChange={(e) => setNewItemWeight(e.target.value)}
-                    className="touch-target w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-foreground"
-                    placeholder="lbs"
-                    aria-label="Weight (lbs)"
-                  />
-                  <input
-                    value={newItemStorage}
-                    onChange={(e) => setNewItemStorage(e.target.value)}
-                    className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-foreground"
-                    placeholder="Tote, bin, shelf…"
-                    aria-label="Storage location"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const name = newItemName.trim();
-                      if (!name) return;
-                      const weight = Number.parseFloat(newItemWeight);
-                      addItem({
-                        categoryId: category.id,
-                        name,
-                        weight_lbs: Number.isFinite(weight) ? weight : undefined,
-                        storageLocation: newItemStorage.trim() || undefined,
-                      });
-                      setNewItemName("");
-                      setNewItemWeight("");
-                      setNewItemStorage("");
-                    }}
-                    className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground active:opacity-90"
-                    aria-label="Add item"
-                  >
-                    <Plus className="size-4" aria-hidden />
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setAddItemOpen(true)}
+                className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-surface/50 px-3 py-2.5 text-sm font-semibold text-foreground active:bg-background"
+              >
+                <Plus className="size-4 text-accent" aria-hidden />
+                Add item
+              </button>
+
+              <AddItemDialog
+                open={addItemOpen}
+                onClose={() => setAddItemOpen(false)}
+                onAdd={(input) => {
+                  addItem({
+                    categoryId: category.id,
+                    ...input,
+                  });
+                }}
+              />
 
               <button
                 type="button"

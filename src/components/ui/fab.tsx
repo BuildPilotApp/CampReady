@@ -1,20 +1,29 @@
-import type { ReactNode } from "react";
+import { forwardRef, type ReactNode } from "react";
 
 interface FabProps {
   label: string;
   text?: string;
   onClick: () => void;
   children: ReactNode;
+  armed?: boolean;
 }
 
-export function Fab({ label, text, onClick, children }: FabProps) {
+export const Fab = forwardRef<HTMLButtonElement, FabProps>(function Fab(
+  { label, text, onClick, children, armed = false },
+  ref,
+) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
-      aria-label={label}
-      title={label}
-      className="absolute z-30 flex h-14 -translate-y-2 items-center justify-center gap-2 rounded-full bg-accent px-4 text-accent-foreground shadow-lg ring-4 ring-background active:scale-95"
+      aria-label={armed ? "Confirm reset all items" : label}
+      title={armed ? "Tap again to confirm" : label}
+      className={`absolute z-30 flex h-14 -translate-y-2 items-center justify-center gap-2 rounded-full px-4 shadow-lg ring-4 ring-background active:scale-95 ${
+        armed
+          ? "bg-red-600 text-white"
+          : "bg-accent text-accent-foreground"
+      }`}
       style={{
         right: "max(0.75rem, env(safe-area-inset-right))",
         bottom: "100%",
@@ -25,4 +34,4 @@ export function Fab({ label, text, onClick, children }: FabProps) {
       {text ? <span className="text-sm font-bold">{text}</span> : null}
     </button>
   );
-}
+});

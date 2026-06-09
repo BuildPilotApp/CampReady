@@ -7,38 +7,16 @@ import { CampReadyProvider, useCampReady } from "@/components/providers/camp-rea
 import { ChecklistView } from "@/components/views/checklist-view";
 import { DashboardView } from "@/components/views/dashboard-view";
 import { Fab } from "@/components/ui/fab";
-import { Tent, RotateCcw, Info, ChevronLeft } from "lucide-react";
+import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
+import { Tent, RotateCcw, Info } from "lucide-react";
 
 function AppHeader() {
   const {
     activeTab,
     activeTrip,
     activeTripStats,
-    infoView,
     openInfoMenu,
-    closeInfo,
   } = useCampReady();
-
-  if (infoView) {
-    return (
-      <div className="flex items-center gap-3 py-3">
-        <button
-          type="button"
-          onClick={closeInfo}
-          aria-label="Close information"
-          className="touch-target inline-flex items-center justify-center rounded-xl border-2 border-border bg-surface text-foreground active:opacity-90"
-        >
-          <ChevronLeft className="size-6" strokeWidth={2.25} aria-hidden />
-        </button>
-        <div className="min-w-0">
-          <p className="text-lg font-bold leading-tight text-foreground">
-            Information
-          </p>
-          <p className="truncate text-sm font-medium text-muted">CampReady</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex items-center gap-3 py-3">
@@ -78,19 +56,18 @@ function AppHeader() {
 }
 
 function CampReadyFooter() {
-  const { activeTab, activeTrip, infoView, resetAllItems } = useCampReady();
-
-  if (infoView) {
-    return null;
-  }
+  const { activeTab, activeTrip, resetAllItems } = useCampReady();
+  const { armed, handleClick, ref } = useDestructiveConfirm(resetAllItems);
 
   return (
     <div className="relative">
       {activeTab === "checklist" && activeTrip ? (
         <Fab
+          ref={ref}
+          armed={armed}
           label="Reset or uncheck all items"
-          text="Reset All"
-          onClick={resetAllItems}
+          text={armed ? "Confirm?" : "Reset All"}
+          onClick={handleClick}
         >
           <RotateCcw className="size-6" strokeWidth={2.5} aria-hidden />
         </Fab>
@@ -105,13 +82,8 @@ function CampReadyShell() {
 
   return (
     <MobileShell header={<AppHeader />} footer={<CampReadyFooter />}>
-      {infoView ? (
-        <InfoPanel />
-      ) : activeTab === "dashboard" ? (
-        <DashboardView />
-      ) : (
-        <ChecklistView />
-      )}
+      {activeTab === "dashboard" ? <DashboardView /> : <ChecklistView />}
+      {infoView ? <InfoPanel /> : null}
     </MobileShell>
   );
 }

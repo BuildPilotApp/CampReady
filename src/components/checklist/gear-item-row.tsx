@@ -6,6 +6,7 @@ import {
 } from "@/components/checklist/pack-status-indicator";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import type { GearItem } from "@/types";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -17,11 +18,11 @@ interface GearItemRowProps {
 
 function ItemMetaLine({ item }: { item: GearItem }) {
   const parts: string[] = [];
+  if (typeof item.weight_lbs === "number" && item.weight_lbs > 0) {
+    parts.push(`${item.weight_lbs} lbs`);
+  }
   if (item.storageLocation) {
     parts.push(item.storageLocation);
-  }
-  if (typeof item.weight_lbs === "number" && item.weight_lbs > 0) {
-    parts.push(`${item.weight_lbs} lb`);
   }
 
   if (parts.length === 0) {
@@ -29,7 +30,9 @@ function ItemMetaLine({ item }: { item: GearItem }) {
   }
 
   return (
-    <span className="mt-0.5 block truncate text-xs text-muted">{parts.join(" · ")}</span>
+    <span className="mt-0.5 block truncate text-xs font-medium text-muted">
+      {parts.join(" · ")}
+    </span>
   );
 }
 
@@ -42,6 +45,7 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
     typeof item.weight_lbs === "number" ? String(item.weight_lbs) : "",
   );
   const [storageLocation, setStorageLocation] = useState(item.storageLocation ?? "");
+  const { armed, handleClick, ref } = useDestructiveConfirm(() => deleteItem(item.id));
 
   useEffect(() => {
     setName(item.name);
@@ -65,7 +69,7 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={saveDetails}
-          className="touch-target w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground"
+          className="touch-target w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
           placeholder="Item name"
         />
         <div className="mt-1.5 flex gap-2">
@@ -87,16 +91,17 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
             aria-label="Storage location"
           />
           <button
+            ref={ref}
             type="button"
-            onClick={() => {
-              if (window.confirm(`Delete "${item.name}"?`)) {
-                deleteItem(item.id);
-              }
-            }}
-            className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted active:text-foreground"
-            aria-label={`Delete ${item.name}`}
+            onClick={handleClick}
+            className={`touch-target inline-flex shrink-0 items-center justify-center rounded-lg border px-2 active:opacity-90 ${
+              armed
+                ? "min-w-16 border-red-500 bg-red-50 text-xs font-bold text-red-600"
+                : "size-9 border-border text-muted active:text-foreground"
+            }`}
+            aria-label={armed ? `Confirm delete ${item.name}` : `Delete ${item.name}`}
           >
-            <Trash2 className="size-4" aria-hidden />
+            {armed ? "Confirm?" : <Trash2 className="size-4" aria-hidden />}
           </button>
         </div>
       </div>
@@ -118,7 +123,7 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
         <PackStatusIndicator status={item.status} />
         <span className="min-w-0 flex-1">
           <span
-            className={`block text-base font-semibold leading-snug ${
+            className={`block text-base font-bold leading-snug ${
               packed
                 ? "text-muted line-through decoration-border"
                 : "text-foreground"

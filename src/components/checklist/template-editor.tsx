@@ -1,5 +1,6 @@
 "use client";
 
+import { AddItemDialog } from "@/components/ui/add-item-dialog";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import type { Category, GearItem } from "@/types";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
@@ -100,28 +101,11 @@ export function TemplateCategorySection({
     addTemplateItem,
   } = useCampReady();
   const [categoryName, setCategoryName] = useState(category.name);
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemWeight, setNewItemWeight] = useState("");
-  const [newItemStorage, setNewItemStorage] = useState("");
+  const [addItemOpen, setAddItemOpen] = useState(false);
 
   useEffect(() => {
     setCategoryName(category.name);
   }, [category.id, category.name]);
-
-  const handleAddItem = () => {
-    const name = newItemName.trim();
-    if (!name) return;
-    addTemplateItem({
-      templateId,
-      categoryId: category.id,
-      name,
-      weight_lbs: parseWeightLbs(newItemWeight),
-      storageLocation: newItemStorage.trim() || undefined,
-    });
-    setNewItemName("");
-    setNewItemWeight("");
-    setNewItemStorage("");
-  };
 
   return (
     <details className="group/category overflow-hidden rounded-xl border border-border bg-background" open>
@@ -170,43 +154,27 @@ export function TemplateCategorySection({
           </ul>
         ) : null}
 
-        <div className="mt-3 rounded-lg border border-dashed border-border bg-surface/50 p-2.5">
-          <p className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
-            Add gear item
-          </p>
-          <input
-            value={newItemName}
-            onChange={(e) => setNewItemName(e.target.value)}
-            className="touch-target mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground"
-            placeholder="Headlamp"
-          />
-          <div className="mt-1.5 flex gap-2">
-            <input
-              inputMode="decimal"
-              value={newItemWeight}
-              onChange={(e) => setNewItemWeight(e.target.value)}
-              className="touch-target w-[4.25rem] rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground"
-              placeholder="lbs"
-              aria-label="Weight (lbs)"
-            />
-            <input
-              value={newItemStorage}
-              onChange={(e) => setNewItemStorage(e.target.value)}
-              className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground"
-              placeholder="Tote, bin, shelf…"
-              aria-label="Storage location"
-            />
-            <button
-              type="button"
-              onClick={handleAddItem}
-              disabled={!newItemName.trim()}
-              className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground active:opacity-90 disabled:opacity-50"
-              aria-label="Add gear item"
-            >
-              <Plus className="size-4" aria-hidden />
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setAddItemOpen(true)}
+          className="touch-target mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-surface/50 px-3 py-2.5 text-sm font-semibold text-foreground active:bg-background"
+        >
+          <Plus className="size-4 text-accent" aria-hidden />
+          Add gear item
+        </button>
+
+        <AddItemDialog
+          open={addItemOpen}
+          title="Add gear item"
+          onClose={() => setAddItemOpen(false)}
+          onAdd={(input) => {
+            addTemplateItem({
+              templateId,
+              categoryId: category.id,
+              ...input,
+            });
+          }}
+        />
 
         <button
           type="button"

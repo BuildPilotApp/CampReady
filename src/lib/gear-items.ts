@@ -14,6 +14,15 @@ export function getCategoryPackCounts(items: GearItem[]): {
   return { packed, total };
 }
 
+export function getCategoryTotalWeightLbs(items: GearItem[]): number {
+  return items.reduce((sum, item) => {
+    if (typeof item.weight_lbs === "number" && item.weight_lbs > 0) {
+      return sum + item.weight_lbs;
+    }
+    return sum;
+  }, 0);
+}
+
 /** Category highlight follows the least-complete item: needed → staged → packed. */
 export function getCategoryStatus(items: GearItem[]): GearItemStatus | null {
   if (items.length === 0) {
