@@ -1,5 +1,5 @@
-import type { CampReadyDatabase, Category, TripRecord } from "@/types";
-import { createTrip } from "./defaults";
+import type { CampReadyDatabase, Category } from "@/types";
+import { DATABASE_VERSION } from "./constants";
 
 export function cloneCategories(categories: Category[]): Category[] {
   return categories.map((category) => {
@@ -17,45 +17,21 @@ export function cloneCategories(categories: Category[]): Category[] {
   });
 }
 
-export function createSeedDatabase(): CampReadyDatabase {
-  const trip = createTrip({
-    name: "Yosemite Weekend",
-    startDate: defaultTripDate(),
-    endDate: defaultTripDate(),
-    location: { query: "Yosemite" },
-  });
-
-  const seededTrip: TripRecord = { ...trip, categories: [] };
-
-  return {
-    version: 1,
-    trips: [seededTrip],
-    templates: [],
-    activeTripId: seededTrip.id,
-  };
-}
-
-function defaultTripDate(): string {
-  const date = new Date();
-  date.setDate(date.getDate() + 14);
-  return date.toISOString().slice(0, 10);
-}
-
+/** Normalize persisted data without injecting sample content. */
 export function ensureSeededDatabase(
   data: CampReadyDatabase,
 ): CampReadyDatabase {
-  const base: CampReadyDatabase = {
-    version: 1,
-    trips: data.trips ?? [],
+  const trips = data.trips ?? [];
+
+  return {
+    version: DATABASE_VERSION,
+    trips,
     templates: data.templates ?? [],
-    activeTripId: data.activeTripId ?? data.trips?.[0]?.id ?? null,
+    activeTripId:
+      data.activeTripId && trips.some((trip) => trip.id === data.activeTripId)
+        ? data.activeTripId
+        : trips[0]?.id ?? null,
   };
-
-  if (base.trips.length > 0) {
-    return base;
-  }
-
-  return createSeedDatabase();
 }
 
 export function isEmptyDatabase(data: CampReadyDatabase): boolean {

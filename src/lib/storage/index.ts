@@ -8,9 +8,9 @@ export {
   touchTrip,
 } from "./defaults";
 export {
-  createSeedDatabase,
   ensureSeededDatabase,
   cloneCategories,
+  isEmptyDatabase,
 } from "./seed";
 export {
   readDatabaseSync,
