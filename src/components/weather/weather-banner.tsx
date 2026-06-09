@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 export function WeatherBanner() {
   const { activeTrip, updateTrip } = useCampReady();
   const [status, setStatus] = useState<
-    "idle" | "loading" | "ready" | "error" | "needs-location"
+    "idle" | "loading" | "ready" | "offline" | "error" | "needs-location"
   >("idle");
   const [daily, setDaily] = useState<{
     place: string;
@@ -62,7 +62,7 @@ export function WeatherBanner() {
         activeTrip.endDate,
       );
 
-      const weather = await getWeatherSummariesForDates({
+      const { summaries: weather, offline } = await getWeatherSummariesForDates({
         latitude: latitude!,
         longitude: longitude!,
         datesIso,
@@ -77,7 +77,7 @@ export function WeatherBanner() {
       }
 
       setDaily({ place, byDate: weather });
-      setStatus("ready");
+      setStatus(offline ? "offline" : "ready");
     }
 
     void run();
@@ -107,6 +107,17 @@ export function WeatherBanner() {
 
   const dates = enumerateDateRange(activeTrip.startDate, activeTrip.endDate);
 
+  const statusBadge =
+    status === "loading"
+      ? "Loading…"
+      : status === "offline"
+        ? "Offline Mode (Cached Forecast)"
+        : status === "error"
+          ? "Unavailable"
+          : status === "needs-location"
+            ? "No match"
+            : "Daily";
+
   return (
     <div className="mt-4 rounded-xl border-2 border-border bg-background px-3 py-2">
       <div className="flex items-center justify-between gap-3">
@@ -121,14 +132,14 @@ export function WeatherBanner() {
             </span>
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-accent/15 px-3 py-1 text-xs font-bold text-accent">
-          {status === "loading"
-            ? "Loading…"
-            : status === "error"
-              ? "Unavailable"
-              : status === "needs-location"
-                ? "No match"
-                : "Daily"}
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
+            status === "offline"
+              ? "bg-amber-500/15 text-amber-800 dark:text-amber-200"
+              : "bg-accent/15 text-accent"
+          }`}
+        >
+          {statusBadge}
         </span>
       </div>
 
@@ -140,11 +151,11 @@ export function WeatherBanner() {
 
       {status === "error" ? (
         <p className="mt-2 text-sm font-semibold text-muted">
-          Couldn’t load weather. Check the trip location spelling and try again.
+          Couldn&apos;t load weather. Check the trip location spelling and try again.
         </p>
       ) : null}
 
-      {status === "ready" || status === "loading" ? (
+      {status === "ready" || status === "offline" || status === "loading" ? (
         <div className="mt-2 overflow-x-auto overscroll-x-contain">
           <div className="flex gap-2 pb-1">
             {dates.map((d) => {
@@ -181,7 +192,7 @@ export function WeatherBanner() {
                         </p>
                       </div>
                       <p className="mt-1 text-center text-[0.58rem] font-bold leading-tight text-accent">
-                        {s.label}
+                        {status === "offline" ? "Cached" : s.label}
                       </p>
                     </>
                   ) : (

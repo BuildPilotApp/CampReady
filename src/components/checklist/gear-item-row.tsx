@@ -30,7 +30,7 @@ function ItemMetaLine({ item }: { item: GearItem }) {
   }
 
   return (
-    <span className="mt-0.5 block truncate text-xs font-medium text-muted">
+    <span className="mt-0.5 block truncate text-[0.6rem] font-medium leading-snug text-zinc-500 dark:text-zinc-400">
       {parts.join(" · ")}
     </span>
   );
@@ -125,8 +125,8 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
           <span
             className={`block text-base font-bold leading-snug ${
               packed
-                ? "text-muted line-through decoration-border"
-                : "text-foreground"
+                ? "text-muted line-through decoration-border dark:text-zinc-500 dark:decoration-zinc-600"
+                : "text-foreground dark:text-white"
             }`}
           >
             {item.name}

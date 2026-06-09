@@ -1,6 +1,10 @@
 "use client";
 
 import { OverlayModal } from "@/components/ui/overlay-modal";
+import {
+  modalInputClassName,
+  modalTextareaClassName,
+} from "@/components/ui/modal-field-styles";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import type { InfoView } from "@/types";
 import { ChevronLeft } from "lucide-react";
@@ -149,7 +153,7 @@ function FeedbackForm({
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={5}
-          className="rounded-xl border-2 border-border bg-background px-3 py-2 text-base text-foreground"
+          className={modalTextareaClassName}
         />
       </label>
       <label className="mt-3 flex flex-col gap-1">
@@ -160,7 +164,7 @@ function FeedbackForm({
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base text-foreground"
+          className={modalInputClassName}
           placeholder="you@example.com"
         />
       </label>

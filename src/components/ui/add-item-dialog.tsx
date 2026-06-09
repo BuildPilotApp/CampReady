@@ -1,6 +1,7 @@
 "use client";
 
 import { OverlayModal } from "@/components/ui/overlay-modal";
+import { modalInputClassName } from "@/components/ui/modal-field-styles";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
@@ -72,7 +73,7 @@ export function AddItemDialog({
               }
             }}
             autoFocus
-            className="touch-target w-full rounded-xl border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground"
+            className={modalInputClassName}
             placeholder="Headlamp"
           />
         </label>
@@ -85,7 +86,7 @@ export function AddItemDialog({
               inputMode="decimal"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              className="touch-target w-20 rounded-xl border-2 border-border bg-background px-2 py-2 text-sm text-foreground"
+              className={`${modalInputClassName} w-20`}
               placeholder="lbs"
             />
           </label>
@@ -96,7 +97,7 @@ export function AddItemDialog({
             <input
               value={storage}
               onChange={(e) => setStorage(e.target.value)}
-              className="touch-target w-full rounded-xl border-2 border-border bg-background px-3 py-2 text-sm text-foreground"
+              className={modalInputClassName}
               placeholder="Tote, bin, shelf…"
             />
           </label>

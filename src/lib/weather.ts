@@ -13,6 +13,20 @@ export interface WeatherSummary {
   label: string;
 }
 
+export interface WeatherFetchResult {
+  summaries: Record<string, WeatherSummary>;
+  offline: boolean;
+}
+
+interface StoredForecastSnapshot {
+  latitude: number;
+  longitude: number;
+  datesIso: string[];
+  summaries: Record<string, WeatherSummary>;
+}
+
+const LAST_FORECAST_KEY = "campready:weather:last-forecast";
+
 const GEOCODE_ENDPOINT = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
 const ARCHIVE_ENDPOINT = "https://archive-api.open-meteo.com/v1/archive";
@@ -48,6 +62,65 @@ function readCache<T>(key: string, maxAgeMs: number): T | null {
 function writeCache<T>(key: string, value: T): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(key, JSON.stringify({ ts: Date.now(), value }));
+}
+
+function readPersistentCache<T>(key: string): T | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(key);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { ts: number; value: T };
+    return parsed.value;
+  } catch {
+    return null;
+  }
+}
+
+function writePersistentCache<T>(key: string, value: T): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(key, JSON.stringify({ ts: Date.now(), value }));
+}
+
+function writeLastForecastSnapshot(snapshot: StoredForecastSnapshot): void {
+  writePersistentCache(LAST_FORECAST_KEY, snapshot);
+}
+
+function readLastForecastSnapshot(): StoredForecastSnapshot | null {
+  return readPersistentCache<StoredForecastSnapshot>(LAST_FORECAST_KEY);
+}
+
+function mergeOfflineForecast(
+  results: Record<string, WeatherSummary>,
+  datesIso: string[],
+  latitude: number,
+  longitude: number,
+): { summaries: Record<string, WeatherSummary>; usedOffline: boolean } {
+  const stored = readLastForecastSnapshot();
+  if (!stored) {
+    return { summaries: results, usedOffline: false };
+  }
+
+  const locationMatches =
+    stored.latitude === latitude && stored.longitude === longitude;
+  const merged = { ...results };
+  let usedOffline = false;
+
+  for (const dateIso of datesIso) {
+    if (merged[dateIso]) {
+      continue;
+    }
+    if (locationMatches && stored.summaries[dateIso]) {
+      merged[dateIso] = stored.summaries[dateIso];
+      usedOffline = true;
+      continue;
+    }
+    if (stored.summaries[dateIso]) {
+      merged[dateIso] = stored.summaries[dateIso];
+      usedOffline = true;
+    }
+  }
+
+  return { summaries: merged, usedOffline };
 }
 
 function mapGeocodeResult(first: {
@@ -175,7 +248,10 @@ async function fetchDailyRange(input: {
   longitude: number;
   startIso: string;
   endIso: string;
-}): Promise<Map<string, { maxC: number; minC: number; windKmh: number }> | null> {
+}): Promise<{
+  data: Map<string, { maxC: number; minC: number; windKmh: number }> | null;
+  networkError: boolean;
+}> {
   const { endpoint, latitude, longitude, startIso, endIso } = input;
 
   try {
@@ -190,11 +266,13 @@ async function fetchDailyRange(input: {
     url.searchParams.set("end_date", endIso);
 
     const res = await fetch(url.toString());
-    if (!res.ok) return null;
-    const data = await res.json();
-    return parseDailyResponse(data);
+    if (!res.ok) {
+      return { data: null, networkError: true };
+    }
+    const json = await res.json();
+    return { data: parseDailyResponse(json), networkError: false };
   } catch {
-    return null;
+    return { data: null, networkError: true };
   }
 }
 
@@ -202,12 +280,15 @@ export async function getWeatherSummariesForDates(input: {
   latitude: number;
   longitude: number;
   datesIso: string[];
-}): Promise<Record<string, WeatherSummary>> {
+}): Promise<WeatherFetchResult> {
   const { latitude, longitude, datesIso } = input;
   const uniqueDates = sortIsoAsc(Array.from(new Set(datesIso)));
-  if (uniqueDates.length === 0) return {};
+  if (uniqueDates.length === 0) {
+    return { summaries: {}, offline: false };
+  }
 
   const results: Record<string, WeatherSummary> = {};
+  let networkError = false;
 
   const forecastDates: string[] = [];
   const archiveDates: string[] = [];
@@ -256,13 +337,17 @@ export async function getWeatherSummariesForDates(input: {
   if (missingForecast.length > 0) {
     const startIso = missingForecast[0]!;
     const endIso = missingForecast[missingForecast.length - 1]!;
-    const dailyMap = await fetchDailyRange({
+    const { data: dailyMap, networkError: forecastFailed } = await fetchDailyRange({
       endpoint: FORECAST_ENDPOINT,
       latitude,
       longitude,
       startIso,
       endIso,
     });
+
+    if (forecastFailed) {
+      networkError = true;
+    }
 
     if (dailyMap) {
       for (const d of missingForecast) {
@@ -280,13 +365,17 @@ export async function getWeatherSummariesForDates(input: {
     const startIso = priorDates[0]!;
     const endIso = priorDates[priorDates.length - 1]!;
 
-    const dailyMap = await fetchDailyRange({
+    const { data: dailyMap, networkError: archiveFailed } = await fetchDailyRange({
       endpoint: ARCHIVE_ENDPOINT,
       latitude,
       longitude,
       startIso,
       endIso,
     });
+
+    if (archiveFailed) {
+      networkError = true;
+    }
 
     if (dailyMap) {
       for (const d of missingArchive) {
@@ -306,5 +395,33 @@ export async function getWeatherSummariesForDates(input: {
     }
   }
 
-  return results;
+  const missingAfterFetch = uniqueDates.filter((dateIso) => results[dateIso] == null);
+  const hasFreshData = uniqueDates.some((dateIso) => results[dateIso] != null);
+
+  if (hasFreshData && missingAfterFetch.length === 0 && !networkError) {
+    writeLastForecastSnapshot({
+      latitude,
+      longitude,
+      datesIso: uniqueDates,
+      summaries: results,
+    });
+    return { summaries: results, offline: false };
+  }
+
+  if (networkError || missingAfterFetch.length > 0) {
+    const { summaries: merged, usedOffline } = mergeOfflineForecast(
+      results,
+      uniqueDates,
+      latitude,
+      longitude,
+    );
+    if (usedOffline && uniqueDates.some((dateIso) => merged[dateIso] != null)) {
+      return { summaries: merged, offline: true };
+    }
+    if (Object.keys(merged).length > 0) {
+      return { summaries: merged, offline: usedOffline };
+    }
+  }
+
+  return { summaries: results, offline: false };
 }
