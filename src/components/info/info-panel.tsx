@@ -11,6 +11,7 @@ import {
   submitFeedback,
 } from "@/lib/feedback-submission";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { TERMS_LAST_UPDATED, TERMS_SECTIONS } from "@/lib/legal-copy";
 import type { InfoView } from "@/types";
 import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
@@ -210,6 +211,7 @@ export function InfoPanel() {
     const buttons: { id: InfoView; label: string }[] = [
       { id: "about", label: "About" },
       { id: "guide", label: "User Guide" },
+      { id: "terms", label: "Terms of Service & Disclaimers" },
       { id: "feedback", label: "Feedback" },
       { id: "bug", label: "Report Bug" },
     ];
@@ -257,6 +259,37 @@ export function InfoPanel() {
                   </li>
                 ))}
               </ul>
+            </li>
+          ))}
+        </ul>
+      </OverlayModal>
+    );
+  }
+
+  if (infoView === "terms") {
+    return (
+      <OverlayModal onClose={closeInfo}>
+        <PanelHeader title="Terms of Service & Disclaimers" onBack={goMenu} />
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted">
+          Last Updated: {TERMS_LAST_UPDATED}
+        </p>
+        <ul className="mt-5 flex flex-col gap-6">
+          {TERMS_SECTIONS.map((section) => (
+            <li
+              key={section.title}
+              className="rounded-xl border border-border bg-background/60 px-4 py-3"
+            >
+              <h3 className="text-sm font-bold leading-snug text-foreground">
+                {section.title}
+              </h3>
+              {section.body.split("\n\n").map((paragraph, index) => (
+                <p
+                  key={index}
+                  className="mt-2 text-sm leading-relaxed text-muted"
+                >
+                  {paragraph}
+                </p>
+              ))}
             </li>
           ))}
         </ul>
