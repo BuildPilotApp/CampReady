@@ -5,29 +5,56 @@ export type AffiliateItemCategory = "gear" | "replenishable" | "generic";
 export const AFFILIATE_GEAR_KEYWORDS = [
   "First Aid Kit",
   "Sleeping Bag",
+  "Air Mattress",
   "Water Filter",
   "Power Bank",
   "Headlamp",
+  "Backpack",
+  "Hammock",
+  "Lantern",
+  "Hatchet",
   "Cooler",
+  "Heater",
+  "Shovel",
+  "Chair",
+  "Table",
   "Stove",
+  "Tarp",
   "Tent",
+  "Axe",
+  "Cot",
 ] as const;
 
 /** Consumables and restock items that benefit from high-intent outdoor search terms. */
 export const REPLENISHABLE_KEYWORDS = [
+  "Insect Repellent",
   "Firestarter",
+  "Trash Bags",
   "Batteries",
   "Propane",
   "Matches",
   "Coffee",
+  "Charcoal",
   "Wipes",
+  "Sunscreen",
   "Fuel",
   "Soap",
   "First Aid",
 ] as const;
 
 /** Everyday camp kit items surfaced with a camping/outdoor search prefix. */
-export const GENERIC_GEAR_KEYWORDS = ["Spoon", "Towel", "Plate", "Knife"] as const;
+export const GENERIC_GEAR_KEYWORDS = [
+  "Spoon",
+  "Blanket",
+  "Towel",
+  "Plate",
+  "Pillow",
+  "Knife",
+  "Mug",
+  "Cup",
+  "Pan",
+  "Pot",
+] as const;
 
 export type AffiliateGearKeyword = (typeof AFFILIATE_GEAR_KEYWORDS)[number];
 export type ReplenishableKeyword = (typeof REPLENISHABLE_KEYWORDS)[number];
@@ -93,6 +120,12 @@ export function isAffiliateGearItem(itemName: string): boolean {
 }
 
 function buildReplenishableSearchQuery(normalizedItemName: string): string {
+  if (normalizedItemName.includes("insect repellent")) {
+    return "camping bug spray";
+  }
+  if (normalizedItemName.includes("trash bags")) {
+    return "heavy duty outdoor trash bags";
+  }
   if (normalizedItemName.includes("coffee")) {
     return "instant camping coffee packs";
   }
@@ -113,6 +146,12 @@ function buildReplenishableSearchQuery(normalizedItemName: string): string {
   }
   if (normalizedItemName.includes("firestarter")) {
     return "camping fire starter";
+  }
+  if (normalizedItemName.includes("sunscreen")) {
+    return "sport sunscreen spf 50";
+  }
+  if (normalizedItemName.includes("charcoal")) {
+    return "portable charcoal packs";
   }
   if (normalizedItemName.includes("first aid")) {
     return "camping first aid supplies";
