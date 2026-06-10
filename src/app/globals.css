@@ -11,7 +11,7 @@
   --ring-track: #c5d4c0;
   --ring-progress: #15803d;
   --touch-target: 3rem;
-  --mobile-max-width: 430px;
+  --mobile-max-width: 480px;
   --status-missing-bg: #fef2f2;
   --status-missing-fg: #991b1b;
   --status-missing-border: #f87171;
@@ -75,17 +75,30 @@ html {
 body {
   margin: 0;
   min-height: 100%;
-  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   overscroll-behavior-y: auto;
 }
 
-.mobile-app-shell {
+/* Full-width canvas with a centered phone-width column (max 480px). */
+.app-viewport-canvas {
+  display: flex;
+  min-height: 100dvh;
+  width: 100%;
+  justify-content: center;
+  background: var(--background);
+}
+
+.app-viewport-frame {
   width: 100%;
   max-width: var(--mobile-max-width);
-  margin-inline: auto;
+  min-height: 100dvh;
   box-shadow: 0 0 0 1px var(--border);
+}
+
+.mobile-app-shell {
+  width: 100%;
+  min-height: 100dvh;
 }
 
 .mobile-safe-x {

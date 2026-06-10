@@ -7,8 +7,8 @@ interface MobileShellProps {
 }
 
 /**
- * Constrains the UI to a phone-width column with safe-area padding
- * for one-handed use and outdoor readability.
+ * Main app scaffold — fills the centered viewport frame from the root layout
+ * with safe-area padding for one-handed use and outdoor readability.
  */
 export function MobileShell({ children, header, footer }: MobileShellProps) {
   return (

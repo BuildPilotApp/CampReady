@@ -35,8 +35,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full bg-background text-foreground antialiased">
-        {children}
+      <body className="min-h-full text-foreground antialiased">
+        <div className="app-viewport-canvas">
+          <div className="app-viewport-frame">{children}</div>
+        </div>
       </body>
     </html>
   );
