@@ -40,6 +40,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Capacitor / native builds
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
 # generated PWA service worker (produced by `npm run build`)
 public/sw.js
 public/sw.js.map
