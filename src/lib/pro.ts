@@ -1,7 +1,7 @@
 export const PRO_STORAGE_KEY = "campready_pro";
 
 export const STRIPE_CHECKOUT_URL =
-  "https://buy.stripe.com/00w28s5UnaNeaYybl6cV201";
+  "https://buy.stripe.com/eVqcN65Un6wY6Iiah2cV202";
 
 export const FREE_TRIP_LIMIT = 1;
 export const FREE_TEMPLATE_LIMIT = 1;
