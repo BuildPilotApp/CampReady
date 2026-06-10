@@ -98,8 +98,9 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
             Upgrade Now — $4.99 (Buy Once, Own Forever)
           </a>
 
-          <p className="mt-3 text-center text-xs text-zinc-500">
-            One-time purchase. Unlocks on this device after checkout.
+          <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
+            One-time purchase. After checkout, return to CampReady and Pro unlocks
+            automatically on this device.
           </p>
         </div>
       </section>

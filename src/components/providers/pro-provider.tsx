@@ -2,7 +2,7 @@
 
 import { PaywallModal } from "@/components/premium/paywall-modal";
 import { ProSuccessToast } from "@/components/premium/pro-success-toast";
-import { readProStatus, setProStatus } from "@/lib/pro";
+import { readProStatus, tryActivateProFromCheckoutCallback } from "@/lib/pro";
 import {
   createContext,
   useCallback,
@@ -22,24 +22,45 @@ interface ProContextValue {
 
 const ProContext = createContext<ProContextValue | null>(null);
 
+function syncProFromDevice(): { activated: boolean; isPro: boolean } {
+  const activated = tryActivateProFromCheckoutCallback();
+  return { activated, isPro: readProStatus() };
+}
+
 export function ProProvider({ children }: { children: React.ReactNode }) {
   const [isPro, setIsPro] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("checkout") === "success") {
-      setProStatus(true);
-      setIsPro(true);
+
+  const refreshProState = useCallback((showSuccessOnActivate = false) => {
+    const { activated, isPro: nextIsPro } = syncProFromDevice();
+    setIsPro(nextIsPro);
+
+    if (activated && showSuccessOnActivate) {
       setSuccessVisible(true);
-
-      const cleanUrl = window.location.pathname + window.location.hash;
-      window.history.replaceState({}, "", cleanUrl);
-      return;
+      setPaywallOpen(false);
     }
-
-    setIsPro(readProStatus());
   }, []);
+
+  useEffect(() => {
+    refreshProState(true);
+
+    const handleReturnToApp = () => {
+      if (document.visibilityState === "visible") {
+        refreshProState(true);
+      }
+    };
+
+    window.addEventListener("focus", handleReturnToApp);
+    window.addEventListener("pageshow", handleReturnToApp);
+    document.addEventListener("visibilitychange", handleReturnToApp);
+
+    return () => {
+      window.removeEventListener("focus", handleReturnToApp);
+      window.removeEventListener("pageshow", handleReturnToApp);
+      document.removeEventListener("visibilitychange", handleReturnToApp);
+    };
+  }, [refreshProState]);
 
   useEffect(() => {
     if (!successVisible) return;
