@@ -6,12 +6,14 @@ import { LocationInput, type LocationInputHandle } from "@/components/ui/locatio
 import { TripDateRangeInput } from "@/components/ui/trip-date-range-input";
 import { WeatherBanner } from "@/components/weather/weather-banner";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { usePro } from "@/components/providers/pro-provider";
 import { todayIso } from "@/lib/date-utils";
+import { canCreateTrip } from "@/lib/pro";
 import { getTripStats } from "@/lib/storage";
 import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
 import type { TripLocation, TripRecord } from "@/types";
 import { CalendarDays, ChevronDown, MapPin, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 
 function formatTripDate(isoDate: string): string {
   const date = new Date(`${isoDate}T12:00:00`);
@@ -94,6 +96,7 @@ export function TripManager() {
     deleteTrip,
     updateTrip,
   } = useCampReady();
+  const { isPro, openPaywall } = usePro();
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState<string>(todayIso());
   const [endDate, setEndDate] = useState<string>(todayIso());
@@ -106,12 +109,23 @@ export function TripManager() {
     [database.trips],
   );
 
+  const tripLimitReached = !canCreateTrip(isPro, trips.length);
+
+  const handleNewTripAttempt = (event: MouseEvent<HTMLElement>) => {
+    if (!tripLimitReached) return;
+    event.preventDefault();
+    openPaywall();
+  };
+
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-bold text-foreground">Trips</h2>
 
       <details className="rounded-xl border-2 border-border bg-surface p-4">
-        <summary className="touch-target flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-foreground">
+        <summary
+          onClick={handleNewTripAttempt}
+          className="touch-target flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-foreground"
+        >
           <span className="inline-flex items-center gap-2">
             <Plus className="size-5 text-accent" aria-hidden />
             Create new trip
@@ -156,6 +170,10 @@ export function TripManager() {
             type="button"
             disabled={!name.trim()}
             onClick={async () => {
+              if (tripLimitReached) {
+                openPaywall();
+                return;
+              }
               const location =
                 (await newLocationRef.current?.commitQuery()) ?? newLocation;
               createNewTrip({

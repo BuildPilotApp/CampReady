@@ -2,11 +2,14 @@
 
 import { CREATE_GEAR_CHECKLIST_HINT } from "@/lib/gear-checklist-copy";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { usePro } from "@/components/providers/pro-provider";
+import { canCreateTemplate } from "@/lib/pro";
 import { ChevronDown, Save } from "lucide-react";
 import { useState } from "react";
 
 export function SaveChecklistTemplate() {
-  const { activeTrip, createTemplateFromTrip } = useCampReady();
+  const { activeTrip, createTemplateFromTrip, database } = useCampReady();
+  const { isPro, openPaywall } = usePro();
   const [name, setName] = useState("");
 
   if (!activeTrip) {
@@ -54,6 +57,11 @@ export function SaveChecklistTemplate() {
               type="button"
               disabled={!name.trim()}
               onClick={() => {
+                const templateCount = database.templates?.length ?? 0;
+                if (!canCreateTemplate(isPro, templateCount)) {
+                  openPaywall();
+                  return;
+                }
                 createTemplateFromTrip({
                   tripId: activeTrip.id,
                   name: name.trim(),

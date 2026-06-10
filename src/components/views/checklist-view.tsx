@@ -1,6 +1,7 @@
 "use client";
 
 import { CategorySection } from "@/components/checklist/category-section";
+import { ExportListButton } from "@/components/checklist/export-list-button";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
 import { GearInventoryPanel } from "@/components/checklist/gear-inventory-panel";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
@@ -40,6 +41,7 @@ export function ChecklistView() {
               </h2>
               <p className="mt-1 text-xs leading-snug text-muted">{PACK_TRIP_HINT}</p>
             </div>
+            <ExportListButton trip={activeTrip} />
           </div>
 
           <FilterToggle />

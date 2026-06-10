@@ -4,6 +4,8 @@ import { ApplyChecklistPrompt } from "@/components/checklist/apply-checklist-pro
 import { SaveChecklistTemplate } from "@/components/checklist/save-checklist-template";
 import { TemplateCategorySection } from "@/components/checklist/template-editor";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { usePro } from "@/components/providers/pro-provider";
+import { canCreateTemplate } from "@/lib/pro";
 import {
   BUILD_GEAR_CHECKLIST_HINT,
   SAVED_CHECKLISTS_EMPTY_MESSAGE,
@@ -103,6 +105,7 @@ export function GearInventoryPanel() {
     updateTemplate,
     addTemplateCategory,
   } = useCampReady();
+  const { isPro, openPaywall } = usePro();
 
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [pendingAction, setPendingAction] = useState<PendingChecklistAction | null>(
@@ -174,9 +177,16 @@ export function GearInventoryPanel() {
     });
   };
 
+  const templateLimitReached = !canCreateTemplate(isPro, templates.length);
+
   const handleCreateChecklist = () => {
     const name = newChecklistName.trim();
     if (!name) return;
+
+    if (templateLimitReached) {
+      openPaywall();
+      return;
+    }
 
     const templateId = createBlankTemplate(name);
     if (!templateId) return;

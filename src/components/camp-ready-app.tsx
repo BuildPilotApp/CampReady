@@ -4,6 +4,7 @@ import { MobileShell } from "@/components/layout/mobile-shell";
 import { InfoPanel } from "@/components/info/info-panel";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { CampReadyProvider, useCampReady } from "@/components/providers/camp-ready-provider";
+import { ProProvider } from "@/components/providers/pro-provider";
 import { ChecklistView } from "@/components/views/checklist-view";
 import { DashboardView } from "@/components/views/dashboard-view";
 import { Fab } from "@/components/ui/fab";
@@ -90,8 +91,10 @@ function CampReadyShell() {
 
 export function CampReadyApp() {
   return (
-    <CampReadyProvider>
-      <CampReadyShell />
-    </CampReadyProvider>
+    <ProProvider>
+      <CampReadyProvider>
+        <CampReadyShell />
+      </CampReadyProvider>
+    </ProProvider>
   );
 }
