@@ -7,8 +7,9 @@ import {
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
+import { buildAmazonAffiliateSearchUrl } from "@/lib/affiliate-links";
 import type { GearItem } from "@/types";
-import { Trash2 } from "lucide-react";
+import { Tag, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface GearItemRowProps {
@@ -33,6 +34,27 @@ function ItemMetaLine({ item }: { item: GearItem }) {
     <span className="mt-0.5 block truncate text-[0.6rem] font-medium leading-snug text-zinc-500 dark:text-zinc-400">
       {parts.join(" · ")}
     </span>
+  );
+}
+
+function AffiliateGearLinkButton({ itemName }: { itemName: string }) {
+  const url = buildAmazonAffiliateSearchUrl(itemName);
+  if (!url) {
+    return null;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        window.open(url, "_blank", "noopener,noreferrer");
+      }}
+      aria-label={`Shop for ${itemName} on Amazon`}
+      className="touch-target inline-flex shrink-0 items-center justify-center px-1.5 text-zinc-600 active:opacity-80 dark:text-zinc-400"
+    >
+      <Tag className="size-3.5" aria-hidden />
+    </button>
   );
 }
 
@@ -90,6 +112,7 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
             placeholder="Tote, bin, shelf…"
             aria-label="Storage location"
           />
+          <AffiliateGearLinkButton itemName={name} />
           <button
             ref={ref}
             type="button"
@@ -114,27 +137,30 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
         packed ? "bg-background/40" : staged ? "bg-status-staged-bg/25" : "bg-surface"
       }`}
     >
-      <button
-        type="button"
-        onClick={() => cycleItemStatus(item.id)}
-        aria-label={`${item.name}, ${packStatusLabel(item.status)}. Tap to update.`}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left active:opacity-90"
-      >
-        <PackStatusIndicator status={item.status} />
-        <span className="min-w-0 flex-1">
-          <span
-            className={`block text-base font-bold leading-snug ${
-              packed
-                ? "text-muted line-through decoration-border dark:text-zinc-500 dark:decoration-zinc-600"
-                : "text-foreground dark:text-white"
-            }`}
-          >
-            {item.name}
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => cycleItemStatus(item.id)}
+          aria-label={`${item.name}, ${packStatusLabel(item.status)}. Tap to update.`}
+          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left active:opacity-90"
+        >
+          <PackStatusIndicator status={item.status} />
+          <span className="min-w-0 flex-1">
+            <span
+              className={`block text-base font-bold leading-snug ${
+                packed
+                  ? "text-muted line-through decoration-border dark:text-zinc-500 dark:decoration-zinc-600"
+                  : "text-foreground dark:text-white"
+              }`}
+            >
+              {item.name}
+            </span>
+            <ItemMetaLine item={item} />
           </span>
-          <ItemMetaLine item={item} />
-        </span>
-        <StatusBadge status={item.status} compact />
-      </button>
+          <StatusBadge status={item.status} compact />
+        </button>
+        <AffiliateGearLinkButton itemName={item.name} />
+      </div>
     </div>
   );
 }
