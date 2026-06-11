@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode — required for Android WebView; web/iOS also set `.dark` via system-theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #eef2eb;
   --foreground: #081408;
@@ -43,8 +46,32 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+html.dark {
+  color-scheme: dark;
+  --background: #0a120c;
+  --foreground: #f0fdf4;
+  --muted: #a8c4b0;
+  --border: #3d5c47;
+  --accent: #4ade80;
+  --accent-foreground: #052e16;
+  --surface: #132218;
+  --ring-track: #2a4030;
+  --ring-progress: #4ade80;
+  --status-missing-bg: #450a0a;
+  --status-missing-fg: #fecaca;
+  --status-missing-border: #ef4444;
+  --status-staged-bg: #422006;
+  --status-staged-fg: #fef08a;
+  --status-staged-border: #eab308;
+  --status-packed-bg: #052e16;
+  --status-packed-fg: #bbf7d0;
+  --status-packed-border: #22c55e;
+}
+
+/* Fallback for browsers that honor prefers-color-scheme before JS runs. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
+    color-scheme: dark;
     --background: #0a120c;
     --foreground: #f0fdf4;
     --muted: #a8c4b0;
@@ -68,6 +95,7 @@
 
 html {
   height: 100%;
+  color-scheme: light dark;
   -webkit-tap-highlight-color: transparent;
   text-size-adjust: 100%;
 }
