@@ -1,5 +1,6 @@
 "use client";
 
+import { AmazonAssociateDisclosure } from "@/components/checklist/amazon-associate-disclosure";
 import { CategorySection } from "@/components/checklist/category-section";
 import { ExportListButton } from "@/components/checklist/export-list-button";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
@@ -40,6 +41,7 @@ export function ChecklistView() {
                 Pack for {activeTrip.name}
               </h2>
               <p className="mt-1 text-xs leading-snug text-muted">{PACK_TRIP_HINT}</p>
+              <AmazonAssociateDisclosure />
             </div>
             <ExportListButton trip={activeTrip} />
           </div>

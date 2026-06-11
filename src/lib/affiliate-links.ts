@@ -137,6 +137,10 @@ export type GenericGearKeyword = GalleyKeyword;
 /** Replace with your Amazon Associates tracking ID. */
 export const AMAZON_AFFILIATE_TAG = "YOUR_AMAZON_TAG_HERE";
 
+/** Exact phrasing required by Amazon Associates program policies. */
+export const AMAZON_ASSOCIATE_DISCLOSURE =
+  "As an Amazon Associate I earn from qualifying purchases.";
+
 const GALLEY_OUTDOOR_KEYWORDS = new Set<GalleyKeyword>(["Blanket", "Tablecloth", "Towel"]);
 
 interface AffiliateKeywordEntry {
