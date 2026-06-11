@@ -4,6 +4,13 @@ const config: CapacitorConfig = {
   appId: "app.campready.mobile",
   appName: "CampReady",
   webDir: "out",
+  backgroundColor: "#09090b",
+  android: {
+    backgroundColor: "#09090b",
+  },
+  ios: {
+    backgroundColor: "#09090b",
+  },
   server: {
     androidScheme: "https",
   },
