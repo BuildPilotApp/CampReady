@@ -17,6 +17,6 @@ You explicitly agree that you are 100% solely responsible for your own safety, p
   },
   {
     title: "4. Affiliate Disclosure",
-    body: `As an Amazon Associate, CampReady earns from qualifying purchases. Clicking the price tag icons generates targeted search links that may reward the creator with a small commission at no additional cost to the user. #ad`,
+    body: `As an Amazon Associate I earn from qualifying purchases. Tapping "Check Price" on gear items opens Amazon search links that may reward the creator with a small commission at no additional cost to the user. #ad`,
   },
 ] as const;

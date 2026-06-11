@@ -8,8 +8,9 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { buildAmazonAffiliateSearchUrl } from "@/lib/affiliate-links";
+import { openExternalUrl } from "@/lib/open-external-url";
 import type { GearItem } from "@/types";
-import { Tag, Trash2 } from "lucide-react";
+import { ShoppingCart, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface GearItemRowProps {
@@ -37,7 +38,13 @@ function ItemMetaLine({ item }: { item: GearItem }) {
   );
 }
 
-function AffiliateGearLinkButton({ itemName }: { itemName: string }) {
+function AffiliateGearLinkButton({
+  itemName,
+  className = "mr-3",
+}: {
+  itemName: string;
+  className?: string;
+}) {
   const url = buildAmazonAffiliateSearchUrl(itemName);
   if (!url) {
     return null;
@@ -48,12 +55,13 @@ function AffiliateGearLinkButton({ itemName }: { itemName: string }) {
       type="button"
       onClick={(event) => {
         event.stopPropagation();
-        window.open(url, "_blank", "noopener,noreferrer");
+        void openExternalUrl(url);
       }}
-      aria-label={`Shop for ${itemName} on Amazon`}
-      className="touch-target inline-flex shrink-0 items-center justify-center px-1.5 text-zinc-600 active:opacity-80 dark:text-zinc-400"
+      aria-label={`Check price for ${itemName} on Amazon`}
+      className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-2.5 py-1 text-[0.65rem] font-semibold text-muted shadow-sm active:scale-[0.97] active:bg-background active:opacity-90 dark:border-border/60 dark:bg-surface/80 dark:text-zinc-300 dark:active:bg-surface ${className}`}
     >
-      <Tag className="size-3.5" aria-hidden />
+      <ShoppingCart className="size-3 shrink-0" strokeWidth={2.25} aria-hidden />
+      <span>Check Price</span>
     </button>
   );
 }
@@ -112,7 +120,7 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
             placeholder="Tote, bin, shelf…"
             aria-label="Storage location"
           />
-          <AffiliateGearLinkButton itemName={name} />
+          <AffiliateGearLinkButton itemName={name} className="" />
           <button
             ref={ref}
             type="button"
