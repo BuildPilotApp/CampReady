@@ -37,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html lang="en" className="dark h-full" suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="light dark" />
         <Script
@@ -46,7 +46,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: SYSTEM_THEME_INIT_SCRIPT }}
         />
       </head>
-      <body className="min-h-full text-foreground antialiased">
+      <body className="min-h-full bg-zinc-950 text-foreground antialiased">
         <SystemThemeProvider>
           <div className="app-viewport-canvas">
             <div className="app-viewport-frame">{children}</div>
