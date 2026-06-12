@@ -1,6 +1,8 @@
 import type { AppTab, ChecklistFilter } from "@/types";
+import { getPowerPolicy } from "@/lib/runtime/app-power-mode";
 
 export const UI_SESSION_STORAGE_KEY = "campready:ui-session";
+const UI_SESSION_DEBOUNCE_MS = 500;
 
 export interface UiSessionState {
   activeTab?: AppTab;
@@ -87,7 +89,52 @@ export function writeUiSessionState(state: UiSessionState): void {
   }
 }
 
+let pendingUiSessionState: UiSessionState | null = null;
+let uiSessionWriteTimer: number | null = null;
+
+function clearUiSessionWriteTimer(): void {
+  if (uiSessionWriteTimer) {
+    window.clearTimeout(uiSessionWriteTimer);
+    uiSessionWriteTimer = null;
+  }
+}
+
+/** Debounced UI session write — skipped while the app is backgrounded. */
+export function scheduleWriteUiSessionState(state: UiSessionState): void {
+  if (!isBrowser()) {
+    return;
+  }
+
+  pendingUiSessionState = state;
+
+  if (getPowerPolicy().deferNonCriticalWrites) {
+    clearUiSessionWriteTimer();
+    return;
+  }
+
+  clearUiSessionWriteTimer();
+  const delay = UI_SESSION_DEBOUNCE_MS * getPowerPolicy().debounceMultiplier;
+  uiSessionWriteTimer = window.setTimeout(() => {
+    uiSessionWriteTimer = null;
+    flushUiSessionState();
+  }, delay);
+}
+
+/** Immediately persist any queued UI session state. */
+export function flushUiSessionState(): void {
+  clearUiSessionWriteTimer();
+  if (!pendingUiSessionState) {
+    return;
+  }
+
+  writeUiSessionState(pendingUiSessionState);
+  pendingUiSessionState = null;
+}
+
 export function clearUiSessionState(): void {
+  clearUiSessionWriteTimer();
+  pendingUiSessionState = null;
+
   if (!isBrowser()) {
     return;
   }

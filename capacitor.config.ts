@@ -13,10 +13,11 @@ const config: CapacitorConfig = {
   },
   server: {
     androidScheme: "https",
+    // Intentionally no server.url — assets must load from bundled webDir (out/).
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 800,
       launchAutoHide: true,
       launchFadeOutDuration: 300,
       backgroundColor: "#09090b",

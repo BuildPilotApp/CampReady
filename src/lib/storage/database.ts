@@ -1,4 +1,5 @@
 import type { CampReadyDatabase, TripRecord } from "@/types";
+import { getPowerPolicy } from "@/lib/runtime/app-power-mode";
 import { STORAGE_KEY } from "./constants";
 import { createEmptyDatabase } from "./defaults";
 import {
@@ -28,6 +29,7 @@ export type StorageWriteResult =
 
 let memoryCache: CampReadyDatabase | null = null;
 let lastPersistedSerialized: string | null = null;
+let pendingMirrorSerialized: string | null = null;
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
@@ -134,10 +136,29 @@ export function tryWriteLocalStorage(serialized: string): StorageWriteResult {
   }
 }
 
-/** Fire-and-forget mirror to IndexedDB; never surfaces errors to callers. */
+/** Fire-and-forget mirror to IndexedDB; deferred when the app is backgrounded. */
 function mirrorToLocalForage(serialized: string): void {
+  if (getPowerPolicy().deferNonCriticalWrites) {
+    pendingMirrorSerialized = serialized;
+    return;
+  }
+
+  pendingMirrorSerialized = null;
   void writeToLocalForage(serialized).catch(() => {
     // Durable offline mirror is best-effort; memory + localStorage remain primary.
+  });
+}
+
+/** Flush a queued IndexedDB mirror after foreground return or page hide. */
+export function flushPendingIndexedDBMirror(): void {
+  if (!pendingMirrorSerialized) {
+    return;
+  }
+
+  const serialized = pendingMirrorSerialized;
+  pendingMirrorSerialized = null;
+  void writeToLocalForage(serialized).catch(() => {
+    pendingMirrorSerialized = serialized;
   });
 }
 
@@ -214,6 +235,22 @@ function tryFinalizeParsed(
     return { ok: true, database: finalizeDatabase(parsed) };
   } catch {
     return { ok: false };
+  }
+}
+
+export function hasValidLocalStorageSnapshot(): boolean {
+  if (!isBrowser()) {
+    return false;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return false;
+    }
+    return tryFinalizeParsed(raw).ok;
+  } catch {
+    return false;
   }
 }
 

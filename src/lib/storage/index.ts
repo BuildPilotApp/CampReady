@@ -22,6 +22,8 @@ export {
   isStorageAvailable,
   sanitizeDatabase,
   tryWriteLocalStorage,
+  hasValidLocalStorageSnapshot,
+  flushPendingIndexedDBMirror,
   type HydrationResult,
   type HydrationRecoveryReason,
   type StorageWriteResult,
@@ -36,6 +38,8 @@ export {
 export {
   readUiSessionState,
   writeUiSessionState,
+  scheduleWriteUiSessionState,
+  flushUiSessionState,
   clearUiSessionState,
   UI_SESSION_STORAGE_KEY,
   type UiSessionState,

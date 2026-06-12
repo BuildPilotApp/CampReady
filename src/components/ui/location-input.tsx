@@ -1,6 +1,7 @@
 "use client";
 
 import { geocodeLocation, searchGeocodeLocations } from "@/lib/weather";
+import { isNetworkAvailable } from "@/lib/runtime/network-guard";
 import type { TripLocation } from "@/types";
 import { MapPin } from "lucide-react";
 import {
@@ -42,6 +43,7 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
     >([]);
     const [open, setOpen] = useState(false);
     const [resolving, setResolving] = useState(false);
+    const [offlineHint, setOfflineHint] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const suggestionsRef = useRef(suggestions);
 
@@ -57,8 +59,15 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
       const q = query.trim();
       if (q.length < 2) {
         setSuggestions([]);
+        setOfflineHint(false);
         return;
       }
+      if (!isNetworkAvailable()) {
+        setSuggestions([]);
+        setOfflineHint(true);
+        return;
+      }
+      setOfflineHint(false);
       const results = await searchGeocodeLocations(q, 6);
       setSuggestions(results);
       setOpen(results.length > 0);
@@ -119,6 +128,13 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
 
       setResolving(true);
       try {
+        if (!isNetworkAvailable()) {
+          const loc: TripLocation = { query: q };
+          commitLocation(loc);
+          setOfflineHint(true);
+          return loc;
+        }
+
         const geo = await geocodeLocation(q);
         if (geo) {
           const loc: TripLocation = {
@@ -199,6 +215,10 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
         </div>
         {resolving ? (
           <p className="text-xs font-semibold text-muted">Resolving location…</p>
+        ) : offlineHint ? (
+          <p className="text-xs font-semibold text-muted">
+            Offline — saved name only; connect to match coordinates.
+          </p>
         ) : value?.latitude != null ? (
           <p className="text-xs font-semibold text-accent">Location matched</p>
         ) : text.trim().length >= 2 ? (

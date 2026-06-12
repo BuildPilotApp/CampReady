@@ -1,8 +1,15 @@
 "use client";
 
 import { enumerateDateRange } from "@/lib/date-utils";
-import { geocodeLocation, getWeatherSummariesForDates } from "@/lib/weather";
+import { onReturnToForeground } from "@/lib/runtime/app-power-mode";
+import { shouldAttemptNetworkFetch } from "@/lib/runtime/network-guard";
+import {
+  geocodeLocation,
+  getWeatherSummariesForDates,
+  loadCachedWeatherOnly,
+} from "@/lib/weather";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { useAppPowerMode } from "@/hooks/use-app-power-mode";
 import { MapPin, Wind } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -53,6 +60,8 @@ function WeatherStatusBadge({
 
 export function WeatherBanner() {
   const { activeTrip, updateTrip } = useCampReady();
+  const { deferNetwork } = useAppPowerMode();
+  const [refreshKey, setRefreshKey] = useState(0);
   const [status, setStatus] = useState<
     "idle" | "loading" | "ready" | "offline" | "error" | "needs-location"
   >("idle");
@@ -64,7 +73,13 @@ export function WeatherBanner() {
     >;
   } | null>(null);
 
+  useEffect(() => onReturnToForeground(() => setRefreshKey((key) => key + 1)), []);
+
   useEffect(() => {
+    if (deferNetwork) {
+      return;
+    }
+
     let cancelled = false;
 
     async function run() {
@@ -74,19 +89,49 @@ export function WeatherBanner() {
         return;
       }
 
-      setStatus("loading");
-      setDaily(null);
+      const datesIso = enumerateDateRange(
+        activeTrip.startDate,
+        activeTrip.endDate,
+      );
 
       let latitude = activeTrip.location.latitude;
       let longitude = activeTrip.location.longitude;
       let place =
         activeTrip.location.resolvedName ?? activeTrip.location.query.trim();
 
+      const applyCachedOnly = () => {
+        if (typeof latitude !== "number" || typeof longitude !== "number") {
+          setDaily(null);
+          setStatus("needs-location");
+          return;
+        }
+
+        const cached = loadCachedWeatherOnly({
+          latitude,
+          longitude,
+          datesIso,
+        });
+        const hasAny = datesIso.some((d) => cached.summaries[d] != null);
+        if (!hasAny) {
+          setDaily(null);
+          setStatus("error");
+          return;
+        }
+
+        setDaily({ place, byDate: cached.summaries });
+        setStatus("offline");
+      };
+
+      if (!shouldAttemptNetworkFetch()) {
+        applyCachedOnly();
+        return;
+      }
+
       if (typeof latitude !== "number" || typeof longitude !== "number") {
         const geo = await geocodeLocation(activeTrip.location.query);
         if (cancelled) return;
         if (!geo) {
-          setStatus("needs-location");
+          applyCachedOnly();
           return;
         }
         latitude = geo.latitude;
@@ -102,10 +147,7 @@ export function WeatherBanner() {
         });
       }
 
-      const datesIso = enumerateDateRange(
-        activeTrip.startDate,
-        activeTrip.endDate,
-      );
+      setStatus("loading");
 
       const { summaries: weather, offline } = await getWeatherSummariesForDates({
         latitude: latitude!,
@@ -117,7 +159,7 @@ export function WeatherBanner() {
 
       const hasAny = datesIso.some((d) => weather[d] != null);
       if (!hasAny) {
-        setStatus("error");
+        applyCachedOnly();
         return;
       }
 
@@ -137,7 +179,10 @@ export function WeatherBanner() {
     activeTrip?.location?.query,
     activeTrip?.location?.latitude,
     activeTrip?.location?.longitude,
+    activeTrip?.location?.resolvedName,
     updateTrip,
+    deferNetwork,
+    refreshKey,
   ]);
 
   if (!activeTrip?.location?.query?.trim()) {

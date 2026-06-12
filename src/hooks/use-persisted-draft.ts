@@ -1,5 +1,6 @@
 "use client";
 
+import { getPowerPolicy } from "@/lib/runtime/app-power-mode";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const DEFAULT_DEBOUNCE_MS = 400;
@@ -71,9 +72,13 @@ export function usePersistedDraft({
       return;
     }
 
+    if (getPowerPolicy().deferNonCriticalWrites) {
+      return;
+    }
+
     const timer = window.setTimeout(() => {
       commitDraft(draft);
-    }, debounceMs);
+    }, debounceMs * getPowerPolicy().debounceMultiplier);
 
     return () => window.clearTimeout(timer);
   }, [draft, debounceMs, commitDraft, normalize, rejectEmpty]);
@@ -174,9 +179,13 @@ export function usePersistedGearItemDraft({
       return;
     }
 
+    if (getPowerPolicy().deferNonCriticalWrites) {
+      return;
+    }
+
     const timer = window.setTimeout(() => {
       commitDraft(draft);
-    }, debounceMs);
+    }, debounceMs * getPowerPolicy().debounceMultiplier);
 
     return () => window.clearTimeout(timer);
   }, [draft, debounceMs, commitDraft]);

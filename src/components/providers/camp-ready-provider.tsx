@@ -15,7 +15,9 @@ import {
   createEmptyDatabase,
   ensureSeededDatabase,
   getTripStats,
+  hasValidLocalStorageSnapshot,
   hydrateDatabase,
+  readDatabaseSync,
   touchTrip,
   writeDatabaseSync,
   type HydrationRecoveryReason,
@@ -23,9 +25,11 @@ import {
 import {
   clearUiSessionState,
   readUiSessionState,
-  writeUiSessionState,
+  scheduleWriteUiSessionState,
 } from "@/lib/storage/ui-session-state";
 import { flushPendingFeedbackSubmissions } from "@/lib/feedback-submission";
+import { onReturnToForeground } from "@/lib/runtime/app-power-mode";
+import { isNetworkAvailable } from "@/lib/runtime/network-guard";
 import {
   CUSTOM_TEMPLATE_ID,
   getTemplateOptionLabel,
@@ -197,8 +201,12 @@ function updateTemplateById(
 }
 
 export function CampReadyProvider({ children }: { children: React.ReactNode }) {
-  const [ready, setReady] = useState(false);
-  const [database, setDatabase] = useState<CampReadyDatabase | null>(null);
+  const [ready, setReady] = useState(
+    () => typeof window !== "undefined",
+  );
+  const [database, setDatabase] = useState<CampReadyDatabase | null>(() =>
+    typeof window !== "undefined" ? readDatabaseSync() : null,
+  );
   const [activeTab, setActiveTab] = useState<AppTab>("dashboard");
   const [infoView, setInfoView] = useState<InfoView | null>(null);
   const [checklistFilter, setChecklistFilter] =
@@ -216,22 +224,36 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
+    if (!database) {
+      const syncDb = readDatabaseSync();
+      setDatabase(syncDb);
+      setReady(true);
+    }
+
     void hydrateDatabase()
       .then((result) => {
-        if (!cancelled) {
+        if (cancelled) {
+          return;
+        }
+
+        const shouldApply =
+          result.recovered || !hasValidLocalStorageSnapshot();
+        if (shouldApply) {
           setDatabase(result.database);
-          if (result.recovered && result.reason) {
-            setStorageRecovery(result.reason);
-          }
-          setReady(true);
+        }
+        if (result.recovered && result.reason) {
+          setStorageRecovery(result.reason);
         }
       })
       .catch(() => {
-        if (!cancelled) {
+        if (cancelled) {
+          return;
+        }
+
+        if (!hasValidLocalStorageSnapshot()) {
           const fallback = ensureSeededDatabase(createEmptyDatabase());
           setDatabase(fallback);
           setStorageRecovery("error");
-          setReady(true);
           try {
             writeDatabaseSync(fallback);
           } catch {
@@ -268,7 +290,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    writeUiSessionState({
+    scheduleWriteUiSessionState({
       activeTab,
       checklistFilter,
       collapsedCategories,
@@ -281,12 +303,18 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     }
 
     const flushQueue = () => {
+      if (!isNetworkAvailable() || document.visibilityState === "hidden") {
+        return;
+      }
       void flushPendingFeedbackSubmissions();
     };
 
-    flushQueue();
+    const unsubscribeForeground = onReturnToForeground(flushQueue);
     window.addEventListener("online", flushQueue);
-    return () => window.removeEventListener("online", flushQueue);
+    return () => {
+      unsubscribeForeground();
+      window.removeEventListener("online", flushQueue);
+    };
   }, [ready]);
 
   const persist = useCallback((next: CampReadyDatabase) => {

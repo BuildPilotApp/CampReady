@@ -46,9 +46,10 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
     refreshProState(true);
 
     const handleReturnToApp = () => {
-      if (document.visibilityState === "visible") {
-        refreshProState(true);
+      if (document.visibilityState !== "visible") {
+        return;
       }
+      refreshProState(true);
     };
 
     window.addEventListener("focus", handleReturnToApp);

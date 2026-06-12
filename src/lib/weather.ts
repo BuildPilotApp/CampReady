@@ -1,4 +1,5 @@
 import { formatLocalIsoDate, parseIsoDate } from "@/lib/date-utils";
+import { isNetworkAvailable, shouldAttemptNetworkFetch } from "@/lib/runtime/network-guard";
 
 export interface GeocodeResult {
   name: string;
@@ -153,6 +154,10 @@ export async function searchGeocodeLocations(
   const cached = readCache<GeocodeResult[]>(key, 1000 * 60 * 60 * 24 * 7);
   if (cached) return cached;
 
+  if (!shouldAttemptNetworkFetch()) {
+    return [];
+  }
+
   try {
     const url = new URL(GEOCODE_ENDPOINT);
     url.searchParams.set("name", q);
@@ -242,6 +247,60 @@ function isLiveForecastDate(dateIso: string): boolean {
   return diffDays >= 0 && diffDays <= 10;
 }
 
+function collectCachedSummaries(
+  latitude: number,
+  longitude: number,
+  uniqueDates: string[],
+): Record<string, WeatherSummary> {
+  const results: Record<string, WeatherSummary> = {};
+
+  for (const d of uniqueDates) {
+    if (isLiveForecastDate(d)) {
+      const key = cacheKey(["forecast", String(latitude), String(longitude), d]);
+      const cached = readCache<WeatherSummary>(key, 1000 * 60 * 30);
+      if (cached) {
+        results[d] = cached;
+      }
+      continue;
+    }
+
+    const prev = isoDatePrevYear(d);
+    const key = cacheKey(["archive", String(latitude), String(longitude), d, prev]);
+    const cached = readCache<WeatherSummary>(key, 1000 * 60 * 30);
+    if (cached) {
+      results[d] = cached;
+    }
+  }
+
+  return results;
+}
+
+/** Load weather strictly from on-device caches — never hits the network. */
+export function loadCachedWeatherOnly(input: {
+  latitude: number;
+  longitude: number;
+  datesIso: string[];
+}): WeatherFetchResult {
+  const { latitude, longitude, datesIso } = input;
+  const uniqueDates = sortIsoAsc(Array.from(new Set(datesIso)));
+  if (uniqueDates.length === 0) {
+    return { summaries: {}, offline: true };
+  }
+
+  const cached = collectCachedSummaries(latitude, longitude, uniqueDates);
+  const { summaries: merged, usedOffline } = mergeOfflineForecast(
+    cached,
+    uniqueDates,
+    latitude,
+    longitude,
+  );
+
+  return {
+    summaries: merged,
+    offline: usedOffline || Object.keys(merged).length > 0,
+  };
+}
+
 async function fetchDailyRange(input: {
   endpoint: string;
   latitude: number;
@@ -253,6 +312,10 @@ async function fetchDailyRange(input: {
   networkError: boolean;
 }> {
   const { endpoint, latitude, longitude, startIso, endIso } = input;
+
+  if (!isNetworkAvailable()) {
+    return { data: null, networkError: true };
+  }
 
   try {
     const url = new URL(endpoint);
@@ -285,6 +348,10 @@ export async function getWeatherSummariesForDates(input: {
   const uniqueDates = sortIsoAsc(Array.from(new Set(datesIso)));
   if (uniqueDates.length === 0) {
     return { summaries: {}, offline: false };
+  }
+
+  if (!shouldAttemptNetworkFetch()) {
+    return loadCachedWeatherOnly({ latitude, longitude, datesIso: uniqueDates });
   }
 
   const results: Record<string, WeatherSummary> = {};

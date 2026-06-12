@@ -26,21 +26,35 @@ export function SystemThemeProvider({
       }
     });
 
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme"],
-    });
+    const startObserver = () => {
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme"],
+      });
+    };
+
+    const stopObserver = () => {
+      observer.disconnect();
+    };
+
+    startObserver();
 
     window.addEventListener("pageshow", enforce);
-    document.addEventListener("visibilitychange", () => {
+    const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         enforce();
+        startObserver();
+        return;
       }
-    });
+      stopObserver();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
-      observer.disconnect();
+      stopObserver();
       window.removeEventListener("pageshow", enforce);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
 

@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Build static export
-        run: npx next build
+        run: npx next build --webpack
         env:
           NEXT_PUBLIC_BASE_PATH: /CampReady
 
