@@ -85,7 +85,7 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
   const handleDownloadCsv = async () => {
     const saved = await downloadChecklistCsv(trip);
     setFeedback(
-      saved
+      saved || !hasItems
         ? null
         : {
             type: "error",

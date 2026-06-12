@@ -77,7 +77,16 @@ export function formatChecklistAsJson(trip: TripRecord): string {
   return JSON.stringify(tripToExportDocument(trip), null, 2);
 }
 
+function tripHasExportableItems(trip: TripRecord): boolean {
+  return trip.categories.some((category) => category.items.length > 0);
+}
+
 export async function downloadChecklistCsv(trip: TripRecord): Promise<boolean> {
+  if (!tripHasExportableItems(trip)) {
+    window.alert("Add items to your list before exporting!");
+    return false;
+  }
+
   const csv = formatChecklistAsCsv(trip);
   return downloadTextFile(
     csv,
