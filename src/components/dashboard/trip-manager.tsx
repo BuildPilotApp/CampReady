@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InventoryTemplatePicker } from "@/components/dashboard/inventory-template-picker";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { LocationInput, type LocationInputHandle } from "@/components/ui/location-input";
@@ -113,6 +114,7 @@ export function TripManager() {
   const [endDate, setEndDate] = useState<string>(todayIso());
   const [newLocation, setNewLocation] = useState<TripLocation | undefined>();
   const [templateId, setTemplateId] = useState<string>(CUSTOM_TEMPLATE_ID);
+  const [tripPendingDelete, setTripPendingDelete] = useState<TripRecord | null>(null);
   const newLocationRef = useRef<LocationInputHandle>(null);
 
   const trips = useMemo(
@@ -326,11 +328,7 @@ export function TripManager() {
                   <div className="border-t border-border px-4 py-3">
                     <button
                       type="button"
-                      onClick={() => {
-                        if (window.confirm("Delete this trip?")) {
-                          deleteTrip(trip.id);
-                        }
-                      }}
+                      onClick={() => setTripPendingDelete(trip)}
                       className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-border bg-background px-4 text-base font-bold text-foreground active:opacity-90"
                     >
                       <Trash2 className="size-5 text-muted" aria-hidden />
@@ -343,6 +341,24 @@ export function TripManager() {
           })}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={tripPendingDelete !== null}
+        title="Delete trip?"
+        message={
+          tripPendingDelete
+            ? `This permanently removes "${tripPendingDelete.name}" and all of its packing data. This can't be undone.`
+            : ""
+        }
+        confirmLabel="Delete trip"
+        onConfirm={() => {
+          if (tripPendingDelete) {
+            deleteTrip(tripPendingDelete.id);
+          }
+          setTripPendingDelete(null);
+        }}
+        onCancel={() => setTripPendingDelete(null)}
+      />
     </section>
   );
 }

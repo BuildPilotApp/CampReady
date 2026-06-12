@@ -2,6 +2,7 @@
 
 import { GearItemRow } from "@/components/checklist/gear-item-row";
 import { AddItemDialog } from "@/components/ui/add-item-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import {
   getCategoryPackCounts,
@@ -26,6 +27,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [rename, setRename] = useState(category.name);
   const [addItemOpen, setAddItemOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
     setRename(category.name);
@@ -154,16 +156,24 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
 
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm(`Delete category "${category.name}" and its items?`)) {
-                    deleteCategory(category.id);
-                  }
-                }}
+                onClick={() => setDeleteConfirmOpen(true)}
                 className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-bold text-muted active:bg-surface active:text-foreground"
               >
                 <Trash2 className="size-3.5" aria-hidden />
                 Delete category
               </button>
+
+              <ConfirmDialog
+                open={deleteConfirmOpen}
+                title="Delete category?"
+                message={`This permanently removes "${category.name}" and all items inside. This can't be undone.`}
+                confirmLabel="Delete category"
+                onConfirm={() => {
+                  deleteCategory(category.id);
+                  setDeleteConfirmOpen(false);
+                }}
+                onCancel={() => setDeleteConfirmOpen(false)}
+              />
             </div>
           ) : null}
 
