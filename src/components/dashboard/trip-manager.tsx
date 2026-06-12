@@ -40,7 +40,14 @@ function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
 
   useEffect(() => {
     setValue(name);
-  }, [tripId, name]);
+  }, [tripId]);
+
+  const persistName = (raw: string) => {
+    const next = raw.trim();
+    if (next && next !== name) {
+      updateTrip(tripId, { name: next });
+    }
+  };
 
   return (
     <label className="flex flex-col gap-1">
@@ -49,11 +56,15 @@ function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
       </span>
       <input
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          const next = e.target.value;
+          setValue(next);
+          persistName(next);
+        }}
         onBlur={() => {
           const next = value.trim();
-          if (next && next !== name) {
-            updateTrip(tripId, { name: next });
+          if (next) {
+            persistName(value);
           } else {
             setValue(name);
           }

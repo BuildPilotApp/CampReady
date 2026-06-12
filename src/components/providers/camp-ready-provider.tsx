@@ -211,7 +211,11 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
 
   const persist = useCallback((next: CampReadyDatabase) => {
     setDatabase(next);
-    writeDatabaseSync(next);
+    try {
+      writeDatabaseSync(next);
+    } catch {
+      // Storage writes are best-effort; in-memory state already updated for the UI.
+    }
   }, []);
 
   const activeTrip = useMemo<TripRecord | null>(() => {

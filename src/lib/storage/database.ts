@@ -135,9 +135,11 @@ function finalizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
   memoryCache = seeded;
 
   if (isBrowser() && hadSampleTrip) {
-    const serialized = serializeDatabase(seeded);
-    window.localStorage.setItem(STORAGE_KEY, serialized);
-    void writeToLocalForage(serialized);
+    const serialized = trySerializeDatabase(seeded);
+    if (serialized) {
+      tryWriteLocalStorage(serialized);
+      mirrorToLocalForage(serialized);
+    }
   }
 
   return seeded;
@@ -145,6 +147,34 @@ function finalizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
 
 function serializeDatabase(data: CampReadyDatabase): string {
   return JSON.stringify(data);
+}
+
+function trySerializeDatabase(data: CampReadyDatabase): string | null {
+  try {
+    return serializeDatabase(data);
+  } catch {
+    return null;
+  }
+}
+
+function tryWriteLocalStorage(serialized: string): boolean {
+  if (!isBrowser()) {
+    return false;
+  }
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, serialized);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Fire-and-forget mirror to localforage; never surfaces errors to callers. */
+function mirrorToLocalForage(serialized: string): void {
+  void writeToLocalForage(serialized).catch(() => {
+    // Durable offline mirror is best-effort; memory + localStorage remain primary.
+  });
 }
 
 /**
@@ -160,7 +190,13 @@ export function readDatabaseSync(): CampReadyDatabase {
     return createEmptyDatabase();
   }
 
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  let raw: string | null = null;
+  try {
+    raw = window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    raw = null;
+  }
+
   if (!raw) {
     memoryCache = createEmptyDatabase();
     return memoryCache;
@@ -181,9 +217,13 @@ export function writeDatabaseSync(data: CampReadyDatabase): void {
     return;
   }
 
-  const serialized = serializeDatabase(data);
-  window.localStorage.setItem(STORAGE_KEY, serialized);
-  void writeToLocalForage(serialized);
+  const serialized = trySerializeDatabase(data);
+  if (!serialized) {
+    return;
+  }
+
+  tryWriteLocalStorage(serialized);
+  mirrorToLocalForage(serialized);
 }
 
 /** Hydrate memory + localStorage from localforage (e.g. first app launch). */
@@ -192,13 +232,23 @@ export async function hydrateDatabase(): Promise<CampReadyDatabase> {
     return createEmptyDatabase();
   }
 
-  const localRaw = window.localStorage.getItem(STORAGE_KEY);
+  let localRaw: string | null = null;
+  try {
+    localRaw = window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    localRaw = null;
+  }
+
   if (localRaw) {
     const localData = parseDatabase(localRaw);
     if (localData) {
       return finalizeDatabase(localData);
     }
-    window.localStorage.removeItem(STORAGE_KEY);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore corrupt or inaccessible localStorage during hydration.
+    }
   }
 
   const remoteRaw = await readFromLocalForage();
@@ -206,7 +256,10 @@ export async function hydrateDatabase(): Promise<CampReadyDatabase> {
     const remoteData = parseDatabase(remoteRaw);
     if (remoteData) {
       const finalized = finalizeDatabase(remoteData);
-      window.localStorage.setItem(STORAGE_KEY, serializeDatabase(finalized));
+      const serialized = trySerializeDatabase(finalized);
+      if (serialized) {
+        tryWriteLocalStorage(serialized);
+      }
       return finalized;
     }
   }
@@ -233,8 +286,14 @@ export function clearDatabase(): void {
     return;
   }
 
-  window.localStorage.removeItem(STORAGE_KEY);
-  void clearLocalForage();
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Best-effort clear; memory cache is already reset.
+  }
+  void clearLocalForage().catch(() => {
+    // Ignore durable store clear failures.
+  });
 }
 
 export function isStorageAvailable(): boolean {

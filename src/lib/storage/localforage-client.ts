@@ -23,14 +23,22 @@ export function getLocalForage(): LocalForage {
 }
 
 export async function readFromLocalForage(): Promise<string | null> {
-  const store = getLocalForage();
-  const value = await store.getItem<string>(STORAGE_KEY);
-  return value ?? null;
+  try {
+    const store = getLocalForage();
+    const value = await store.getItem<string>(STORAGE_KEY);
+    return value ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function writeToLocalForage(serialized: string): Promise<void> {
-  const store = getLocalForage();
-  await store.setItem(STORAGE_KEY, serialized);
+  try {
+    const store = getLocalForage();
+    await store.setItem(STORAGE_KEY, serialized);
+  } catch {
+    // Caller decides whether to retry or fall back; never throw to UI paths.
+  }
 }
 
 export async function clearLocalForage(): Promise<void> {
