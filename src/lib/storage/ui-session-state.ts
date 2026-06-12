@@ -10,6 +10,16 @@ export interface UiSessionState {
   collapsedCategories?: Record<string, boolean>;
 }
 
+/** Categories start collapsed on a fresh app open; session storage restores user toggles. */
+export const DEFAULT_CATEGORY_COLLAPSED = true;
+
+export function resolveCategoryCollapsed(
+  collapsedCategories: Record<string, boolean>,
+  categoryId: string,
+): boolean {
+  return collapsedCategories[categoryId] ?? DEFAULT_CATEGORY_COLLAPSED;
+}
+
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }

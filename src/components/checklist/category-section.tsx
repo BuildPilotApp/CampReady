@@ -12,6 +12,7 @@ import {
   getCategoryTotalWeightLbs,
   isGearItemRemaining,
 } from "@/lib/gear-items";
+import { resolveCategoryCollapsed } from "@/lib/storage/ui-session-state";
 import type { Category, ChecklistFilter } from "@/types";
 import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -24,7 +25,7 @@ interface CategorySectionProps {
 export function CategorySection({ category, filter }: CategorySectionProps) {
   const { collapsedCategories, toggleCategory, updateCategory, deleteCategory, addItem } =
     useCampReady();
-  const collapsed = collapsedCategories[category.id] ?? false;
+  const collapsed = resolveCategoryCollapsed(collapsedCategories, category.id);
   const [isEditing, setIsEditing] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);

@@ -24,6 +24,7 @@ import {
 } from "@/lib/storage";
 import {
   clearUiSessionState,
+  DEFAULT_CATEGORY_COLLAPSED,
   readUiSessionState,
   scheduleWriteUiSessionState,
 } from "@/lib/storage/ui-session-state";
@@ -357,7 +358,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   const toggleCategory = useCallback((categoryId: string) => {
     setCollapsedCategories((current) => ({
       ...current,
-      [categoryId]: !current[categoryId],
+      [categoryId]: !(current[categoryId] ?? DEFAULT_CATEGORY_COLLAPSED),
     }));
   }, []);
 
