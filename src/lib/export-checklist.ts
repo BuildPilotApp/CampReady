@@ -1,3 +1,4 @@
+import { tripToExportDocument } from "@/lib/checklist-export-format";
 import { STATUS_LABELS } from "@/lib/gear-status";
 import type { TripRecord } from "@/types";
 
@@ -71,6 +72,10 @@ export function formatChecklistAsCsv(trip: TripRecord): string {
   return rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
 }
 
+export function formatChecklistAsJson(trip: TripRecord): string {
+  return JSON.stringify(tripToExportDocument(trip), null, 2);
+}
+
 export function downloadChecklistCsv(trip: TripRecord): void {
   const csv = formatChecklistAsCsv(trip);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -78,6 +83,17 @@ export function downloadChecklistCsv(trip: TripRecord): void {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = `${sanitizeFilename(trip.name)}-pack-list.csv`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+export function downloadChecklistJson(trip: TripRecord): void {
+  const json = formatChecklistAsJson(trip);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${sanitizeFilename(trip.name)}-pack-list.json`;
   anchor.click();
   URL.revokeObjectURL(url);
 }

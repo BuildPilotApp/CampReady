@@ -1,5 +1,5 @@
 import { SystemThemeProvider } from "@/components/providers/system-theme-provider";
-import { SYSTEM_THEME_INIT_SCRIPT } from "@/lib/theme/system-theme";
+import { FORCE_DARK_THEME_INIT_SCRIPT } from "@/lib/theme/system-theme";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
@@ -25,10 +25,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#1b4332" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1a12" },
-  ],
+  themeColor: "#0f1a12",
 };
 
 export default function RootLayout({
@@ -37,13 +34,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark h-full" suppressHydrationWarning>
+    <html lang="en" className="dark h-full" data-theme="dark" suppressHydrationWarning>
       <head>
-        <meta name="color-scheme" content="light dark" />
+        <meta name="color-scheme" content="dark" />
         <Script
-          id="system-theme-init"
+          id="force-dark-theme-init"
           strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: SYSTEM_THEME_INIT_SCRIPT }}
+          dangerouslySetInnerHTML={{ __html: FORCE_DARK_THEME_INIT_SCRIPT }}
         />
       </head>
       <body className="min-h-full bg-zinc-950 text-foreground antialiased">

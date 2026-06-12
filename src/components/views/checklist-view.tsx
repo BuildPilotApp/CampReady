@@ -3,6 +3,10 @@
 import { AmazonAssociateDisclosure } from "@/components/checklist/amazon-associate-disclosure";
 import { CategorySection } from "@/components/checklist/category-section";
 import { ExportListButton } from "@/components/checklist/export-list-button";
+import {
+  ImportListButton,
+  type ImportListStatus,
+} from "@/components/checklist/import-list-button";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
 import { GearInventoryPanel } from "@/components/checklist/gear-inventory-panel";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
@@ -17,6 +21,7 @@ import { useState } from "react";
 export function ChecklistView() {
   const { activeTrip, activeTripStats, checklistFilter, addCategory } = useCampReady();
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [importStatus, setImportStatus] = useState<ImportListStatus | null>(null);
 
   const categories = activeTrip?.categories ?? [];
 
@@ -35,15 +40,34 @@ export function ChecklistView() {
 
       {activeTrip ? (
         <section className="mt-5 flex flex-col gap-3">
-          <div className="flex items-end justify-between gap-3 px-1">
-            <div className="min-w-0">
-              <h2 className="text-base font-bold text-foreground">
-                Pack for {activeTrip.name}
-              </h2>
-              <p className="mt-1 text-xs leading-snug text-muted">{PACK_TRIP_HINT}</p>
-              <AmazonAssociateDisclosure />
+          <div className="px-1">
+            <h2 className="text-base font-bold text-foreground">
+              Pack for {activeTrip.name}
+            </h2>
+            <p className="mt-1 text-xs leading-snug text-muted">{PACK_TRIP_HINT}</p>
+            <AmazonAssociateDisclosure />
+          </div>
+
+          <div className="rounded-xl border-2 border-border bg-surface px-3 py-2.5">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <ImportListButton
+                tripId={activeTrip.id}
+                onStatusChange={setImportStatus}
+              />
+              <ExportListButton trip={activeTrip} />
             </div>
-            <ExportListButton trip={activeTrip} />
+            {importStatus ? (
+              <p
+                role="status"
+                className={`mt-2 text-right text-xs font-semibold leading-snug ${
+                  importStatus.type === "error"
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-muted"
+                }`}
+              >
+                {importStatus.message}
+              </p>
+            ) : null}
           </div>
 
           <FilterToggle />

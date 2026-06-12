@@ -1,12 +1,12 @@
 "use client";
 
-import { usePro } from "@/components/providers/pro-provider";
 import {
   copyChecklistText,
   downloadChecklistCsv,
+  downloadChecklistJson,
 } from "@/lib/export-checklist";
 import type { TripRecord } from "@/types";
-import { Check, ChevronDown, Download, FileText } from "lucide-react";
+import { Braces, Check, ChevronDown, Download, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface ExportListButtonProps {
@@ -14,7 +14,6 @@ interface ExportListButtonProps {
 }
 
 export function ExportListButton({ trip }: ExportListButtonProps) {
-  const { isPro, openPaywall } = usePro();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -43,10 +42,7 @@ export function ExportListButton({ trip }: ExportListButtonProps) {
   }, [copied]);
 
   const handleToggle = () => {
-    if (!isPro) {
-      openPaywall();
-      return;
-    }
+    if (!hasItems) return;
     setOpen((current) => !current);
   };
 
@@ -61,6 +57,11 @@ export function ExportListButton({ trip }: ExportListButtonProps) {
     setOpen(false);
   };
 
+  const handleDownloadJson = () => {
+    downloadChecklistJson(trip);
+    setOpen(false);
+  };
+
   return (
     <div ref={menuRef} className="relative shrink-0">
       <button
@@ -69,23 +70,23 @@ export function ExportListButton({ trip }: ExportListButtonProps) {
         disabled={!hasItems}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="touch-target inline-flex items-center gap-1.5 rounded-xl border-2 border-border bg-surface px-3 py-2 text-xs font-bold text-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="touch-target inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-border bg-surface px-3 text-xs font-bold text-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {copied ? (
-          <Check className="size-4 text-accent" aria-hidden />
+          <Check className="size-4 shrink-0 text-accent" aria-hidden />
         ) : (
-          <Download className="size-4 text-accent" aria-hidden />
+          <Download className="size-4 shrink-0 text-accent" aria-hidden />
         )}
-        {copied ? "Copied" : "Export List"}
-        {isPro && hasItems ? (
+        <span className="whitespace-nowrap">{copied ? "Copied" : "Export List"}</span>
+        {hasItems ? (
           <ChevronDown
-            className={`size-3.5 text-muted transition-transform ${open ? "rotate-180" : ""}`}
+            className={`size-3.5 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
             aria-hidden
           />
         ) : null}
       </button>
 
-      {open && isPro ? (
+      {open && hasItems ? (
         <div
           role="menu"
           className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-xl border-2 border-border bg-surface shadow-lg"
@@ -107,6 +108,15 @@ export function ExportListButton({ trip }: ExportListButtonProps) {
           >
             <Download className="size-4 shrink-0 text-accent" aria-hidden />
             Download CSV
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleDownloadJson}
+            className="touch-target flex w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+          >
+            <Braces className="size-4 shrink-0 text-accent" aria-hidden />
+            Download JSON
           </button>
         </div>
       ) : null}

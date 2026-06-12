@@ -1,40 +1,26 @@
 /** Dark palette tokens shared by class and media-query selectors. */
 export const DARK_THEME_CLASS = "dark";
+export const DARK_THEME_ATTR = "data-theme";
+export const DARK_THEME_ATTR_VALUE = "dark";
 
-/**
- * Android System WebView reports `prefers-color-scheme: no-preference` even when
- * the device is in dark mode. Capacitor's WebView user agent includes `; wv)`.
- */
-export function isAndroidSystemWebView(): boolean {
-  if (typeof navigator === "undefined") {
-    return false;
-  }
+/** Inline JS shared by the init script and native WebView injection. */
+export const FORCE_DARK_THEME_JS = `(function(){try{var r=document.documentElement;r.classList.add("dark");r.classList.remove("light");r.setAttribute("data-theme","dark");r.style.colorScheme="dark";if(document.body){document.body.style.colorScheme="dark";}}catch(e){}})();`;
 
-  return /Android/i.test(navigator.userAgent) && /;\s*wv\)/.test(navigator.userAgent);
-}
+export const FORCE_DARK_THEME_INIT_SCRIPT = FORCE_DARK_THEME_JS;
 
-export function prefersDarkColorScheme(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) {
-    return false;
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
-/** Sync the `dark` class from `prefers-color-scheme` (web + iOS). */
-export function syncSystemThemeClass(): void {
+/** Always apply the root dark markers — app is dark-only on every platform. */
+export function forceDarkThemeClass(): void {
   if (typeof document === "undefined") {
     return;
   }
 
-  if (isAndroidSystemWebView()) {
-    return;
+  const root = document.documentElement;
+  root.classList.add(DARK_THEME_CLASS);
+  root.classList.remove("light");
+  root.setAttribute(DARK_THEME_ATTR, DARK_THEME_ATTR_VALUE);
+  root.style.colorScheme = "dark";
+
+  if (document.body) {
+    document.body.style.colorScheme = "dark";
   }
-
-  document.documentElement.classList.toggle(
-    DARK_THEME_CLASS,
-    prefersDarkColorScheme(),
-  );
 }
-
-export const SYSTEM_THEME_INIT_SCRIPT = `(()=>{try{if(/Android/i.test(navigator.userAgent)&&/;\\s*wv\\)/.test(navigator.userAgent))return;var d=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}})();`;

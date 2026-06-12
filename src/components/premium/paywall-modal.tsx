@@ -17,9 +17,9 @@ const FEATURES = [
   },
   {
     icon: Shield,
-    title: "Share Your Manifest",
+    title: "Merge Pack Lists",
     description:
-      "Export clean text or CSV checklists to share with partners or print for staging.",
+      "Import JSON or CSV exports to merge categories and gear into any trip without duplicates.",
   },
 ] as const;
 

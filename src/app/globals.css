@@ -1,28 +1,29 @@
 @import "tailwindcss";
 
-/* Class-based dark mode — required for Android WebView; web/iOS also set `.dark` via system-theme. */
-@custom-variant dark (&:where(.dark, .dark *));
+/* Dark-only app: `dark:` utilities always apply; `.dark` / data-theme are extra guards for WebView. */
+@custom-variant dark (&:where(*));
 
 :root {
-  --background: #eef2eb;
-  --foreground: #081408;
-  --muted: #2d4a36;
-  --border: #9fb39a;
-  --accent: #14532d;
-  --accent-foreground: #f0fdf4;
-  --surface: #ffffff;
-  --ring-track: #c5d4c0;
-  --ring-progress: #15803d;
+  color-scheme: dark;
+  --background: #0a120c;
+  --foreground: #f0fdf4;
+  --muted: #a8c4b0;
+  --border: #3d5c47;
+  --accent: #4ade80;
+  --accent-foreground: #052e16;
+  --surface: #132218;
+  --ring-track: #2a4030;
+  --ring-progress: #4ade80;
   --touch-target: 3rem;
   --mobile-max-width: 480px;
-  --status-missing-bg: #fef2f2;
-  --status-missing-fg: #991b1b;
-  --status-missing-border: #f87171;
-  --status-staged-bg: #fefce8;
-  --status-staged-fg: #854d0e;
-  --status-staged-border: #facc15;
-  --status-packed-bg: #ecfdf5;
-  --status-packed-fg: #14532d;
+  --status-missing-bg: #450a0a;
+  --status-missing-fg: #fecaca;
+  --status-missing-border: #ef4444;
+  --status-staged-bg: #422006;
+  --status-staged-fg: #fef08a;
+  --status-staged-border: #eab308;
+  --status-packed-bg: #052e16;
+  --status-packed-fg: #bbf7d0;
   --status-packed-border: #22c55e;
 }
 
@@ -46,56 +47,9 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-html.dark {
-  color-scheme: dark;
-  --background: #0a120c;
-  --foreground: #f0fdf4;
-  --muted: #a8c4b0;
-  --border: #3d5c47;
-  --accent: #4ade80;
-  --accent-foreground: #052e16;
-  --surface: #132218;
-  --ring-track: #2a4030;
-  --ring-progress: #4ade80;
-  --status-missing-bg: #450a0a;
-  --status-missing-fg: #fecaca;
-  --status-missing-border: #ef4444;
-  --status-staged-bg: #422006;
-  --status-staged-fg: #fef08a;
-  --status-staged-border: #eab308;
-  --status-packed-bg: #052e16;
-  --status-packed-fg: #bbf7d0;
-  --status-packed-border: #22c55e;
-}
-
-/* Fallback for browsers that honor prefers-color-scheme before JS runs. */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    color-scheme: dark;
-    --background: #0a120c;
-    --foreground: #f0fdf4;
-    --muted: #a8c4b0;
-    --border: #3d5c47;
-    --accent: #4ade80;
-    --accent-foreground: #052e16;
-    --surface: #132218;
-    --ring-track: #2a4030;
-    --ring-progress: #4ade80;
-    --status-missing-bg: #450a0a;
-    --status-missing-fg: #fecaca;
-    --status-missing-border: #ef4444;
-    --status-staged-bg: #422006;
-    --status-staged-fg: #fef08a;
-    --status-staged-border: #eab308;
-    --status-packed-bg: #052e16;
-    --status-packed-fg: #bbf7d0;
-    --status-packed-border: #22c55e;
-  }
-}
-
 html {
   height: 100%;
-  color-scheme: light dark;
+  color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
   text-size-adjust: 100%;
 }

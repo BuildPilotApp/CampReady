@@ -1,6 +1,11 @@
 "use client";
 
 import { nextGearStatus } from "@/lib/gear-status";
+import type { ChecklistExportCategory } from "@/lib/checklist-export-format";
+import {
+  mergeImportedCategories,
+  type ImportMergeResult,
+} from "@/lib/import-checklist";
 import {
   cloneCategories,
   hydrateDatabase,
@@ -126,6 +131,10 @@ interface CampReadyContextValue {
   deleteItem: (itemId: string) => void;
   cycleItemStatus: (itemId: string) => void;
   resetAllItems: () => void;
+  importChecklistIntoTrip: (
+    tripId: string,
+    categories: ChecklistExportCategory[],
+  ) => ImportMergeResult | null;
 }
 
 const CampReadyContext = createContext<CampReadyContextValue | null>(null);
@@ -686,6 +695,26 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     );
   }, [database, persist]);
 
+  const importChecklistIntoTrip = useCallback(
+    (tripId: string, categories: ChecklistExportCategory[]) => {
+      if (!database) return null;
+
+      const trip = database.trips.find((entry) => entry.id === tripId);
+      if (!trip) return null;
+
+      const result = mergeImportedCategories(trip.categories, categories);
+      persist(
+        updateTripById(database, tripId, (currentTrip) => ({
+          ...currentTrip,
+          categories: result.categories,
+        })),
+      );
+      setChecklistFilter("all");
+      return result;
+    },
+    [database, persist],
+  );
+
   const value = useMemo<CampReadyContextValue | null>(() => {
     if (!database) {
       return null;
@@ -732,6 +761,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       deleteItem,
       cycleItemStatus,
       resetAllItems,
+      importChecklistIntoTrip,
     };
   }, [
     ready,
@@ -771,6 +801,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     deleteItem,
     cycleItemStatus,
     resetAllItems,
+    importChecklistIntoTrip,
   ]);
 
   if (!value) {

@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  isAndroidSystemWebView,
-  syncSystemThemeClass,
+  DARK_THEME_CLASS,
+  forceDarkThemeClass,
 } from "@/lib/theme/system-theme";
 import { useEffect } from "react";
 
 /**
- * Keeps the root `dark` class aligned with the OS theme on web and iOS.
- * Android Capacitor WebView is synced from MainActivity because matchMedia is unreliable there.
+ * Keeps dark markers on <html> after hydration and re-applies them if a
+ * WebView or OEM skin strips the class (common on Samsung, Xiaomi, etc.).
  */
 export function SystemThemeProvider({
   children,
@@ -16,17 +16,32 @@ export function SystemThemeProvider({
   children: React.ReactNode;
 }) {
   useEffect(() => {
-    if (isAndroidSystemWebView()) {
-      return;
-    }
+    forceDarkThemeClass();
 
-    syncSystemThemeClass();
+    const enforce = () => forceDarkThemeClass();
 
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => syncSystemThemeClass();
+    const observer = new MutationObserver(() => {
+      if (!document.documentElement.classList.contains(DARK_THEME_CLASS)) {
+        forceDarkThemeClass();
+      }
+    });
 
-    media.addEventListener("change", handleChange);
-    return () => media.removeEventListener("change", handleChange);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+
+    window.addEventListener("pageshow", enforce);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        enforce();
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("pageshow", enforce);
+    };
   }, []);
 
   return children;

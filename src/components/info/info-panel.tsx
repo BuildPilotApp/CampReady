@@ -19,56 +19,152 @@ import { useState } from "react";
 const ABOUT_TEXT =
   "CampReady is a simple gear checklist for camping and road trips. Build a reusable inventory of the gear you own, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. CampReady is designed to be easy to scan with one hand—so you can focus on getting out the door without wondering what you left behind.";
 
-const USER_GUIDE = [
+interface UserGuideItem {
+  text: string;
+  lifetimePro?: boolean;
+}
+
+interface UserGuideSection {
+  title: string;
+  description?: string;
+  items: UserGuideItem[];
+}
+
+const LIFETIME_PRO_LABEL = "CampReady Lifetime Pro";
+
+const USER_GUIDE: UserGuideSection[] = [
   {
     title: "Getting started",
     items: [
-      "Open the Dashboard to create trips, track packing progress, and view weather.",
-      "The app starts with no trips—tap Create new trip to add your first one.",
-      "When creating or editing a trip, open Gear checklist to choose New or a saved checklist from your inventory.",
-      "Select a trip on the Dashboard, then switch to the Gear Checklist tab to pack.",
+      {
+        text: "Open the Dashboard to create trips, track packing progress, and view weather.",
+      },
+      {
+        text: "The app starts with no trips—tap Create new trip to add your first one.",
+      },
+      {
+        text: "When creating or editing a trip, open Gear checklist to choose New or a saved checklist from your inventory.",
+      },
+      {
+        text: "Select a trip on the Dashboard, then switch to the Gear Checklist tab to pack.",
+      },
     ],
   },
   {
     title: "Saved gear checklists (your inventory)",
     items: [
-      "Saved checklists are reusable lists of the gear you own, organized by category.",
-      "On the Gear Checklist tab, expand Gear inventory to manage saved lists and build new ones. It stays collapsed by default so packing stays front and center.",
-      "Each gear item has optional weight (lbs) and storage fields—for example tote, bin, or shelf.",
-      "When you edit or create a checklist and trips exist, CampReady asks whether to load it onto a trip or edit inventory only—you pick which trip to replace.",
-      "Saved checklists also appear when creating or editing a trip on the Dashboard.",
-      "You can copy a trip's packed list into inventory with Save trip list to inventory inside Gear inventory.",
+      {
+        text: "Saved checklists are reusable lists of the gear you own, organized by category.",
+      },
+      {
+        text: "On the Gear Checklist tab, expand Gear inventory to manage saved lists and build new ones. It stays collapsed by default so packing stays front and center.",
+      },
+      {
+        text: "Each gear item has optional weight (lbs) and storage fields—for example tote, bin, or shelf.",
+      },
+      {
+        text: "When you edit or create a checklist and trips exist, CampReady asks whether to load it onto a trip or edit inventory only—you pick which trip to replace.",
+      },
+      {
+        text: "Saved checklists also appear when creating or editing a trip on the Dashboard.",
+      },
+      {
+        text: "You can copy a trip's packed list into inventory with Save trip list to inventory inside Gear inventory.",
+      },
     ],
   },
   {
     title: "Packing a trip",
     items: [
-      "With a trip selected, the Pack for section lists that trip's gear checklist.",
-      "Add categories or totes to group gear—for example Kitchen, Shelter, or Tools.",
-      "Category headers use a soft color tint—red for Needed, yellow for Staged, green when fully Packed—so you can spot what still needs attention.",
-      "Each item shows a Needed, Staged, or Packed badge that matches its status color. Tap an item to advance: Needed → Staged → Packed.",
-      "Use Edit at the top of a category to rename the category, add or remove items, or adjust weight and storage details.",
-      "Use All or To pack to filter the list. Reset All (floating button) sets every item back to Needed.",
+      {
+        text: "With a trip selected, the Pack for section lists that trip's gear checklist.",
+      },
+      {
+        text: "Add categories or totes to group gear—for example Kitchen, Shelter, or Tools.",
+      },
+      {
+        text: "Category headers use a soft color tint—red for Needed, yellow for Staged, green when fully Packed—so you can spot what still needs attention.",
+      },
+      {
+        text: "Each item shows a Needed, Staged, or Packed badge that matches its status color. Tap an item to advance: Needed → Staged → Packed.",
+      },
+      {
+        text: "Use Edit at the top of a category to rename the category, add or remove items, or adjust weight and storage details.",
+      },
+      {
+        text: "Use All or To pack to filter the list. Reset All (floating button) sets every item back to Needed.",
+      },
+      {
+        text: "Export List: in the pack list toolbar, tap Export List to copy your checklist as text or download CSV or JSON. Available when the trip has at least one item.",
+      },
     ],
   },
   {
     title: "Trip details & weather",
     items: [
-      "Expand Edit trip details on a trip card to change dates, location, or load a different saved checklist.",
-      "Add a location using suggestions or press Enter to match coordinates.",
-      "Weather shows daily high/low temps and wind for each trip day.",
-      "Within 10 days: Live Forecast. Beyond that: Historical Average.",
+      {
+        text: "Expand Edit trip details on a trip card to change dates, location, or load a different saved checklist.",
+      },
+      {
+        text: "Add a location using suggestions or press Enter to match coordinates.",
+      },
+      {
+        text: "Weather shows daily high/low temps and wind for each trip day.",
+      },
+      {
+        text: "Within 10 days: Live Forecast. Beyond that: Historical Average.",
+      },
+    ],
+  },
+  {
+    title: LIFETIME_PRO_LABEL,
+    description:
+      "CampReady is free to use with one trip and one saved gear checklist. Lifetime Pro is a one-time upgrade that unlocks the features below. You can read these instructions anytime—even before upgrading—to see how Pro works and what you gain.",
+    items: [
+      {
+        text: "Unlimited trips: create and manage as many concurrent trips as you need instead of being limited to one.",
+        lifetimePro: true,
+      },
+      {
+        text: "Unlimited saved gear checklists: build separate inventories for different rigs, seasons, or family setups instead of being limited to one.",
+        lifetimePro: true,
+      },
+      {
+        text: "Import List: merge a previously exported pack list back into a trip. On the Gear Checklist tab, tap Import List in the pack list toolbar (next to Export List). Select a .json or .csv file in CampReady's export format. Categories and items that already exist are combined by name—nothing is duplicated, and your current pack status on matching items is kept. Weight and storage details update when the import file includes them.",
+        lifetimePro: true,
+      },
+      {
+        text: "To upgrade, tap any Pro-only button (such as Import List, or Create new trip when you already have one trip) and follow the Lifetime Pro checkout. Pro unlocks on this device after purchase—no subscription.",
+        lifetimePro: true,
+      },
     ],
   },
   {
     title: "Tips",
     items: [
-      "Choose New when creating a trip if you want to build a fresh checklist as you pack.",
-      "Save a checklist once you have your gear inventory set up—reuse it on every trip.",
-      "Data saves automatically on this device. No account required.",
+      {
+        text: "Choose New when creating a trip if you want to build a fresh checklist as you pack.",
+      },
+      {
+        text: "Save a checklist once you have your gear inventory set up—reuse it on every trip.",
+      },
+      {
+        text: "Data saves automatically on this device. No account required.",
+      },
+      {
+        text: "Export a trip before a big pack. With Lifetime Pro, import that file later to merge gear back in without starting over.",
+      },
     ],
   },
 ];
+
+function LifetimeProBadge() {
+  return (
+    <span className="mr-1.5 inline-flex shrink-0 items-center rounded-md bg-teal-500/15 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+      Lifetime Pro
+    </span>
+  );
+}
 
 function PanelHeader({
   title,
@@ -252,10 +348,19 @@ export function InfoPanel() {
           {USER_GUIDE.map((section) => (
             <li key={section.title}>
               <p className="text-base font-bold text-foreground">{section.title}</p>
+              {section.description ? (
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {section.description}
+                </p>
+              ) : null}
               <ul className="mt-2 list-disc space-y-2 pl-5">
                 {section.items.map((item) => (
-                  <li key={item} className="text-sm leading-relaxed text-muted">
-                    {item}
+                  <li
+                    key={item.text}
+                    className="text-sm leading-relaxed text-muted"
+                  >
+                    {item.lifetimePro ? <LifetimeProBadge /> : null}
+                    {item.text}
                   </li>
                 ))}
               </ul>
