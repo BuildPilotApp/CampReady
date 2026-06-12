@@ -1,12 +1,10 @@
 import { Capacitor } from "@capacitor/core";
+import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 
-function prefersNativeShare(): boolean {
+function prefersMobileWebShare(): boolean {
   if (typeof navigator === "undefined") {
     return false;
-  }
-
-  if (Capacitor.isNativePlatform()) {
-    return true;
   }
 
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -61,9 +59,44 @@ function dataUrlDownload(content: string, filename: string, mimeType: string): v
   anchorDownload(dataUrl, filename);
 }
 
+function isShareCanceled(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return true;
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  return /cancel/i.test(message);
+}
+
+async function downloadTextFileNative(
+  content: string,
+  filename: string,
+): Promise<boolean> {
+  try {
+    const { uri } = await Filesystem.writeFile({
+      path: `exports/${filename}`,
+      data: content,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8,
+      recursive: true,
+    });
+
+    await Share.share({
+      title: filename,
+      files: [uri],
+      dialogTitle: `Save ${filename}`,
+    });
+
+    return true;
+  } catch (error) {
+    return isShareCanceled(error);
+  }
+}
+
 /**
- * Saves text content as a downloadable file. Uses the system share sheet on
- * mobile and Capacitor, with anchor and data-URL fallbacks for desktop web.
+ * Saves text content as a downloadable file. Uses Capacitor Filesystem + Share on
+ * native apps, the system share sheet on mobile browsers, and anchor downloads
+ * on desktop web.
  */
 export async function downloadTextFile(
   content: string,
@@ -74,9 +107,13 @@ export async function downloadTextFile(
     return false;
   }
 
+  if (Capacitor.isNativePlatform()) {
+    return downloadTextFileNative(content, filename);
+  }
+
   const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
 
-  if (prefersNativeShare()) {
+  if (prefersMobileWebShare()) {
     const shared = await shareDownloadFile(blob, filename, mimeType);
     if (shared) {
       return true;
