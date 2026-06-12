@@ -60,10 +60,10 @@ function AffiliateGearLinkButton({
         void openExternalUrl(url);
       }}
       aria-label={`Check price for ${itemName} on Amazon`}
-      className={`inline-flex h-12 w-[7.25rem] shrink-0 items-center justify-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-3 text-[0.65rem] font-semibold leading-none text-muted shadow-sm active:scale-[0.97] active:bg-background active:opacity-90 dark:border-border/60 dark:bg-surface/80 dark:text-zinc-300 dark:active:bg-surface ${className}`}
+      className={`inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-3 text-[0.65rem] font-semibold leading-none text-muted shadow-sm active:scale-[0.97] active:bg-background active:opacity-90 sm:h-12 dark:border-border/60 dark:bg-surface/80 dark:text-zinc-300 dark:active:bg-surface ${className}`}
     >
       <ShoppingCart className="size-3 shrink-0" strokeWidth={2.25} aria-hidden />
-      <span className="truncate">Check Price</span>
+      <span className="truncate whitespace-nowrap">Check Price</span>
     </button>
   );
 
@@ -157,19 +157,19 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
         packed ? "bg-background/40" : staged ? "bg-status-staged-bg/25" : "bg-surface"
       }`}
     >
-      <div className="flex min-h-16 items-center gap-1">
+      <div className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center gap-x-3 gap-y-1.5 px-3 py-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:grid-rows-1 sm:gap-y-0 sm:py-0">
         <button
           type="button"
           onClick={() => cycleItemStatus(item.id)}
           aria-label={`${item.name}, ${packStatusLabel(item.status)}. Tap to update.`}
-          className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 text-left active:opacity-90"
+          className="col-span-2 row-start-1 flex min-w-0 items-center gap-3 text-left active:opacity-90 sm:col-span-2"
         >
           <span className="inline-flex size-11 shrink-0 items-center justify-center">
             <PackStatusIndicator status={item.status} />
           </span>
           <span className="flex min-w-0 flex-1 flex-col justify-center">
             <span
-              className={`block text-base font-bold leading-snug ${
+              className={`block truncate text-base font-bold leading-snug sm:pr-2 ${
                 packed
                   ? "text-muted line-through decoration-border dark:text-zinc-500 dark:decoration-zinc-600"
                   : "text-foreground dark:text-white"
@@ -179,9 +179,11 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
             </span>
             <ItemMetaLine item={item} />
           </span>
-          <StatusBadge status={item.status} compact />
         </button>
-        <AffiliateGearLinkButton itemName={item.name} />
+        <div className="col-start-2 row-start-2 flex shrink-0 items-center justify-end gap-2 sm:col-start-3 sm:row-start-1">
+          <StatusBadge status={item.status} compact />
+          <AffiliateGearLinkButton itemName={item.name} variant="inline" />
+        </div>
       </div>
     </div>
   );
