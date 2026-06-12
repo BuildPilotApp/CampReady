@@ -18,7 +18,7 @@ CampReady may make limited network requests only when you explicitly use optiona
 
 - **Weather forecasts** for a trip location you enter
 - **Location suggestions** while typing a place name
-- **Opening affiliate product links** when you tap a gear price tag icon
+- **Opening affiliate product links** when you tap the shopping cart icon on an eligible gear item
 - **Completing a Pro upgrade** through Stripe in your system browser
 
 These requests are initiated by your actions. CampReady does not perform background tracking or silent data collection.
