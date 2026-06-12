@@ -513,6 +513,10 @@ export const AMAZON_AFFILIATE_TAG = "YOUR_AMAZON_TAG_HERE";
 export const AMAZON_ASSOCIATE_DISCLOSURE =
   "As an Amazon Associate I earn from qualifying purchases.";
 
+/** Supplementary in-app note describing how affiliate shopping links are presented. */
+export const AMAZON_ASSOCIATE_USAGE_NOTE =
+  "Tapping the shopping cart icon on eligible gear items opens Amazon search links and may earn the creator a small commission at no extra cost to you.";
+
 const OUTDOOR_GEAR_KEYWORDS = new Set<string>([
   ...OUTDOOR_OFFGRID_KEYWORDS,
   "Solar",

@@ -3,18 +3,17 @@ import { STORAGE_KEY } from "./constants";
 
 let configured = false;
 
-/** Configure localforage once; prefers localStorage for instant offline writes. */
+/**
+ * IndexedDB mirror for durable offline backup — separate from synchronous localStorage.
+ * Does not duplicate the localStorage driver to avoid redundant writes to the same store.
+ */
 export function getLocalForage(): LocalForage {
   if (!configured) {
     localforage.config({
       name: "campready",
       storeName: "offline",
-      description: "CampReady offline checklist data",
-      driver: [
-        localforage.LOCALSTORAGE,
-        localforage.INDEXEDDB,
-        localforage.WEBSQL,
-      ],
+      description: "CampReady IndexedDB offline mirror",
+      driver: [localforage.INDEXEDDB],
     });
     configured = true;
   }
@@ -42,6 +41,10 @@ export async function writeToLocalForage(serialized: string): Promise<void> {
 }
 
 export async function clearLocalForage(): Promise<void> {
-  const store = getLocalForage();
-  await store.removeItem(STORAGE_KEY);
+  try {
+    const store = getLocalForage();
+    await store.removeItem(STORAGE_KEY);
+  } catch {
+    // Best-effort durable store clear.
+  }
 }

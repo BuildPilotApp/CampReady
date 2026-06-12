@@ -9,7 +9,9 @@ import { useEffect } from "react";
  */
 export function StorageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    void hydrateDatabase();
+    void hydrateDatabase().catch(() => {
+      // Hydration errors are handled by CampReadyProvider.
+    });
   }, []);
 
   return children;

@@ -14,7 +14,7 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { TERMS_LAST_UPDATED, TERMS_SECTIONS } from "@/lib/legal-copy";
 import type { InfoView } from "@/types";
 import { ChevronLeft } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 const ABOUT_TEXT =
   "CampReady is a simple gear checklist for camping and road trips. Build a reusable inventory of the gear you own, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. CampReady is designed to be easy to scan with one hand, so you can focus on getting out the door without wondering what you left behind.";
@@ -160,7 +160,7 @@ const USER_GUIDE: UserGuideSection[] = [
 
 function LifetimeProBadge() {
   return (
-    <span className="mr-1.5 inline-flex shrink-0 items-center rounded-md bg-teal-500/15 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+    <span className="mr-1.5 inline-flex shrink-0 items-center rounded-md bg-teal-500/15 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300">
       Lifetime Pro
     </span>
   );
@@ -199,6 +199,8 @@ function FeedbackForm({
   prompt: string;
   onBack: () => void;
 }) {
+  const messageId = useId();
+  const emailId = useId();
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -250,22 +252,24 @@ function FeedbackForm({
         onBack={onBack}
       />
       <p className="mt-4 text-base leading-relaxed text-muted">{prompt}</p>
-      <label className="mt-4 flex flex-col gap-1">
+      <label htmlFor={messageId} className="mt-4 flex flex-col gap-1">
         <span className="text-xs font-bold uppercase tracking-wide text-muted">
           Message
         </span>
         <textarea
+          id={messageId}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={5}
           className={modalTextareaClassName}
         />
       </label>
-      <label className="mt-3 flex flex-col gap-1">
+      <label htmlFor={emailId} className="mt-3 flex flex-col gap-1">
         <span className="text-xs font-bold uppercase tracking-wide text-muted">
           Email (optional)
         </span>
         <input
+          id={emailId}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}

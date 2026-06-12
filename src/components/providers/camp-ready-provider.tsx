@@ -8,14 +8,24 @@ import {
 } from "@/lib/import-checklist";
 import {
   cloneCategories,
-  hydrateDatabase,
+  clearDatabase,
   createCategory,
   createGearItem,
   createTrip,
+  createEmptyDatabase,
+  ensureSeededDatabase,
   getTripStats,
+  hydrateDatabase,
   touchTrip,
   writeDatabaseSync,
+  type HydrationRecoveryReason,
 } from "@/lib/storage";
+import {
+  clearUiSessionState,
+  readUiSessionState,
+  writeUiSessionState,
+} from "@/lib/storage/ui-session-state";
+import { flushPendingFeedbackSubmissions } from "@/lib/feedback-submission";
 import {
   CUSTOM_TEMPLATE_ID,
   getTemplateOptionLabel,
@@ -135,6 +145,12 @@ interface CampReadyContextValue {
     tripId: string,
     categories: ChecklistExportCategory[],
   ) => ImportMergeResult | null;
+  storageRecovery: HydrationRecoveryReason | null;
+  dismissStorageRecovery: () => void;
+  resetAllData: () => void;
+  restoreBackupCategories: (
+    categories: ChecklistExportCategory[],
+  ) => ImportMergeResult | null;
 }
 
 const CampReadyContext = createContext<CampReadyContextValue | null>(null);
@@ -193,21 +209,85 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
     null,
   );
+  const [storageRecovery, setStorageRecovery] =
+    useState<HydrationRecoveryReason | null>(null);
+  const [uiSessionHydrated, setUiSessionHydrated] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
-    void hydrateDatabase().then((data) => {
-      if (!cancelled) {
-        setDatabase(data);
-        setReady(true);
-      }
-    });
+    void hydrateDatabase()
+      .then((result) => {
+        if (!cancelled) {
+          setDatabase(result.database);
+          if (result.recovered && result.reason) {
+            setStorageRecovery(result.reason);
+          }
+          setReady(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          const fallback = ensureSeededDatabase(createEmptyDatabase());
+          setDatabase(fallback);
+          setStorageRecovery("error");
+          setReady(true);
+          try {
+            writeDatabaseSync(fallback);
+          } catch {
+            // In-memory state is usable even if disk write fails.
+          }
+        }
+      });
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!ready || uiSessionHydrated) {
+      return;
+    }
+
+    const session = readUiSessionState();
+    if (session.activeTab) {
+      setActiveTab(session.activeTab);
+    }
+    if (session.checklistFilter) {
+      setChecklistFilter(session.checklistFilter);
+    }
+    if (session.collapsedCategories) {
+      setCollapsedCategories(session.collapsedCategories);
+    }
+    setUiSessionHydrated(true);
+  }, [ready, uiSessionHydrated]);
+
+  useEffect(() => {
+    if (!ready || !uiSessionHydrated) {
+      return;
+    }
+
+    writeUiSessionState({
+      activeTab,
+      checklistFilter,
+      collapsedCategories,
+    });
+  }, [ready, uiSessionHydrated, activeTab, checklistFilter, collapsedCategories]);
+
+  useEffect(() => {
+    if (!ready) {
+      return;
+    }
+
+    const flushQueue = () => {
+      void flushPendingFeedbackSubmissions();
+    };
+
+    flushQueue();
+    window.addEventListener("online", flushQueue);
+    return () => window.removeEventListener("online", flushQueue);
+  }, [ready]);
 
   const persist = useCallback((next: CampReadyDatabase) => {
     setDatabase(next);
@@ -719,6 +799,66 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const dismissStorageRecovery = useCallback(() => {
+    setStorageRecovery(null);
+  }, []);
+
+  const resetAllData = useCallback(() => {
+    const empty = ensureSeededDatabase(createEmptyDatabase());
+    clearDatabase();
+    clearUiSessionState();
+    persist(empty);
+    setCollapsedCategories({});
+    setChecklistFilter("all");
+    setEditingTemplateId(null);
+    setActiveTab("dashboard");
+    setUiSessionHydrated(true);
+  }, [persist]);
+
+  const restoreBackupCategories = useCallback(
+    (categories: ChecklistExportCategory[]) => {
+      if (!database) return null;
+
+      let workingDatabase = database;
+      let tripId = database.activeTripId ?? database.trips[0]?.id ?? null;
+
+      if (!tripId) {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() + 7);
+        const iso = startDate.toISOString().slice(0, 10);
+        const trip: TripRecord = {
+          ...createTrip({
+            name: "Restored trip",
+            startDate: iso,
+            endDate: iso,
+          }),
+          categories: [],
+        };
+        tripId = trip.id;
+        workingDatabase = {
+          ...database,
+          trips: [trip, ...database.trips],
+          activeTripId: tripId,
+        };
+      }
+
+      const trip = workingDatabase.trips.find((entry) => entry.id === tripId);
+      if (!trip) return null;
+
+      const result = mergeImportedCategories(trip.categories, categories);
+      persist(
+        updateTripById(workingDatabase, tripId, (currentTrip) => ({
+          ...currentTrip,
+          categories: result.categories,
+        })),
+      );
+      setActiveTab("checklist");
+      setChecklistFilter("all");
+      return result;
+    },
+    [database, persist],
+  );
+
   const value = useMemo<CampReadyContextValue | null>(() => {
     if (!database) {
       return null;
@@ -766,6 +906,10 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       cycleItemStatus,
       resetAllItems,
       importChecklistIntoTrip,
+      storageRecovery,
+      dismissStorageRecovery,
+      resetAllData,
+      restoreBackupCategories,
     };
   }, [
     ready,
@@ -806,6 +950,10 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     cycleItemStatus,
     resetAllItems,
     importChecklistIntoTrip,
+    storageRecovery,
+    dismissStorageRecovery,
+    resetAllData,
+    restoreBackupCategories,
   ]);
 
   if (!value) {

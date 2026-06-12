@@ -12,37 +12,75 @@ export interface FeedbackSubmission {
   email: string;
 }
 
-function saveSubmissionLocally(entry: FeedbackSubmission & { at: string }): void {
-  let existing: unknown[] = [];
-  try {
-    existing = JSON.parse(
-      localStorage.getItem(LOCAL_SUBMISSIONS_KEY) ?? "[]",
-    ) as unknown[];
-    if (!Array.isArray(existing)) {
-      existing = [];
-    }
-  } catch {
-    existing = [];
-  }
-  localStorage.setItem(
-    LOCAL_SUBMISSIONS_KEY,
-    JSON.stringify([entry, ...existing]),
-  );
+interface QueuedFeedbackSubmission extends FeedbackSubmission {
+  id: string;
+  at: string;
 }
 
-export async function submitFeedback(
-  submission: FeedbackSubmission,
-): Promise<"sent" | "saved"> {
-  const entry = {
-    ...submission,
-    at: new Date().toISOString(),
-  };
+export interface FeedbackFlushResult {
+  sent: number;
+  remaining: number;
+}
 
-  if (typeof navigator !== "undefined" && !navigator.onLine) {
-    saveSubmissionLocally(entry);
-    return "saved";
+function readQueuedSubmissions(): QueuedFeedbackSubmission[] {
+  if (typeof window === "undefined") {
+    return [];
   }
 
+  try {
+    const raw = localStorage.getItem(LOCAL_SUBMISSIONS_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter((entry): entry is QueuedFeedbackSubmission => {
+      if (typeof entry !== "object" || entry === null) {
+        return false;
+      }
+
+      const record = entry as Partial<QueuedFeedbackSubmission>;
+      return (
+        typeof record.id === "string" &&
+        typeof record.at === "string" &&
+        (record.type === "feedback" || record.type === "bug") &&
+        typeof record.message === "string" &&
+        typeof record.email === "string"
+      );
+    });
+  } catch {
+    return [];
+  }
+}
+
+function writeQueuedSubmissions(entries: QueuedFeedbackSubmission[]): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    if (entries.length === 0) {
+      localStorage.removeItem(LOCAL_SUBMISSIONS_KEY);
+      return;
+    }
+
+    localStorage.setItem(LOCAL_SUBMISSIONS_KEY, JSON.stringify(entries));
+  } catch {
+    // Queue write is best-effort.
+  }
+}
+
+function saveSubmissionLocally(entry: QueuedFeedbackSubmission): void {
+  writeQueuedSubmissions([entry, ...readQueuedSubmissions()]);
+}
+
+async function postFeedbackToFormspree(
+  submission: FeedbackSubmission,
+): Promise<boolean> {
   try {
     const response = await fetch(FORMSPREE_ENDPOINT, {
       method: "POST",
@@ -61,14 +99,59 @@ export async function submitFeedback(
       }),
     });
 
-    if (response.ok) {
-      return "sent";
-    }
-
-    saveSubmissionLocally(entry);
-    return "saved";
+    return response.ok;
   } catch {
+    return false;
+  }
+}
+
+/** Attempts to upload any locally queued feedback when connectivity returns. */
+export async function flushPendingFeedbackSubmissions(): Promise<FeedbackFlushResult> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const remaining = readQueuedSubmissions().length;
+    return { sent: 0, remaining };
+  }
+
+  const queue = readQueuedSubmissions();
+  if (queue.length === 0) {
+    return { sent: 0, remaining: 0 };
+  }
+
+  const stillPending: QueuedFeedbackSubmission[] = [];
+  let sent = 0;
+
+  for (const entry of queue) {
+    const delivered = await postFeedbackToFormspree(entry);
+    if (delivered) {
+      sent += 1;
+    } else {
+      stillPending.push(entry);
+    }
+  }
+
+  writeQueuedSubmissions(stillPending);
+  return { sent, remaining: stillPending.length };
+}
+
+export async function submitFeedback(
+  submission: FeedbackSubmission,
+): Promise<"sent" | "saved"> {
+  const entry: QueuedFeedbackSubmission = {
+    ...submission,
+    id: crypto.randomUUID(),
+    at: new Date().toISOString(),
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
     saveSubmissionLocally(entry);
     return "saved";
   }
+
+  const delivered = await postFeedbackToFormspree(submission);
+  if (delivered) {
+    return "sent";
+  }
+
+  saveSubmissionLocally(entry);
+  return "saved";
 }

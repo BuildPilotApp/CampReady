@@ -5,11 +5,12 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { usePro } from "@/components/providers/pro-provider";
 import { canCreateTemplate } from "@/lib/pro";
 import { ChevronDown, Save } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 export function SaveChecklistTemplate() {
   const { activeTrip, createTemplateFromTrip, database } = useCampReady();
   const { isPro, openPaywall } = usePro();
+  const checklistNameId = useId();
   const [name, setName] = useState("");
 
   if (!activeTrip) {
@@ -42,11 +43,12 @@ export function SaveChecklistTemplate() {
           </p>
         ) : (
           <>
-            <label className="flex flex-col gap-1">
-              <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
+            <label htmlFor={checklistNameId} className="flex flex-col gap-1">
+              <span className="text-xs font-bold uppercase tracking-wide text-muted">
                 Checklist name
               </span>
               <input
+                id={checklistNameId}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"

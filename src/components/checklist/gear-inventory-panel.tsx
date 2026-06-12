@@ -12,9 +12,10 @@ import {
   SAVED_CHECKLISTS_HEADER_SUBTITLE,
 } from "@/lib/gear-checklist-copy";
 import { getTemplateStats } from "@/lib/templates";
+import { usePersistedDraft } from "@/hooks/use-persisted-draft";
 import type { ChecklistTemplate, TripRecord } from "@/types";
 import { ChevronDown, ClipboardList, Layers, Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 interface PendingChecklistAction {
   templateId: string;
@@ -113,7 +114,6 @@ export function GearInventoryPanel() {
   );
   const [newChecklistName, setNewChecklistName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [editName, setEditName] = useState("");
 
   const templates = useMemo(
     () =>
@@ -129,10 +129,20 @@ export function GearInventoryPanel() {
   );
 
   const template = editingTemplate;
+  const editChecklistNameId = useId();
 
-  useEffect(() => {
-    setEditName(template?.name ?? "");
-  }, [template?.id, template?.name]);
+  const { draft: editName, setDraft: setEditName, handleBlur: handleEditNameBlur } =
+    usePersistedDraft({
+      savedValue: template?.name ?? "",
+      resetKey: template?.id ?? "none",
+      onSave: (value) => {
+        if (!template) return;
+        const next = value.trim();
+        if (next && next !== template.name) {
+          updateTemplate(template.id, { name: next });
+        }
+      },
+    });
 
   useEffect(() => {
     if (editingTemplateId && detailsRef.current) {
@@ -304,19 +314,15 @@ export function GearInventoryPanel() {
             ) : (
               <div className="mt-3 flex flex-col gap-3">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                  <label className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
+                  <label htmlFor={editChecklistNameId} className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="text-xs font-bold uppercase tracking-wide text-muted">
                       Checklist name
                     </span>
                     <input
+                      id={editChecklistNameId}
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      onBlur={() => {
-                        const next = editName.trim();
-                        if (next && next !== template.name) {
-                          updateTemplate(template.id, { name: next });
-                        }
-                      }}
+                      onBlur={handleEditNameBlur}
                       className="touch-target rounded-xl border-2 border-border bg-surface px-3 text-sm font-semibold text-foreground"
                     />
                   </label>
@@ -330,7 +336,7 @@ export function GearInventoryPanel() {
                 </div>
 
                 <div className="rounded-lg border border-dashed border-border p-2.5">
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Add category or tote
                   </p>
                   <div className="mt-1.5 flex gap-2">

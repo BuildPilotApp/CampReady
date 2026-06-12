@@ -20,4 +20,31 @@ export {
   hydrateDatabase,
   clearDatabase,
   isStorageAvailable,
+  sanitizeDatabase,
+  tryWriteLocalStorage,
+  type HydrationResult,
+  type HydrationRecoveryReason,
+  type StorageWriteResult,
 } from "./database";
+export { normalizeDatabaseDocument } from "./schema-normalize";
+export {
+  logStorageRepair,
+  getStorageAuditLog,
+  clearStorageAuditLog,
+  type StorageAuditEntry,
+} from "./storage-audit-log";
+export {
+  readUiSessionState,
+  writeUiSessionState,
+  clearUiSessionState,
+  UI_SESSION_STORAGE_KEY,
+  type UiSessionState,
+} from "./ui-session-state";
+export {
+  subscribeStoragePersistenceStatus,
+  subscribeImportValidationFailure,
+  notifyImportValidationFailure,
+  clearImportValidationFailure,
+  isStoragePersistenceBlocked,
+  type StorageWriteFailureReason,
+} from "./storage-notifications";

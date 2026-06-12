@@ -137,7 +137,7 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
         <p
           id="export-list-feedback"
           role="status"
-          className={`absolute right-0 top-full z-50 mt-1 max-w-52 text-right text-[0.65rem] font-semibold leading-snug ${
+          className={`absolute right-0 top-full z-50 mt-1 max-w-52 text-right text-xs font-semibold leading-snug ${
             feedback.type === "error"
               ? "text-red-600 dark:text-red-400"
               : "text-muted"
@@ -157,7 +157,7 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
             type="button"
             role="menuitem"
             onClick={() => void handleCopyText()}
-            className="touch-target flex min-h-11 w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            className="touch-target flex min-h-12 w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
           >
             <FileText className="size-4 shrink-0 text-accent" aria-hidden />
             Copy as text
@@ -166,7 +166,7 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
             type="button"
             role="menuitem"
             onClick={() => void handleDownloadCsv()}
-            className="touch-target flex min-h-11 w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            className="touch-target flex min-h-12 w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
           >
             <Download className="size-4 shrink-0 text-accent" aria-hidden />
             Download CSV
@@ -175,7 +175,7 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
             type="button"
             role="menuitem"
             onClick={() => void handleDownloadAppBackup()}
-            className="touch-target flex min-h-11 w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            className="touch-target flex min-h-12 w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
           >
             <Archive className="size-4 shrink-0 text-accent" aria-hidden />
             Download App Backup

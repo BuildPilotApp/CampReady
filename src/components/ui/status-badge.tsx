@@ -24,18 +24,19 @@ const STATUS_STYLES: Record<
 interface StatusBadgeProps {
   status: GearItemStatus;
   compact?: boolean;
+  className?: string;
 }
 
-export function StatusBadge({ status, compact = false }: StatusBadgeProps) {
+export function StatusBadge({ status, compact = false, className = "" }: StatusBadgeProps) {
   const style = STATUS_STYLES[status];
 
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1 rounded-full border font-semibold ${style.className} ${
         compact
-          ? "min-h-6 px-2 text-[0.65rem]"
+          ? "min-h-6 px-2 text-xs"
           : "min-h-7 px-2.5 text-xs"
-      }`}
+      } ${className}`}
     >
       {style.showCheck ? (
         <Check

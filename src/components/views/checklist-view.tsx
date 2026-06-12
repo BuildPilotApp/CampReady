@@ -16,10 +16,11 @@ import {
 } from "@/lib/gear-checklist-copy";
 import { isGearItemRemaining } from "@/lib/gear-items";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 export function ChecklistView() {
   const { activeTrip, activeTripStats, checklistFilter, addCategory } = useCampReady();
+  const newCategoryInputId = useId();
   const [newCategoryName, setNewCategoryName] = useState("");
   const [importStatus, setImportStatus] = useState<ImportListStatus | null>(null);
 
@@ -75,7 +76,7 @@ export function ChecklistView() {
             <FilterToggle />
           </div>
 
-          <div className="flex flex-col gap-2.5 pb-32">
+          <div className="flex flex-col gap-2.5 pb-32 lg:pb-24">
             {categories.length === 0 ? (
               <section className="rounded-xl border-2 border-border bg-surface px-4 py-6 text-center">
                 <p className="text-sm text-muted">
@@ -106,11 +107,16 @@ export function ChecklistView() {
                 Add category or tote
               </summary>
               <div className="flex gap-2 border-t border-border/60 px-4 py-3">
+                <label htmlFor={newCategoryInputId} className="sr-only">
+                  Category or tote name
+                </label>
                 <input
+                  id={newCategoryInputId}
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground"
                   placeholder="Kitchen"
+                  aria-label="Category or tote name"
                 />
                 <button
                   type="button"

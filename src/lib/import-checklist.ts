@@ -6,9 +6,15 @@ import {
   type ChecklistExportDocument,
 } from "@/lib/checklist-export-format";
 import { createCategory, createGearItem } from "@/lib/storage";
+import {
+  clearImportValidationFailure,
+  notifyImportValidationFailure,
+} from "@/lib/storage/storage-notifications";
 import type { Category, GearItemStatus } from "@/types";
 
 const GEAR_STATUSES: GearItemStatus[] = ["missing", "staged", "packed"];
+/** ~2 MB — prevents main-thread stalls on large imports in the field. */
+export const MAX_IMPORT_FILE_BYTES = 2 * 1024 * 1024;
 
 const STATUS_BY_LABEL: Record<string, GearItemStatus> = {
   [STATUS_LABELS.missing]: "missing",
@@ -40,6 +46,36 @@ export interface ImportMergeResult {
 export type ImportValidationResult =
   | { ok: true; data: ValidatedChecklistImport }
   | { ok: false; errors: ImportValidationError[] };
+
+export interface ValidateChecklistImportOptions {
+  /** Byte length of the source file, when known. */
+  fileSize?: number;
+  /** Skip global import warning banner (programmatic recovery flows). */
+  suppressNotification?: boolean;
+}
+
+/** User-facing summary of one or more import validation errors. */
+export function formatImportValidationErrors(errors: ImportValidationError[]): string {
+  if (errors.length === 0) {
+    return "Import file is invalid or malformed.";
+  }
+
+  const preview = errors.slice(0, 3).map((error) => error.message);
+  const suffix =
+    errors.length > 3 ? ` (+${errors.length - 3} more issue${errors.length - 3 === 1 ? "" : "s"})` : "";
+
+  return `${preview.join(" ")}${suffix}`;
+}
+
+function surfaceImportFailure(
+  result: Extract<ImportValidationResult, { ok: false }>,
+  suppressNotification?: boolean,
+): ImportValidationResult {
+  if (!suppressNotification) {
+    notifyImportValidationFailure(formatImportValidationErrors(result.errors));
+  }
+  return result;
+}
 
 function normalizeName(value: string): string {
   return value.trim().toLowerCase();
@@ -236,8 +272,14 @@ function extractCategoriesFromJson(
   return null;
 }
 
-function parseCsvRows(raw: string): string[][] {
+interface CsvParseResult {
+  rows: string[][];
+  anomalies: ImportValidationError[];
+}
+
+function parseCsvRows(raw: string): CsvParseResult {
   const rows: string[][] = [];
+  const anomalies: ImportValidationError[] = [];
   let row: string[] = [];
   let field = "";
   let inQuotes = false;
@@ -289,17 +331,29 @@ function parseCsvRows(raw: string): string[][] {
     rows.push(row);
   }
 
-  return rows.filter((entry) => entry.some((cell) => cell.trim().length > 0));
+  if (inQuotes) {
+    anomalies.push({
+      path: "csv.parse",
+      message: "CSV appears malformed — a quoted field was not closed.",
+    });
+  }
+
+  return {
+    rows: rows.filter((entry) => entry.some((cell) => cell.trim().length > 0)),
+    anomalies,
+  };
 }
 
 const CSV_HEADERS = ["category", "item", "status", "weight (lbs)", "storage"];
 
 function validateChecklistCsv(raw: string): ImportValidationResult {
   const errors: ImportValidationError[] = [];
-  const rows = parseCsvRows(raw.trim());
+  const { rows, anomalies } = parseCsvRows(raw.trim());
+  errors.push(...anomalies);
 
   if (rows.length === 0) {
-    return { ok: false, errors: [{ path: "csv", message: "CSV file is empty." }] };
+    errors.push({ path: "csv", message: "CSV file is empty." });
+    return { ok: false, errors };
   }
 
   const header = rows[0]!.map((cell) => cell.trim().toLowerCase());
@@ -310,15 +364,12 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
     header[2] === CSV_HEADERS[2];
 
   if (!headerMatches) {
-    return {
-      ok: false,
-      errors: [
-        {
-          path: "csv.header",
-          message: 'CSV must start with headers: Category, Item, Status, Weight (lbs), Storage.',
-        },
-      ],
-    };
+    errors.push({
+      path: "csv.header",
+      message:
+        'CSV must start with headers: Category, Item, Status, Weight (lbs), Storage.',
+    });
+    return { ok: false, errors };
   }
 
   const categoryMap = new Map<string, ChecklistExportCategory>();
@@ -363,10 +414,11 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
 
   const categories = [...categoryMap.values()];
   if (categories.length === 0) {
-    return {
-      ok: false,
-      errors: [{ path: "categories", message: "Import file contains no categories or items." }],
-    };
+    errors.push({
+      path: "categories",
+      message: "Import file contains no categories or items.",
+    });
+    return { ok: false, errors };
   }
 
   return {
@@ -443,11 +495,62 @@ export function validateChecklistJson(raw: string): ImportValidationResult {
 export function validateChecklistImport(
   content: string,
   filename?: string,
+  options?: ValidateChecklistImportOptions,
 ): ImportValidationResult {
-  const format = detectImportFormat(content, filename);
-  return format === "json"
-    ? validateChecklistJson(content)
-    : validateChecklistCsv(content);
+  try {
+    const byteLength =
+      options?.fileSize ?? (typeof TextEncoder !== "undefined" ? new TextEncoder().encode(content).length : content.length);
+
+    if (byteLength > MAX_IMPORT_FILE_BYTES) {
+      return surfaceImportFailure(
+        {
+          ok: false,
+          errors: [
+            {
+              path: "file.size",
+              message: `Import file is too large (max ${Math.round(MAX_IMPORT_FILE_BYTES / (1024 * 1024))} MB).`,
+            },
+          ],
+        },
+        options?.suppressNotification,
+      );
+    }
+
+    const trimmed = content.trim();
+    if (!trimmed) {
+      return surfaceImportFailure(
+        {
+          ok: false,
+          errors: [{ path: "file", message: "Import file is empty." }],
+        },
+        options?.suppressNotification,
+      );
+    }
+
+    const format = detectImportFormat(content, filename);
+    const result =
+      format === "json" ? validateChecklistJson(content) : validateChecklistCsv(content);
+
+    if (result.ok) {
+      clearImportValidationFailure();
+      return result;
+    }
+
+    return surfaceImportFailure(result, options?.suppressNotification);
+  } catch {
+    return surfaceImportFailure(
+      {
+        ok: false,
+        errors: [
+          {
+            path: "import",
+            message: "Import file could not be parsed safely. Check the format and try again.",
+          },
+        ],
+      },
+      options?.suppressNotification,
+    );
+  }
 }
 
 export function mergeImportedCategories(

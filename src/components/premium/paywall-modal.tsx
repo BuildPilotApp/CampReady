@@ -46,7 +46,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-zinc-400 active:bg-zinc-800"
+            className="absolute right-4 top-4 touch-target inline-flex size-12 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-zinc-400 active:bg-zinc-800"
           >
             <X className="size-5" aria-hidden />
           </button>

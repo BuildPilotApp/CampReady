@@ -7,6 +7,11 @@ import { CampReadyProvider, useCampReady } from "@/components/providers/camp-rea
 import { ProProvider } from "@/components/providers/pro-provider";
 import { ChecklistView } from "@/components/views/checklist-view";
 import { DashboardView } from "@/components/views/dashboard-view";
+import { AppToastProvider } from "@/components/ui/app-toast-provider";
+import { GlobalNotificationProvider } from "@/components/providers/global-notification-provider";
+import { ImportValidationBanner } from "@/components/ui/import-validation-banner";
+import { StorageLimitBanner } from "@/components/ui/storage-limit-banner";
+import { StorageRecoveryBanner } from "@/components/ui/storage-recovery-banner";
 import { Fab } from "@/components/ui/fab";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { Tent, RotateCcw, Info } from "lucide-react";
@@ -20,29 +25,61 @@ function AppHeader() {
   } = useCampReady();
 
   return (
-    <div className="flex items-center gap-3 py-3">
-      <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
-      <div className="min-w-0 flex-1">
-        <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
-        <p className="truncate text-sm font-medium text-muted">
-          {activeTab === "dashboard"
-            ? "Trip dashboard"
-            : activeTrip
-              ? `${activeTrip.name} · Gear checklist`
-              : "Gear checklist"}
-        </p>
-        {activeTab === "checklist" && activeTripStats ? (
-          <p className="mt-1 text-xs font-bold text-foreground">
-            {activeTripStats.percentPacked}% Packed{" "}
-            <span className="font-semibold text-muted">|</span> Total Weight:{" "}
-            <span className="tabular-nums">
-              {activeTripStats.totalWeightLbs.toFixed(1)}
-            </span>{" "}
-            lbs
+    <>
+      <div className="flex items-center gap-3 py-3 lg:hidden">
+        <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
+        <div className="min-w-0 flex-1">
+          <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
+          <p className="truncate text-sm font-medium text-muted">
+            {activeTab === "dashboard"
+              ? "Trip dashboard"
+              : activeTrip
+                ? `${activeTrip.name} · Gear checklist`
+                : "Gear checklist"}
           </p>
+          {activeTab === "checklist" && activeTripStats ? (
+            <p className="mt-1 text-xs font-bold text-foreground">
+              {activeTripStats.percentPacked}% Packed{" "}
+              <span className="font-semibold text-muted">|</span> Total Weight:{" "}
+              <span className="tabular-nums">
+                {activeTripStats.totalWeightLbs.toFixed(1)}
+              </span>{" "}
+              lbs
+            </p>
+          ) : null}
+        </div>
+        {activeTab === "dashboard" ? (
+          <button
+            type="button"
+            onClick={openInfoMenu}
+            aria-label="Open information menu"
+            className="touch-target inline-flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-surface text-accent active:opacity-90"
+          >
+            <Info className="size-6" strokeWidth={2.25} aria-hidden />
+          </button>
         ) : null}
       </div>
-      {activeTab === "dashboard" ? (
+
+      <div className="hidden items-center gap-3 py-3 lg:flex">
+        <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
+        <div className="min-w-0 flex-1">
+          <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
+          <p className="truncate text-sm font-medium text-muted">
+            {activeTrip
+              ? `${activeTrip.name} · Dashboard & checklist`
+              : "Dashboard & checklist"}
+          </p>
+          {activeTripStats ? (
+            <p className="mt-1 text-xs font-bold text-foreground">
+              {activeTripStats.percentPacked}% Packed{" "}
+              <span className="font-semibold text-muted">|</span> Total Weight:{" "}
+              <span className="tabular-nums">
+                {activeTripStats.totalWeightLbs.toFixed(1)}
+              </span>{" "}
+              lbs
+            </p>
+          ) : null}
+        </div>
         <button
           type="button"
           onClick={openInfoMenu}
@@ -51,8 +88,8 @@ function AppHeader() {
         >
           <Info className="size-6" strokeWidth={2.25} aria-hidden />
         </button>
-      ) : null}
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -60,20 +97,26 @@ function CampReadyFooter() {
   const { activeTab, activeTrip, resetAllItems } = useCampReady();
   const { armed, handleClick, ref } = useDestructiveConfirm(resetAllItems);
 
+  const fabProps = {
+    ref,
+    armed,
+    label: "Reset or uncheck all items",
+    text: armed ? "Confirm?" : "Reset All",
+    onClick: handleClick,
+    children: <RotateCcw className="size-6" strokeWidth={2.5} aria-hidden />,
+  };
+
   return (
     <div className="relative">
-      {activeTab === "checklist" && activeTrip ? (
+      {activeTrip ? (
         <Fab
-          ref={ref}
-          armed={armed}
-          label="Reset or uncheck all items"
-          text={armed ? "Confirm?" : "Reset All"}
-          onClick={handleClick}
-        >
-          <RotateCcw className="size-6" strokeWidth={2.5} aria-hidden />
-        </Fab>
+          {...fabProps}
+          className={`${activeTab === "checklist" ? "" : "hidden"} lg:flex fab-tablet-split`}
+        />
       ) : null}
-      <BottomNav />
+      <div className="lg:hidden">
+        <BottomNav />
+      </div>
     </div>
   );
 }
@@ -83,7 +126,26 @@ function CampReadyShell() {
 
   return (
     <MobileShell header={<AppHeader />} footer={<CampReadyFooter />}>
-      {activeTab === "dashboard" ? <DashboardView /> : <ChecklistView />}
+      <StorageLimitBanner />
+      <ImportValidationBanner />
+      <StorageRecoveryBanner />
+
+      <div className="lg:hidden">
+        {activeTab === "dashboard" ? <DashboardView /> : <ChecklistView />}
+      </div>
+
+      <div className="hidden lg:grid lg:grid-cols-2 lg:items-start lg:gap-0 lg:py-2">
+        <section aria-label="Trip dashboard" className="app-split-pane pr-2">
+          <DashboardView />
+        </section>
+        <section
+          aria-label="Gear checklist"
+          className="app-split-pane app-split-divider"
+        >
+          <ChecklistView />
+        </section>
+      </div>
+
       {infoView ? <InfoPanel /> : null}
     </MobileShell>
   );
@@ -91,10 +153,14 @@ function CampReadyShell() {
 
 export function CampReadyApp() {
   return (
-    <ProProvider>
-      <CampReadyProvider>
-        <CampReadyShell />
-      </CampReadyProvider>
-    </ProProvider>
+    <GlobalNotificationProvider>
+      <AppToastProvider>
+        <ProProvider>
+          <CampReadyProvider>
+            <CampReadyShell />
+          </CampReadyProvider>
+        </ProProvider>
+      </AppToastProvider>
+    </GlobalNotificationProvider>
   );
 }

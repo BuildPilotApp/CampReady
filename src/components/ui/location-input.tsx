@@ -35,6 +35,7 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
     ref,
   ) {
     const listId = useId();
+  const inputId = useId();
     const [text, setText] = useState(value?.query ?? "");
     const [suggestions, setSuggestions] = useState<
       Array<{ name: string; latitude: number; longitude: number }>
@@ -148,15 +149,19 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
 
     return (
       <div className="relative flex flex-col gap-1">
-        <span className="text-xs font-bold uppercase tracking-wide text-muted">
+        <label
+          htmlFor={inputId}
+          className="text-xs font-bold uppercase tracking-wide text-muted"
+        >
           {label}
-        </span>
+        </label>
         <div className="relative">
           <MapPin
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-accent"
             aria-hidden
           />
           <input
+            id={inputId}
             value={text}
             onChange={(e) => {
               const next = e.target.value;
@@ -189,6 +194,7 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
             autoComplete="off"
             aria-autocomplete="list"
             aria-controls={listId}
+            aria-label={label}
           />
         </div>
         {resolving ? (

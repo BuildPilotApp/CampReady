@@ -6,6 +6,51 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { MapPin, Wind } from "lucide-react";
 import { useEffect, useState } from "react";
 
+function WeatherStatusBadge({
+  status,
+}: {
+  status: "idle" | "loading" | "ready" | "offline" | "error" | "needs-location";
+}) {
+  if (status === "loading") {
+    return (
+      <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-bold text-accent sm:px-3">
+        Loading…
+      </span>
+    );
+  }
+
+  if (status === "offline") {
+    return (
+      <span className="shrink-0 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-200 sm:px-3">
+        <span className="sm:hidden">Cached</span>
+        <span className="hidden sm:inline">Offline (Cached)</span>
+      </span>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-bold text-accent sm:px-3">
+        Unavailable
+      </span>
+    );
+  }
+
+  if (status === "needs-location") {
+    return (
+      <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-bold text-accent sm:px-3">
+        No match
+      </span>
+    );
+  }
+
+  return (
+    <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-bold text-accent sm:px-3">
+      Daily
+    </span>
+  );
+}
+
 export function WeatherBanner() {
   const { activeTrip, updateTrip } = useCampReady();
   const [status, setStatus] = useState<
@@ -107,21 +152,10 @@ export function WeatherBanner() {
 
   const dates = enumerateDateRange(activeTrip.startDate, activeTrip.endDate);
 
-  const statusBadge =
-    status === "loading"
-      ? "Loading…"
-      : status === "offline"
-        ? "Offline Mode (Cached Forecast)"
-        : status === "error"
-          ? "Unavailable"
-          : status === "needs-location"
-            ? "No match"
-            : "Daily";
-
   return (
     <div className="mt-4 rounded-xl border-2 border-border bg-background px-3 py-2">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-widest text-muted">
             Weather
           </p>
@@ -132,15 +166,7 @@ export function WeatherBanner() {
             </span>
           </p>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
-            status === "offline"
-              ? "bg-amber-500/15 text-amber-800 dark:text-amber-200"
-              : "bg-accent/15 text-accent"
-          }`}
-        >
-          {statusBadge}
-        </span>
+        {status !== "idle" ? <WeatherStatusBadge status={status} /> : null}
       </div>
 
       {status === "needs-location" ? (
@@ -174,29 +200,29 @@ export function WeatherBanner() {
                   key={d}
                   className="flex w-20 flex-none flex-col items-center justify-center rounded-lg border-2 border-border bg-surface px-2 py-2"
                 >
-                  <p className="text-[0.65rem] font-bold leading-none text-muted">
+                  <p className="text-xs font-bold leading-none text-muted">
                     {weekday}
                   </p>
-                  <p className="text-[0.65rem] font-bold leading-none text-foreground">
+                  <p className="text-xs font-bold leading-none text-foreground">
                     {monthDay}
                   </p>
                   {s ? (
                     <>
-                      <p className="mt-1 text-[0.8rem] font-extrabold tabular-nums text-foreground">
+                      <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground">
                         {s.highF}°/{s.lowF}°
                       </p>
                       <div className="mt-1 flex items-center gap-1">
                         <Wind className="size-3 text-accent" aria-hidden />
-                        <p className="text-[0.7rem] font-bold tabular-nums text-foreground">
+                        <p className="text-xs font-bold tabular-nums text-foreground">
                           {s.windMph}
                         </p>
                       </div>
-                      <p className="mt-1 text-center text-[0.58rem] font-bold leading-tight text-accent">
+                      <p className="mt-1 text-center text-xs font-bold leading-tight text-accent">
                         {status === "offline" ? "Cached" : s.label}
                       </p>
                     </>
                   ) : (
-                    <p className="mt-1 text-[0.7rem] font-bold text-muted">
+                    <p className="mt-1 text-xs font-bold text-muted">
                       {status === "loading" ? "…" : "N/A"}
                     </p>
                   )}

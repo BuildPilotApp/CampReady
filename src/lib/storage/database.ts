@@ -1,131 +1,92 @@
-import type { CampReadyDatabase, GearItem, TripRecord } from "@/types";
-import { filterUserSavedTemplates } from "@/lib/templates";
+import type { CampReadyDatabase, TripRecord } from "@/types";
 import { STORAGE_KEY } from "./constants";
 import { createEmptyDatabase } from "./defaults";
-import { ensureSeededDatabase, isSampleTrip } from "./seed";
 import {
   clearLocalForage,
   readFromLocalForage,
   writeToLocalForage,
 } from "./localforage-client";
+import { normalizeDatabaseDocument } from "./schema-normalize";
+import { ensureSeededDatabase, isSampleTrip } from "./seed";
+import {
+  notifyStorageWriteFailure,
+  notifyStorageWriteSuccess,
+  type StorageWriteFailureReason,
+} from "./storage-notifications";
+
+export type HydrationRecoveryReason = "corrupt" | "error";
+
+export interface HydrationResult {
+  database: CampReadyDatabase;
+  recovered: boolean;
+  reason?: HydrationRecoveryReason;
+}
+
+export type StorageWriteResult =
+  | { ok: true }
+  | { ok: false; reason: StorageWriteFailureReason };
 
 let memoryCache: CampReadyDatabase | null = null;
+let lastPersistedSerialized: string | null = null;
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
+}
+
+function classifyStorageError(error: unknown): StorageWriteFailureReason {
+  if (error instanceof DOMException) {
+    if (error.name === "QuotaExceededError" || error.code === 22) {
+      return "quota";
+    }
+    if (error.name === "SecurityError") {
+      return "restricted";
+    }
+  }
+
+  return "unknown";
 }
 
 function parseDatabase(raw: string): CampReadyDatabase | null {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "version" in parsed &&
-      parsed.version === 1 &&
-      "trips" in parsed &&
-      Array.isArray(parsed.trips)
+      typeof parsed !== "object" ||
+      parsed === null ||
+      !("version" in parsed) ||
+      (parsed as { version: unknown }).version !== 1 ||
+      !("trips" in parsed)
     ) {
-      const record = parsed as Partial<CampReadyDatabase> & {
-        activeTripId?: string | null;
-        categories?: unknown;
-      };
-
-      // Migration path from earlier schema that stored a single global checklist.
-      const legacyCategories = Array.isArray(record.categories)
-        ? (record.categories as TripRecord["categories"])
-        : null;
-
-      const trips: TripRecord[] = (record.trips as TripRecord[]).map((trip, idx) => {
-        const hasCategories =
-          "categories" in trip && Array.isArray((trip as TripRecord).categories);
-
-        const legacyDate =
-          typeof (trip as any).date === "string" ? (trip as any).date : undefined;
-        const startDate =
-          typeof (trip as any).startDate === "string"
-            ? (trip as any).startDate
-            : legacyDate ?? defaultTripDate();
-        const endDate =
-          typeof (trip as any).endDate === "string"
-            ? (trip as any).endDate
-            : legacyDate ?? startDate;
-
-        if (hasCategories) {
-          const now = new Date().toISOString();
-          return {
-            ...(trip as any),
-            location: (trip as any).location,
-            startDate,
-            endDate,
-            createdAt: (trip as any).createdAt ?? now,
-            updatedAt: (trip as any).updatedAt ?? now,
-          } as TripRecord;
-        }
-
-        const now = new Date().toISOString();
-        // Legacy schema used a single `date` field; migrate it to start/end.
-
-        return {
-          ...(trip as any),
-          location: (trip as any).location,
-          startDate,
-          endDate,
-          categories: idx === 0 && legacyCategories ? legacyCategories : [],
-          createdAt: (trip as any).createdAt ?? now,
-          updatedAt: (trip as any).updatedAt ?? now,
-        } satisfies TripRecord;
-      });
-
-      return ensureSeededDatabase({
-        version: 1,
-        trips,
-        templates: Array.isArray((record as any).templates) ? ((record as any).templates as any) : [],
-        activeTripId: record.activeTripId ?? trips[0]?.id ?? null,
-      });
+      return null;
     }
+
+    const record = parsed as Record<string, unknown>;
+    const legacyCategories = Array.isArray(record.categories)
+      ? record.categories
+      : null;
+
+    const { database } = normalizeDatabaseDocument(parsed, {
+      phase: "parse",
+      legacyCategories: legacyCategories as TripRecord["categories"] | null,
+    });
+
+    return ensureSeededDatabase(database);
   } catch {
     return null;
   }
-  return null;
 }
 
-function defaultTripDate(): string {
-  const date = new Date();
-  date.setDate(date.getDate() + 7);
-  return date.toISOString().slice(0, 10);
+/** Drop removed fields and coerce corrupt persisted records — never throws. */
+export function sanitizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
+  const { database } = normalizeDatabaseDocument(data, { phase: "sanitize" });
+  return database;
 }
 
-/** Drop removed container/sub-item fields from persisted gear records. */
-function sanitizeGearItem(item: GearItem): GearItem {
-  return {
-    id: item.id,
-    name: item.name,
-    category: item.category,
-    status: item.status,
-    weight_lbs: item.weight_lbs,
-    storageLocation: item.storageLocation,
-  };
-}
-
-function sanitizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
-  return {
-    ...data,
-    trips: data.trips.map((trip) => ({
-      ...trip,
-      categories: trip.categories.map((category) => ({
-        ...category,
-        items: category.items.map(sanitizeGearItem),
-      })),
-    })),
-    templates: filterUserSavedTemplates(data.templates).map((template) => ({
-      ...template,
-      categories: (template.categories ?? []).map((category) => ({
-        ...category,
-        items: (category.items ?? []).map(sanitizeGearItem),
-      })),
-    })),
-  };
+function safeFinalizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
+  try {
+    return finalizeDatabase(data);
+  } catch {
+    return finalizeDatabase(createEmptyDatabase());
+  }
 }
 
 function finalizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
@@ -157,24 +118,40 @@ function trySerializeDatabase(data: CampReadyDatabase): string | null {
   }
 }
 
-function tryWriteLocalStorage(serialized: string): boolean {
+export function tryWriteLocalStorage(serialized: string): StorageWriteResult {
   if (!isBrowser()) {
-    return false;
+    return { ok: false, reason: "unknown" };
   }
 
   try {
     window.localStorage.setItem(STORAGE_KEY, serialized);
-    return true;
-  } catch {
-    return false;
+    notifyStorageWriteSuccess();
+    return { ok: true };
+  } catch (error) {
+    const reason = classifyStorageError(error);
+    notifyStorageWriteFailure(reason);
+    return { ok: false, reason };
   }
 }
 
-/** Fire-and-forget mirror to localforage; never surfaces errors to callers. */
+/** Fire-and-forget mirror to IndexedDB; never surfaces errors to callers. */
 function mirrorToLocalForage(serialized: string): void {
   void writeToLocalForage(serialized).catch(() => {
     // Durable offline mirror is best-effort; memory + localStorage remain primary.
   });
+}
+
+function persistSerializedDatabase(serialized: string): void {
+  if (serialized === lastPersistedSerialized) {
+    return;
+  }
+
+  const result = tryWriteLocalStorage(serialized);
+  if (result.ok) {
+    lastPersistedSerialized = serialized;
+  }
+
+  mirrorToLocalForage(serialized);
 }
 
 /**
@@ -203,7 +180,7 @@ export function readDatabaseSync(): CampReadyDatabase {
   }
 
   const parsed = parseDatabase(raw) ?? createEmptyDatabase();
-  return finalizeDatabase(parsed);
+  return safeFinalizeDatabase(parsed);
 }
 
 /**
@@ -222,51 +199,88 @@ export function writeDatabaseSync(data: CampReadyDatabase): void {
     return;
   }
 
-  tryWriteLocalStorage(serialized);
-  mirrorToLocalForage(serialized);
+  persistSerializedDatabase(serialized);
+}
+
+function tryFinalizeParsed(
+  raw: string,
+): { ok: true; database: CampReadyDatabase } | { ok: false } {
+  const parsed = parseDatabase(raw);
+  if (!parsed) {
+    return { ok: false };
+  }
+
+  try {
+    return { ok: true, database: finalizeDatabase(parsed) };
+  } catch {
+    return { ok: false };
+  }
 }
 
 /** Hydrate memory + localStorage from localforage (e.g. first app launch). */
-export async function hydrateDatabase(): Promise<CampReadyDatabase> {
+export async function hydrateDatabase(): Promise<HydrationResult> {
   if (!isBrowser()) {
-    return createEmptyDatabase();
+    return { database: createEmptyDatabase(), recovered: false };
   }
 
-  let localRaw: string | null = null;
+  let sawCorruptStorage = false;
+
   try {
-    localRaw = window.localStorage.getItem(STORAGE_KEY);
-  } catch {
-    localRaw = null;
-  }
-
-  if (localRaw) {
-    const localData = parseDatabase(localRaw);
-    if (localData) {
-      return finalizeDatabase(localData);
-    }
+    let localRaw: string | null = null;
     try {
-      window.localStorage.removeItem(STORAGE_KEY);
+      localRaw = window.localStorage.getItem(STORAGE_KEY);
     } catch {
-      // Ignore corrupt or inaccessible localStorage during hydration.
+      localRaw = null;
     }
-  }
 
-  const remoteRaw = await readFromLocalForage();
-  if (remoteRaw) {
-    const remoteData = parseDatabase(remoteRaw);
-    if (remoteData) {
-      const finalized = finalizeDatabase(remoteData);
-      const serialized = trySerializeDatabase(finalized);
-      if (serialized) {
-        tryWriteLocalStorage(serialized);
+    if (localRaw) {
+      const localResult = tryFinalizeParsed(localRaw);
+      if (localResult.ok) {
+        return { database: localResult.database, recovered: false };
       }
-      return finalized;
-    }
-  }
 
-  const seeded = finalizeDatabase(createEmptyDatabase());
-  writeDatabaseSync(seeded);
-  return seeded;
+      sawCorruptStorage = true;
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Ignore corrupt or inaccessible localStorage during hydration.
+      }
+    }
+
+    const remoteRaw = await readFromLocalForage();
+    if (remoteRaw) {
+      const remoteResult = tryFinalizeParsed(remoteRaw);
+      if (remoteResult.ok) {
+        const serialized = trySerializeDatabase(remoteResult.database);
+        if (serialized) {
+          tryWriteLocalStorage(serialized);
+        }
+        return {
+          database: remoteResult.database,
+          recovered: sawCorruptStorage,
+          reason: sawCorruptStorage ? "corrupt" : undefined,
+        };
+      }
+
+      sawCorruptStorage = true;
+    }
+
+    const seeded = safeFinalizeDatabase(createEmptyDatabase());
+    writeDatabaseSync(seeded);
+    return {
+      database: seeded,
+      recovered: sawCorruptStorage,
+      reason: sawCorruptStorage ? "corrupt" : undefined,
+    };
+  } catch {
+    const seeded = safeFinalizeDatabase(createEmptyDatabase());
+    writeDatabaseSync(seeded);
+    return {
+      database: seeded,
+      recovered: true,
+      reason: "error",
+    };
+  }
 }
 
 /** Async persist — same durability guarantees as sync write. */
@@ -281,6 +295,7 @@ export async function readDatabase(): Promise<CampReadyDatabase> {
 export function clearDatabase(): void {
   const empty = createEmptyDatabase();
   memoryCache = empty;
+  lastPersistedSerialized = null;
 
   if (!isBrowser()) {
     return;
@@ -294,6 +309,7 @@ export function clearDatabase(): void {
   void clearLocalForage().catch(() => {
     // Ignore durable store clear failures.
   });
+  notifyStorageWriteSuccess();
 }
 
 export function isStorageAvailable(): boolean {

@@ -2,14 +2,13 @@
 
 import { AddItemDialog } from "@/components/ui/add-item-dialog";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import {
+  usePersistedDraft,
+  usePersistedGearItemDraft,
+} from "@/hooks/use-persisted-draft";
 import type { Category, GearItem } from "@/types";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-
-function parseWeightLbs(value: string): number | undefined {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
+import { useId, useState } from "react";
 
 function TemplateItemFields({
   templateId,
@@ -19,36 +18,18 @@ function TemplateItemFields({
   item: GearItem;
 }) {
   const { updateTemplateItem, deleteTemplateItem } = useCampReady();
-  const [itemName, setItemName] = useState(item.name);
-  const [weight, setWeight] = useState(
-    typeof item.weight_lbs === "number" ? String(item.weight_lbs) : "",
-  );
-  const [storageLocation, setStorageLocation] = useState(
-    item.storageLocation ?? "",
-  );
-
-  useEffect(() => {
-    setItemName(item.name);
-    setWeight(typeof item.weight_lbs === "number" ? String(item.weight_lbs) : "");
-    setStorageLocation(item.storageLocation ?? "");
-  }, [item.id, item.name, item.weight_lbs, item.storageLocation]);
-
-  const saveItem = () => {
-    const nextName = itemName.trim() || item.name;
-    updateTemplateItem(templateId, item.id, {
-      name: nextName,
-      weight_lbs: parseWeightLbs(weight),
-      storageLocation: storageLocation.trim() || undefined,
-    });
-  };
+  const { draft, setField, handleBlur } = usePersistedGearItemDraft({
+    item,
+    onSave: (patch) => updateTemplateItem(templateId, item.id, patch),
+  });
 
   return (
     <div className="py-2">
       <div className="flex items-center gap-2">
         <input
-          value={itemName}
-          onChange={(e) => setItemName(e.target.value)}
-          onBlur={saveItem}
+          value={draft.name}
+          onChange={(e) => setField("name", e.target.value)}
+          onBlur={handleBlur}
           className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground"
           placeholder="Gear item"
         />
@@ -65,20 +46,20 @@ function TemplateItemFields({
           <Trash2 className="size-4" aria-hidden />
         </button>
       </div>
-      <div className="mt-1.5 flex gap-2">
+      <div className="mt-1.5 flex flex-col gap-2 min-[381px]:flex-row">
         <input
           inputMode="decimal"
-          value={weight}
-          onChange={(e) => setWeight(e.target.value)}
-          onBlur={saveItem}
-          className="touch-target w-[4.25rem] rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground"
+          value={draft.weight}
+          onChange={(e) => setField("weight", e.target.value)}
+          onBlur={handleBlur}
+          className="touch-target w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground min-[381px]:w-[4.25rem]"
           placeholder="lbs"
           aria-label={`Weight for ${item.name}`}
         />
         <input
-          value={storageLocation}
-          onChange={(e) => setStorageLocation(e.target.value)}
-          onBlur={saveItem}
+          value={draft.storageLocation}
+          onChange={(e) => setField("storageLocation", e.target.value)}
+          onBlur={handleBlur}
           className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground"
           placeholder="Tote, bin, shelf…"
           aria-label={`Storage for ${item.name}`}
@@ -100,12 +81,19 @@ export function TemplateCategorySection({
     deleteTemplateCategory,
     addTemplateItem,
   } = useCampReady();
-  const [categoryName, setCategoryName] = useState(category.name);
   const [addItemOpen, setAddItemOpen] = useState(false);
-
-  useEffect(() => {
-    setCategoryName(category.name);
-  }, [category.id, category.name]);
+  const categoryNameId = useId();
+  const { draft: categoryName, setDraft: setCategoryName, handleBlur } =
+    usePersistedDraft({
+      savedValue: category.name,
+      resetKey: category.id,
+      onSave: (value) => {
+        const next = value.trim();
+        if (next && next !== category.name) {
+          updateTemplateCategory(templateId, category.id, next);
+        }
+      },
+    });
 
   return (
     <details className="group/category overflow-hidden rounded-xl border border-border bg-background" open>
@@ -125,21 +113,15 @@ export function TemplateCategorySection({
       </summary>
 
       <div className="border-t border-border px-3 py-3">
-        <label className="flex flex-col gap-1">
-          <span className="text-[0.65rem] font-bold uppercase tracking-wide text-muted">
+        <label htmlFor={categoryNameId} className="flex flex-col gap-1">
+          <span className="text-xs font-bold uppercase tracking-wide text-muted">
             Category name
           </span>
           <input
+            id={categoryNameId}
             value={categoryName}
             onChange={(e) => setCategoryName(e.target.value)}
-            onBlur={() => {
-              const next = categoryName.trim();
-              if (next && next !== category.name) {
-                updateTemplateCategory(templateId, category.id, next);
-              } else {
-                setCategoryName(category.name);
-              }
-            }}
+            onBlur={handleBlur}
             className="touch-target rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground"
           />
         </label>

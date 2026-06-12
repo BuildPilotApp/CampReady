@@ -171,7 +171,7 @@ export function TripDateRangeInput({
           {WEEKDAY_LABELS.map((day) => (
             <div
               key={day}
-              className="pb-1 text-center text-[0.65rem] font-bold uppercase tracking-wide text-muted"
+              className="pb-1 text-center text-xs font-bold uppercase tracking-wide text-muted"
             >
               {day}
             </div>

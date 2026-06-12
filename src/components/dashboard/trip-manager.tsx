@@ -14,7 +14,7 @@ import { getTripStats } from "@/lib/storage";
 import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
 import type { TripLocation, TripRecord } from "@/types";
 import { CalendarDays, ChevronDown, MapPin, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from "react";
 
 function formatTripDate(isoDate: string): string {
   const date = new Date(`${isoDate}T12:00:00`);
@@ -37,6 +37,7 @@ function sortTripsChronologically(trips: TripRecord[]): TripRecord[] {
 
 function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
   const { updateTrip } = useCampReady();
+  const inputId = useId();
   const [value, setValue] = useState(name);
 
   useEffect(() => {
@@ -51,11 +52,12 @@ function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
   };
 
   return (
-    <label className="flex flex-col gap-1">
+    <label htmlFor={inputId} className="flex flex-col gap-1">
       <span className="text-xs font-bold uppercase tracking-wide text-muted">
         Trip name
       </span>
       <input
+        id={inputId}
         value={value}
         onChange={(e) => {
           const next = e.target.value;
@@ -115,6 +117,7 @@ export function TripManager() {
   const [newLocation, setNewLocation] = useState<TripLocation | undefined>();
   const [templateId, setTemplateId] = useState<string>(CUSTOM_TEMPLATE_ID);
   const [tripPendingDelete, setTripPendingDelete] = useState<TripRecord | null>(null);
+  const newTripNameId = useId();
   const newLocationRef = useRef<LocationInputHandle>(null);
 
   const trips = useMemo(
@@ -145,11 +148,12 @@ export function TripManager() {
           </span>
         </summary>
         <div className="mt-3 flex flex-col gap-3">
-          <label className="flex flex-col gap-1">
+          <label htmlFor={newTripNameId} className="flex flex-col gap-1">
             <span className="text-xs font-bold uppercase tracking-wide text-muted">
               Trip name
             </span>
             <input
+              id={newTripNameId}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
