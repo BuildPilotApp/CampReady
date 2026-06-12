@@ -197,7 +197,7 @@ export function WeatherBanner() {
                     </>
                   ) : (
                     <p className="mt-1 text-[0.7rem] font-bold text-muted">
-                      {status === "loading" ? "…" : "—"}
+                      {status === "loading" ? "…" : "N/A"}
                     </p>
                   )}
                 </div>

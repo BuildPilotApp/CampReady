@@ -1,21 +1,29 @@
 "use client";
 
+import { CHECKLIST_ACTION_BUTTON_CLASS } from "@/components/checklist/checklist-action-button-styles";
 import {
   copyChecklistText,
+  downloadChecklistAppBackup,
   downloadChecklistCsv,
-  downloadChecklistJson,
 } from "@/lib/export-checklist";
 import type { TripRecord } from "@/types";
-import { Braces, Check, ChevronDown, Download, FileText } from "lucide-react";
+import { Archive, Check, ChevronDown, Download, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface ExportListButtonProps {
   trip: TripRecord;
+  className?: string;
 }
 
-export function ExportListButton({ trip }: ExportListButtonProps) {
+type ExportFeedback = {
+  type: "success" | "error";
+  message: string;
+};
+
+export function ExportListButton({ trip, className = "" }: ExportListButtonProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<ExportFeedback | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const hasItems = trip.categories.some(
@@ -25,14 +33,20 @@ export function ExportListButton({ trip }: ExportListButtonProps) {
   useEffect(() => {
     if (!open) return;
 
-    const handlePointerDown = (event: MouseEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
       if (!menuRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
+    const timer = window.setTimeout(() => {
+      document.addEventListener("pointerdown", handlePointerDown);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -41,61 +55,109 @@ export function ExportListButton({ trip }: ExportListButtonProps) {
     return () => window.clearTimeout(timer);
   }, [copied]);
 
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = window.setTimeout(() => setFeedback(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [feedback]);
+
   const handleToggle = () => {
     if (!hasItems) return;
     setOpen((current) => !current);
   };
 
   const handleCopyText = async () => {
-    await copyChecklistText(trip);
-    setCopied(true);
+    try {
+      await copyChecklistText(trip);
+      setCopied(true);
+      setFeedback(null);
+    } catch {
+      setCopied(false);
+      setFeedback({
+        type: "error",
+        message: "Could not copy checklist text.",
+      });
+    } finally {
+      setOpen(false);
+    }
+  };
+
+  const handleDownloadCsv = async () => {
+    const saved = await downloadChecklistCsv(trip);
+    setFeedback(
+      saved
+        ? null
+        : {
+            type: "error",
+            message: "Could not download CSV file.",
+          },
+    );
     setOpen(false);
   };
 
-  const handleDownloadCsv = () => {
-    downloadChecklistCsv(trip);
-    setOpen(false);
-  };
-
-  const handleDownloadJson = () => {
-    downloadChecklistJson(trip);
+  const handleDownloadAppBackup = async () => {
+    const saved = await downloadChecklistAppBackup(trip);
+    setFeedback(
+      saved
+        ? null
+        : {
+            type: "error",
+            message: "Could not download app backup.",
+          },
+    );
     setOpen(false);
   };
 
   return (
-    <div ref={menuRef} className="relative shrink-0">
+    <div ref={menuRef} className={`relative isolate min-w-0 ${className}`.trim()}>
       <button
         type="button"
         onClick={handleToggle}
         disabled={!hasItems}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="touch-target inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-border bg-surface px-3 text-xs font-bold text-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-describedby={feedback ? "export-list-feedback" : undefined}
+        className={CHECKLIST_ACTION_BUTTON_CLASS}
       >
         {copied ? (
           <Check className="size-4 shrink-0 text-accent" aria-hidden />
         ) : (
           <Download className="size-4 shrink-0 text-accent" aria-hidden />
         )}
-        <span className="whitespace-nowrap">{copied ? "Copied" : "Export List"}</span>
-        {hasItems ? (
-          <ChevronDown
-            className={`size-3.5 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
-            aria-hidden
-          />
-        ) : null}
+        <span className="truncate">{copied ? "Copied" : "Export List"}</span>
+        <ChevronDown
+          className={`size-3.5 shrink-0 text-muted transition-transform ${
+            hasItems ? (open ? "rotate-180" : "") : "opacity-0"
+          }`}
+          aria-hidden
+        />
       </button>
+
+      {feedback ? (
+        <p
+          id="export-list-feedback"
+          role="status"
+          className={`absolute right-0 top-full z-50 mt-1 max-w-52 text-right text-[0.65rem] font-semibold leading-snug ${
+            feedback.type === "error"
+              ? "text-red-600 dark:text-red-400"
+              : "text-muted"
+          }`}
+        >
+          {feedback.message}
+        </p>
+      ) : null}
 
       {open && hasItems ? (
         <div
           role="menu"
-          className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-xl border-2 border-border bg-surface shadow-lg"
+          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border-2 border-border bg-surface shadow-lg"
+          onPointerDown={(event) => event.stopPropagation()}
         >
           <button
             type="button"
             role="menuitem"
             onClick={() => void handleCopyText()}
-            className="touch-target flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            className="flex min-h-11 w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
           >
             <FileText className="size-4 shrink-0 text-accent" aria-hidden />
             Copy as text
@@ -103,8 +165,8 @@ export function ExportListButton({ trip }: ExportListButtonProps) {
           <button
             type="button"
             role="menuitem"
-            onClick={handleDownloadCsv}
-            className="touch-target flex w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            onClick={() => void handleDownloadCsv()}
+            className="flex min-h-11 w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
           >
             <Download className="size-4 shrink-0 text-accent" aria-hidden />
             Download CSV
@@ -112,11 +174,11 @@ export function ExportListButton({ trip }: ExportListButtonProps) {
           <button
             type="button"
             role="menuitem"
-            onClick={handleDownloadJson}
-            className="touch-target flex w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            onClick={() => void handleDownloadAppBackup()}
+            className="flex min-h-11 w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
           >
-            <Braces className="size-4 shrink-0 text-accent" aria-hidden />
-            Download JSON
+            <Archive className="size-4 shrink-0 text-accent" aria-hidden />
+            Download App Backup
           </button>
         </div>
       ) : null}

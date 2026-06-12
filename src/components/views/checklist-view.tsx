@@ -40,21 +40,22 @@ export function ChecklistView() {
 
       {activeTrip ? (
         <section className="mt-5 flex flex-col gap-3">
-          <div className="px-1">
+          <div className="flex flex-col gap-2.5 px-1">
             <h2 className="text-base font-bold text-foreground">
               Pack for {activeTrip.name}
             </h2>
-            <p className="mt-1 text-xs leading-snug text-muted">{PACK_TRIP_HINT}</p>
-            <AmazonAssociateDisclosure />
+            <p className="text-xs leading-relaxed text-muted">{PACK_TRIP_HINT}</p>
+            <AmazonAssociateDisclosure className="border-t border-border/50 pt-2.5" />
           </div>
 
-          <div className="rounded-xl border-2 border-border bg-surface px-3 py-2.5">
-            <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="relative z-20 overflow-visible rounded-xl border-2 border-border bg-surface px-3 py-3">
+            <div className="grid grid-cols-2 gap-2">
               <ImportListButton
                 tripId={activeTrip.id}
+                className="relative min-w-0"
                 onStatusChange={setImportStatus}
               />
-              <ExportListButton trip={activeTrip} />
+              <ExportListButton trip={activeTrip} className="min-w-0" />
             </div>
             {importStatus ? (
               <p
@@ -70,7 +71,9 @@ export function ChecklistView() {
             ) : null}
           </div>
 
-          <FilterToggle />
+          <div className="relative z-10">
+            <FilterToggle />
+          </div>
 
           <div className="flex flex-col gap-2.5 pb-32">
             {categories.length === 0 ? (

@@ -17,7 +17,7 @@ import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
 
 const ABOUT_TEXT =
-  "CampReady is a simple gear checklist for camping and road trips. Build a reusable inventory of the gear you own, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. CampReady is designed to be easy to scan with one hand—so you can focus on getting out the door without wondering what you left behind.";
+  "CampReady is a simple gear checklist for camping and road trips. Build a reusable inventory of the gear you own, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. CampReady is designed to be easy to scan with one hand, so you can focus on getting out the door without wondering what you left behind.";
 
 interface UserGuideItem {
   text: string;
@@ -40,7 +40,7 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "Open the Dashboard to create trips, track packing progress, and view weather.",
       },
       {
-        text: "The app starts with no trips—tap Create new trip to add your first one.",
+        text: "The app starts with no trips. Tap Create new trip to add your first one.",
       },
       {
         text: "When creating or editing a trip, open Gear checklist to choose New or a saved checklist from your inventory.",
@@ -60,10 +60,10 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "On the Gear Checklist tab, expand Gear inventory to manage saved lists and build new ones. It stays collapsed by default so packing stays front and center.",
       },
       {
-        text: "Each gear item has optional weight (lbs) and storage fields—for example tote, bin, or shelf.",
+        text: "Each gear item has optional weight (lbs) and storage fields, such as tote, bin, or shelf.",
       },
       {
-        text: "When you edit or create a checklist and trips exist, CampReady asks whether to load it onto a trip or edit inventory only—you pick which trip to replace.",
+        text: "When you edit or create a checklist and trips exist, CampReady asks whether to load it onto a trip or edit inventory only. You pick which trip to replace.",
       },
       {
         text: "Saved checklists also appear when creating or editing a trip on the Dashboard.",
@@ -80,10 +80,10 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "With a trip selected, the Pack for section lists that trip's gear checklist.",
       },
       {
-        text: "Add categories or totes to group gear—for example Kitchen, Shelter, or Tools.",
+        text: "Add categories or totes to group gear, such as Kitchen, Shelter, or Tools.",
       },
       {
-        text: "Category headers use a soft color tint—red for Needed, yellow for Staged, green when fully Packed—so you can spot what still needs attention.",
+        text: "Category headers use a soft color tint: red for Needed, yellow for Staged, and green when fully Packed, so you can spot what still needs attention.",
       },
       {
         text: "Each item shows a Needed, Staged, or Packed badge that matches its status color. Tap an item to advance: Needed → Staged → Packed.",
@@ -95,7 +95,7 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "Use All or To pack to filter the list. Reset All (floating button) sets every item back to Needed.",
       },
       {
-        text: "Export List: in the pack list toolbar, tap Export List to copy your checklist as text or download CSV or JSON. Available when the trip has at least one item.",
+        text: "Export List: in the pack list toolbar, tap Export List to copy your checklist as text, download a CSV spreadsheet, or choose Download App Backup to save a .json file you can re-import later with Lifetime Pro. Available when the trip has at least one item.",
       },
     ],
   },
@@ -119,7 +119,7 @@ const USER_GUIDE: UserGuideSection[] = [
   {
     title: LIFETIME_PRO_LABEL,
     description:
-      "CampReady is free to use with one trip and one saved gear checklist. Lifetime Pro is a one-time upgrade that unlocks the features below. You can read these instructions anytime—even before upgrading—to see how Pro works and what you gain.",
+      "CampReady is free to use with one trip and one saved gear checklist. Lifetime Pro is a one-time upgrade that unlocks the features below. You can read these instructions anytime, even before upgrading, to see how Pro works and what you gain.",
     items: [
       {
         text: "Unlimited trips: create and manage as many concurrent trips as you need instead of being limited to one.",
@@ -130,11 +130,11 @@ const USER_GUIDE: UserGuideSection[] = [
         lifetimePro: true,
       },
       {
-        text: "Import List: merge a previously exported pack list back into a trip. On the Gear Checklist tab, tap Import List in the pack list toolbar (next to Export List). Select a .json or .csv file in CampReady's export format. Categories and items that already exist are combined by name—nothing is duplicated, and your current pack status on matching items is kept. Weight and storage details update when the import file includes them.",
+        text: "Import List: merge a previously exported pack list back into a trip. On the Gear Checklist tab, tap Import List in the pack list toolbar (next to Export List). Select an app backup (.json) or CSV file from Export List. Categories and items that already exist are combined by name. Nothing is duplicated, and your current pack status on matching items is kept. Weight and storage details update when the import file includes them.",
         lifetimePro: true,
       },
       {
-        text: "To upgrade, tap any Pro-only button (such as Import List, or Create new trip when you already have one trip) and follow the Lifetime Pro checkout. Pro unlocks on this device after purchase—no subscription.",
+        text: "To upgrade, tap any Pro-only button (such as Import List, or Create new trip when you already have one trip) and follow the Lifetime Pro checkout. Pro unlocks on this device after purchase. No subscription is required.",
         lifetimePro: true,
       },
     ],
@@ -146,13 +146,13 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "Choose New when creating a trip if you want to build a fresh checklist as you pack.",
       },
       {
-        text: "Save a checklist once you have your gear inventory set up—reuse it on every trip.",
+        text: "Save a checklist once you have your gear inventory set up, then reuse it on every trip.",
       },
       {
         text: "Data saves automatically on this device. No account required.",
       },
       {
-        text: "Export a trip before a big pack. With Lifetime Pro, import that file later to merge gear back in without starting over.",
+        text: "Export a Download App Backup or CSV before a big pack. With Lifetime Pro, import that file later to merge gear back in without starting over.",
       },
     ],
   },

@@ -1,8 +1,10 @@
 import { AMAZON_ASSOCIATE_DISCLOSURE } from "@/lib/affiliate-links";
 
-export function AmazonAssociateDisclosure() {
+export function AmazonAssociateDisclosure({ className = "" }: { className?: string }) {
   return (
-    <p className="px-1 text-[0.65rem] leading-snug text-muted">
+    <p
+      className={`text-[0.65rem] leading-snug text-muted ${className}`.trim()}
+    >
       {AMAZON_ASSOCIATE_DISCLOSURE}
     </p>
   );

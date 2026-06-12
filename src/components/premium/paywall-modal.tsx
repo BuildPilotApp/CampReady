@@ -19,7 +19,7 @@ const FEATURES = [
     icon: Shield,
     title: "Merge Pack Lists",
     description:
-      "Import JSON or CSV exports to merge categories and gear into any trip without duplicates.",
+      "Import app backup or CSV exports to merge categories and gear into any trip without duplicates.",
   },
 ] as const;
 
@@ -95,7 +95,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
             rel="noopener noreferrer"
             className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90"
           >
-            Upgrade Now — $4.99 (Buy Once, Own Forever)
+            Upgrade Now: $4.99 (Buy Once, Own Forever)
           </a>
 
           <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">

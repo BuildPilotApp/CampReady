@@ -6,7 +6,8 @@ import {
   formatImportMergeSummary,
   validateChecklistImport,
 } from "@/lib/import-checklist";
-import { Check, Upload } from "lucide-react";
+import { CHECKLIST_ACTION_BUTTON_CLASS } from "@/components/checklist/checklist-action-button-styles";
+import { Check, ChevronDown, Upload } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 export interface ImportListStatus {
@@ -16,6 +17,7 @@ export interface ImportListStatus {
 
 interface ImportListButtonProps {
   tripId?: string | null;
+  className?: string;
   onStatusChange?: (status: ImportListStatus | null) => void;
 }
 
@@ -23,6 +25,7 @@ type ImportState = "idle" | "success" | "error";
 
 export function ImportListButton({
   tripId,
+  className = "",
   onStatusChange,
 }: ImportListButtonProps) {
   const { activeTrip, importChecklistIntoTrip } = useCampReady();
@@ -110,7 +113,7 @@ export function ImportListButton({
     state === "success" ? "Imported" : state === "error" ? "Import failed" : "Import List";
 
   return (
-    <>
+    <div className={className}>
       <input
         ref={inputRef}
         id={inputId}
@@ -119,18 +122,15 @@ export function ImportListButton({
         className="sr-only"
         onChange={(event) => void handleFileChange(event)}
       />
-      <button
-        type="button"
-        onClick={handleClick}
-        className="touch-target inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border-2 border-border bg-surface px-3 text-xs font-bold text-foreground active:opacity-90"
-      >
+      <button type="button" onClick={handleClick} className={CHECKLIST_ACTION_BUTTON_CLASS}>
         {state === "success" ? (
           <Check className="size-4 shrink-0 text-accent" aria-hidden />
         ) : (
           <Upload className="size-4 shrink-0 text-accent" aria-hidden />
         )}
-        <span className="whitespace-nowrap">{label}</span>
+        <span className="truncate">{label}</span>
+        <ChevronDown className="size-3.5 shrink-0 opacity-0" aria-hidden />
       </button>
-    </>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { tripToExportDocument } from "@/lib/checklist-export-format";
+import { downloadTextFile } from "@/lib/download-text-file";
 import { STATUS_LABELS } from "@/lib/gear-status";
 import type { TripRecord } from "@/types";
 
@@ -76,28 +77,48 @@ export function formatChecklistAsJson(trip: TripRecord): string {
   return JSON.stringify(tripToExportDocument(trip), null, 2);
 }
 
-export function downloadChecklistCsv(trip: TripRecord): void {
+export async function downloadChecklistCsv(trip: TripRecord): Promise<boolean> {
   const csv = formatChecklistAsCsv(trip);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${sanitizeFilename(trip.name)}-pack-list.csv`;
-  anchor.click();
-  URL.revokeObjectURL(url);
+  return downloadTextFile(
+    csv,
+    `${sanitizeFilename(trip.name)}-pack-list.csv`,
+    "text/csv",
+  );
 }
 
-export function downloadChecklistJson(trip: TripRecord): void {
+export async function downloadChecklistAppBackup(trip: TripRecord): Promise<boolean> {
   const json = formatChecklistAsJson(trip);
-  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${sanitizeFilename(trip.name)}-pack-list.json`;
-  anchor.click();
-  URL.revokeObjectURL(url);
+  return downloadTextFile(
+    json,
+    `${sanitizeFilename(trip.name)}-app-backup.json`,
+    "application/json",
+  );
+}
+
+/** @deprecated Use downloadChecklistAppBackup */
+export async function downloadChecklistJson(trip: TripRecord): Promise<boolean> {
+  return downloadChecklistAppBackup(trip);
 }
 
 export async function copyChecklistText(trip: TripRecord): Promise<void> {
-  await navigator.clipboard.writeText(formatChecklistAsText(trip));
+  const text = formatChecklistAsText(trip);
+
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall through to the execCommand fallback below.
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
 }
