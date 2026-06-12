@@ -40,17 +40,19 @@ function ItemMetaLine({ item }: { item: GearItem }) {
 
 function AffiliateGearLinkButton({
   itemName,
-  className = "mr-3",
+  className = "",
+  variant = "row",
 }: {
   itemName: string;
   className?: string;
+  variant?: "row" | "inline";
 }) {
   const url = buildAmazonAffiliateSearchUrl(itemName);
   if (!url) {
     return null;
   }
 
-  return (
+  const button = (
     <button
       type="button"
       onClick={(event) => {
@@ -58,11 +60,21 @@ function AffiliateGearLinkButton({
         void openExternalUrl(url);
       }}
       aria-label={`Check price for ${itemName} on Amazon`}
-      className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-3 py-2 text-[0.65rem] font-semibold text-muted shadow-sm active:scale-[0.97] active:bg-background active:opacity-90 dark:border-border/60 dark:bg-surface/80 dark:text-zinc-300 dark:active:bg-surface ${className}`}
+      className={`inline-flex h-12 w-[7.25rem] shrink-0 items-center justify-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-3 text-[0.65rem] font-semibold leading-none text-muted shadow-sm active:scale-[0.97] active:bg-background active:opacity-90 dark:border-border/60 dark:bg-surface/80 dark:text-zinc-300 dark:active:bg-surface ${className}`}
     >
       <ShoppingCart className="size-3 shrink-0" strokeWidth={2.25} aria-hidden />
-      <span>Check Price</span>
+      <span className="truncate">Check Price</span>
     </button>
+  );
+
+  if (variant === "inline") {
+    return button;
+  }
+
+  return (
+    <div className="flex shrink-0 items-center self-stretch pr-3">
+      {button}
+    </div>
   );
 }
 
@@ -120,7 +132,7 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
             placeholder="Tote, bin, shelf…"
             aria-label="Storage location"
           />
-          <AffiliateGearLinkButton itemName={name} className="" />
+          <AffiliateGearLinkButton itemName={name} variant="inline" />
           <button
             ref={ref}
             type="button"
@@ -145,17 +157,17 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
         packed ? "bg-background/40" : staged ? "bg-status-staged-bg/25" : "bg-surface"
       }`}
     >
-      <div className="flex items-center gap-1">
+      <div className="flex min-h-16 items-center gap-1">
         <button
           type="button"
           onClick={() => cycleItemStatus(item.id)}
           aria-label={`${item.name}, ${packStatusLabel(item.status)}. Tap to update.`}
-          className="touch-target flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left active:opacity-90"
+          className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 text-left active:opacity-90"
         >
           <span className="inline-flex size-11 shrink-0 items-center justify-center">
             <PackStatusIndicator status={item.status} />
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 flex-1 flex-col justify-center">
             <span
               className={`block text-base font-bold leading-snug ${
                 packed
