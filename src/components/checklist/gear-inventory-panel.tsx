@@ -239,7 +239,7 @@ export function GearInventoryPanel() {
     <>
       <details
         ref={detailsRef}
-        className="group rounded-xl border-2 border-border bg-surface"
+        className="group mt-1 rounded-xl border-2 border-border bg-surface"
       >
         <summary className="touch-target flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 active:opacity-90">
           <span className="inline-flex min-w-0 items-center gap-2">
@@ -335,6 +335,22 @@ export function GearInventoryPanel() {
                   </button>
                 </div>
 
+                {template.categories.length === 0 ? (
+                  <p className="text-sm text-muted">
+                    Add a category below, then add gear items under each category.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {template.categories.map((category) => (
+                      <TemplateCategorySection
+                        key={category.id}
+                        templateId={template.id}
+                        category={category}
+                      />
+                    ))}
+                  </div>
+                )}
+
                 <div className="rounded-lg border border-dashed border-border p-2.5">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Add category or tote
@@ -361,22 +377,6 @@ export function GearInventoryPanel() {
                     </button>
                   </div>
                 </div>
-
-                {template.categories.length === 0 ? (
-                  <p className="text-sm text-muted">
-                    Add a category above, then add gear items under each category.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {template.categories.map((category) => (
-                      <TemplateCategorySection
-                        key={category.id}
-                        templateId={template.id}
-                        category={category}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             )}
           </div>

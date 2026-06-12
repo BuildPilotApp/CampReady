@@ -566,7 +566,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       persist(
         updateTemplateById(database, templateId, (template) => ({
           ...template,
-          categories: [category, ...template.categories],
+          categories: [...template.categories, category],
         })),
       );
     },
@@ -677,7 +677,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       persist(
         updateTripById(database, database.activeTripId, (trip) => ({
           ...trip,
-          categories: [category, ...trip.categories],
+          categories: [...trip.categories, category],
         })),
       );
       setChecklistFilter("all");
