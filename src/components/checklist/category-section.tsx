@@ -71,13 +71,13 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
       className={`overflow-hidden rounded-xl border border-zinc-800 bg-surface dark:border-zinc-800 ${statusStyles.border}`}
     >
       <div
-        className={`flex min-h-11 w-full items-center gap-2 px-4 py-2.5 ${statusStyles.header}`}
+        className={`flex min-h-11 w-full items-stretch gap-1 px-2 ${statusStyles.header}`}
       >
         <button
           type="button"
           onClick={() => toggleCategory(category.id)}
           aria-expanded={!collapsed}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left active:opacity-90"
+          className="touch-target flex min-w-0 flex-1 items-center gap-3 px-2 text-left active:opacity-90"
         >
           <ChevronDown
             className={`size-5 shrink-0 text-accent transition-transform ${
@@ -101,7 +101,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
           type="button"
           onClick={handleEditClick}
           aria-expanded={isEditing}
-          className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-sm font-semibold active:opacity-90 ${
+          className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold active:opacity-90 ${
             isEditing
               ? "border-accent bg-accent/15 text-foreground"
               : "border-border/60 text-muted active:text-foreground"
@@ -159,7 +159,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
                     deleteCategory(category.id);
                   }
                 }}
-                className="touch-target inline-flex items-center gap-1.5 text-xs font-semibold text-muted active:text-foreground"
+                className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-bold text-muted active:bg-surface active:text-foreground"
               >
                 <Trash2 className="size-3.5" aria-hidden />
                 Delete category

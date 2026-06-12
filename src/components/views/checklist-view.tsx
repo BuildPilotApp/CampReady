@@ -120,7 +120,7 @@ export function ChecklistView() {
                     addCategory(name);
                     setNewCategoryName("");
                   }}
-                  className="touch-target inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground active:opacity-90"
+                  className="touch-target-icon rounded-lg bg-accent text-accent-foreground active:opacity-90"
                   aria-label="Add category or tote"
                 >
                   <Plus className="size-5" aria-hidden />

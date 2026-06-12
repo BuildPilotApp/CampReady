@@ -84,7 +84,7 @@ function SavedChecklistCard({
             deleteTemplate(template.id);
           }
         }}
-        className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg border-2 border-border text-muted active:bg-surface"
+        className="touch-target-icon rounded-lg border-2 border-border text-muted active:bg-surface"
         aria-label={`Delete ${template.name}`}
       >
         <Trash2 className="size-3.5" aria-hidden />
@@ -348,7 +348,7 @@ export function GearInventoryPanel() {
                         addTemplateCategory(template.id, next);
                         setNewCategoryName("");
                       }}
-                      className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground active:opacity-90"
+                      className="touch-target-icon rounded-lg bg-accent text-accent-foreground active:opacity-90"
                       aria-label="Add category"
                     >
                       <Plus className="size-4" aria-hidden />

@@ -59,7 +59,7 @@ function TemplateItemFields({
               deleteTemplateItem(templateId, item.id);
             }
           }}
-          className="touch-target inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted active:bg-background"
+          className="touch-target-icon rounded-lg border border-border text-muted active:bg-background"
           aria-label={`Delete ${item.name}`}
         >
           <Trash2 className="size-4" aria-hidden />

@@ -101,6 +101,17 @@ body {
   min-width: var(--touch-target);
 }
 
+/* Icon-only controls: 48px hit area with centered glyph (≥44px Apple HIG). */
+.touch-target-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  padding: 0.75rem;
+}
+
 @keyframes trip-range-duration-pop {
   from {
     opacity: 0.65;

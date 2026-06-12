@@ -58,7 +58,7 @@ function AffiliateGearLinkButton({
         void openExternalUrl(url);
       }}
       aria-label={`Check price for ${itemName} on Amazon`}
-      className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-2.5 py-1 text-[0.65rem] font-semibold text-muted shadow-sm active:scale-[0.97] active:bg-background active:opacity-90 dark:border-border/60 dark:bg-surface/80 dark:text-zinc-300 dark:active:bg-surface ${className}`}
+      className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-3 py-2 text-[0.65rem] font-semibold text-muted shadow-sm active:scale-[0.97] active:bg-background active:opacity-90 dark:border-border/60 dark:bg-surface/80 dark:text-zinc-300 dark:active:bg-surface ${className}`}
     >
       <ShoppingCart className="size-3 shrink-0" strokeWidth={2.25} aria-hidden />
       <span>Check Price</span>
@@ -125,10 +125,10 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
             ref={ref}
             type="button"
             onClick={handleClick}
-            className={`touch-target inline-flex shrink-0 items-center justify-center rounded-lg border px-2 active:opacity-90 ${
+            className={`touch-target-icon rounded-lg border active:opacity-90 ${
               armed
-                ? "min-w-16 border-red-500 bg-red-50 text-xs font-bold text-red-600"
-                : "size-9 border-border text-muted active:text-foreground"
+                ? "min-w-16 border-red-500 bg-red-50 px-3 text-xs font-bold text-red-600"
+                : "border-border text-muted active:text-foreground"
             }`}
             aria-label={armed ? `Confirm delete ${item.name}` : `Delete ${item.name}`}
           >
@@ -145,14 +145,16 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
         packed ? "bg-background/40" : staged ? "bg-status-staged-bg/25" : "bg-surface"
       }`}
     >
-      <div className="flex items-center">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={() => cycleItemStatus(item.id)}
           aria-label={`${item.name}, ${packStatusLabel(item.status)}. Tap to update.`}
-          className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left active:opacity-90"
+          className="touch-target flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left active:opacity-90"
         >
-          <PackStatusIndicator status={item.status} />
+          <span className="inline-flex size-11 shrink-0 items-center justify-center">
+            <PackStatusIndicator status={item.status} />
+          </span>
           <span className="min-w-0 flex-1">
             <span
               className={`block text-base font-bold leading-snug ${
