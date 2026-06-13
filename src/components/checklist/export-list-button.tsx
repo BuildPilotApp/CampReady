@@ -20,6 +20,11 @@ type ExportFeedback = {
   message: string;
 };
 
+const EXPORT_MENU_ITEM_CLASS =
+  "touch-target flex min-h-12 w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background";
+
+const EXPORT_MENU_ICON_CLASS = "size-4 shrink-0 text-accent";
+
 export function ExportListButton({ trip, className = "" }: ExportListButtonProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -109,7 +114,10 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
   };
 
   return (
-    <div ref={menuRef} className={`relative isolate min-w-0 ${className}`.trim()}>
+    <div
+      ref={menuRef}
+      className={`relative isolate min-w-0 ${open ? "z-50" : ""} ${className}`.trim()}
+    >
       <button
         type="button"
         onClick={handleToggle}
@@ -150,34 +158,34 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
       {open && hasItems ? (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border-2 border-border bg-surface shadow-lg"
+          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border-2 border-border bg-surface shadow-lg shadow-black/30"
           onPointerDown={(event) => event.stopPropagation()}
         >
           <button
             type="button"
             role="menuitem"
             onClick={() => void handleCopyText()}
-            className="touch-target flex min-h-12 w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            className={EXPORT_MENU_ITEM_CLASS}
           >
-            <FileText className="size-4 shrink-0 text-accent" aria-hidden />
+            <FileText className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
             Copy as text
           </button>
           <button
             type="button"
             role="menuitem"
             onClick={() => void handleDownloadCsv()}
-            className="touch-target flex min-h-12 w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
           >
-            <Download className="size-4 shrink-0 text-accent" aria-hidden />
+            <Download className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
             Download CSV
           </button>
           <button
             type="button"
             role="menuitem"
             onClick={() => void handleDownloadAppBackup()}
-            className="touch-target flex min-h-12 w-full items-center gap-2 border-t border-border px-4 py-3 text-left text-sm font-semibold text-foreground active:bg-background"
+            className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
           >
-            <Archive className="size-4 shrink-0 text-accent" aria-hidden />
+            <Archive className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
             Download App Backup
           </button>
         </div>
