@@ -29,7 +29,7 @@ export function ImportListButton({
   onStatusChange,
 }: ImportListButtonProps) {
   const { activeTrip, importChecklistIntoTrip } = useCampReady();
-  const { isPro, openPaywall } = usePro();
+  const { isProEntitled, openPaywall } = usePro();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<ImportState>("idle");
@@ -51,7 +51,7 @@ export function ImportListButton({
   };
 
   const handleClick = () => {
-    if (!isPro) {
+    if (!isProEntitled) {
       openPaywall();
       return;
     }

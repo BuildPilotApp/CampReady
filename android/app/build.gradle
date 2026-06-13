@@ -41,6 +41,7 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation "androidx.core:core:$androidxCoreVersion"
     implementation "androidx.webkit:webkit:$androidxWebkitVersion"
+    implementation "com.android.billingclient:billing:$billingVersion"
     implementation project(':capacitor-cordova-android-plugins')
 }
 

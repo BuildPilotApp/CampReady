@@ -6,14 +6,18 @@ import {
   formatFreeTemplateUsage,
   formatFreeTripUsage,
 } from "@/lib/free-tier-copy";
-import { FREE_TEMPLATE_LIMIT, FREE_TRIP_LIMIT } from "@/lib/pro";
+import {
+  FREE_TEMPLATE_LIMIT,
+  FREE_TRIP_LIMIT,
+  isPrimeTestLabBypassActive,
+} from "@/lib/pro";
 import { Sparkles } from "lucide-react";
 
 export function FreePlanUsageCard() {
   const { database } = useCampReady();
   const { isPro, openPaywall } = usePro();
 
-  if (isPro) {
+  if (isPro || isPrimeTestLabBypassActive()) {
     return null;
   }
 

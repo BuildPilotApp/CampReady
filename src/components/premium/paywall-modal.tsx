@@ -1,7 +1,15 @@
 "use client";
 
 import { usePro } from "@/components/providers/pro-provider";
-import { STRIPE_CHECKOUT_URL } from "@/lib/pro";
+import {
+  canUseNativeGooglePlayBilling,
+  purchaseCampReadyPro,
+  restoreNativeCampReadyPro,
+} from "@/lib/native-billing";
+import {
+  isPrimeTestLabBypassActive,
+  STRIPE_CHECKOUT_URL,
+} from "@/lib/pro";
 import { Check, RefreshCw, Shield, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 
@@ -30,10 +38,54 @@ interface PaywallModalProps {
 }
 
 export function PaywallModal({ onClose }: PaywallModalProps) {
-  const { refreshProAccess } = usePro();
+  const { refreshProAccess, completeProPurchase } = usePro();
   const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
+  const [purchasing, setPurchasing] = useState(false);
+  const primeTestLabBypass = isPrimeTestLabBypassActive();
+  const nativeBilling = canUseNativeGooglePlayBilling();
 
-  const handleRestore = () => {
+  const handleNativePurchase = async () => {
+    setPurchasing(true);
+    setRestoreMessage(null);
+
+    try {
+      const result = await purchaseCampReadyPro();
+      if (result.success) {
+        completeProPurchase();
+        return;
+      }
+
+      if (!result.cancelled && result.error) {
+        setRestoreMessage(result.error);
+      }
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (primeTestLabBypass) {
+      setRestoreMessage(
+        "All Pro features are unlocked during Play Store closed testing.",
+      );
+      return;
+    }
+
+    if (nativeBilling) {
+      setRestoreMessage(null);
+      const restored = await restoreNativeCampReadyPro();
+      if (restored) {
+        refreshProAccess();
+        setRestoreMessage("Pro access restored on this device.");
+        return;
+      }
+
+      setRestoreMessage(
+        "No Google Play purchase found for this account on this device.",
+      );
+      return;
+    }
+
     const result = refreshProAccess();
     if (result.isPro) {
       setRestoreMessage("Pro access restored on this device.");
@@ -76,11 +128,14 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
               id="paywall-title"
               className="mt-2 text-2xl font-bold leading-tight text-white"
             >
-              Pack like a pro. Pay once.
+              {primeTestLabBypass
+                ? "Pro features unlocked for testing"
+                : "Pack like a pro. Pay once."}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-              The free tier includes the full packing workflow for one trip and one
-              saved checklist. Pro removes every limit — forever, on this device.
+              {primeTestLabBypass
+                ? "During Google Play closed testing, every Pro feature is available at no charge on this build."
+                : "The free tier includes the full packing workflow for one trip and one saved checklist. Pro removes every limit — forever, on this device."}
             </p>
           </div>
 
@@ -105,28 +160,65 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
             })}
           </ul>
 
-          <a
-            href={STRIPE_CHECKOUT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90"
-          >
-            Upgrade — $4.99 one-time
-          </a>
+          {primeTestLabBypass ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90"
+            >
+              Got it
+            </button>
+          ) : nativeBilling ? (
+            <>
+              <button
+                type="button"
+                onClick={handleNativePurchase}
+                disabled={purchasing}
+                className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90 disabled:opacity-70"
+              >
+                {purchasing ? "Opening Google Play…" : "Unlock forever — $4.99 one-time"}
+              </button>
 
-          <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
-            Secure checkout opens in your browser. Return to CampReady afterward —
-            Pro unlocks automatically on this device.
-          </p>
+              <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
+                Secure checkout through Google Play. Pro unlocks automatically on
+                this device after purchase.
+              </p>
 
-          <button
-            type="button"
-            onClick={handleRestore}
-            className="touch-target mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-200 active:bg-zinc-800"
-          >
-            <RefreshCw className="size-4" aria-hidden />
-            Restore Pro access
-          </button>
+              <button
+                type="button"
+                onClick={handleRestore}
+                className="touch-target mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-200 active:bg-zinc-800"
+              >
+                <RefreshCw className="size-4" aria-hidden />
+                Restore Pro access
+              </button>
+            </>
+          ) : (
+            <>
+              <a
+                href={STRIPE_CHECKOUT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90"
+              >
+                Unlock forever — $4.99 one-time
+              </a>
+
+              <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
+                Secure checkout opens in your browser. Return to CampReady afterward —
+                Pro unlocks automatically on this device.
+              </p>
+
+              <button
+                type="button"
+                onClick={handleRestore}
+                className="touch-target mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-200 active:bg-zinc-800"
+              >
+                <RefreshCw className="size-4" aria-hidden />
+                Restore Pro access
+              </button>
+            </>
+          )}
 
           {restoreMessage ? (
             <p

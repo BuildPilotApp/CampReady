@@ -11,7 +11,7 @@ import {
   SAVED_CHECKLISTS_HEADER_SUBTITLE,
   STARTER_CHECKLIST_BUTTON_LABEL,
 } from "@/lib/gear-checklist-copy";
-import { canCreateTemplate, FREE_TEMPLATE_LIMIT } from "@/lib/pro";
+import { canCreateTemplate, FREE_TEMPLATE_LIMIT, isPrimeTestLabBypassActive } from "@/lib/pro";
 import { getTemplateStats } from "@/lib/templates";
 import { usePersistedDraft } from "@/hooks/use-persisted-draft";
 import type { ChecklistTemplate, TripRecord } from "@/types";
@@ -180,6 +180,8 @@ export function GearInventoryPanel() {
   };
 
   const templateLimitReached = !canCreateTemplate(isPro, templates.length);
+  const showFreePlanTeasers =
+    !isPro && !isPrimeTestLabBypassActive();
 
   const handleCreateChecklist = () => {
     const name = newChecklistName.trim();
@@ -321,7 +323,7 @@ export function GearInventoryPanel() {
               <p className="text-xs leading-snug text-muted">
                 {SAVED_CHECKLISTS_HEADER_SUBTITLE}
               </p>
-              {!isPro && templates.length >= FREE_TEMPLATE_LIMIT ? (
+              {!showFreePlanTeasers ? null : templates.length >= FREE_TEMPLATE_LIMIT ? (
                 <p className="shrink-0 text-xs font-medium text-muted">
                   {templates.length} of {FREE_TEMPLATE_LIMIT}
                 </p>

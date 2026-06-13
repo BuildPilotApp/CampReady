@@ -2,7 +2,13 @@
 
 import { PaywallModal } from "@/components/premium/paywall-modal";
 import { ProSuccessToast } from "@/components/premium/pro-success-toast";
-import { readProStatus, tryActivateProFromCheckoutCallback } from "@/lib/pro";
+import {
+  applyPrimeTestLabProBypassOnLaunch,
+  hasProEntitlement,
+  readProStatus,
+  tryActivateProFromCheckoutCallback,
+  unlockProLocally,
+} from "@/lib/pro";
 import {
   createContext,
   useCallback,
@@ -14,24 +20,42 @@ import {
 
 interface ProContextValue {
   isPro: boolean;
+  isProEntitled: boolean;
   paywallOpen: boolean;
   openPaywall: () => void;
   closePaywall: () => void;
   requirePro: (action: () => void) => void;
   refreshProAccess: () => { activated: boolean; isPro: boolean };
+  completeProPurchase: () => void;
 }
 
 const ProContext = createContext<ProContextValue | null>(null);
 
 function syncProFromDevice(): { activated: boolean; isPro: boolean } {
+  applyPrimeTestLabProBypassOnLaunch();
   const activated = tryActivateProFromCheckoutCallback();
   return { activated, isPro: readProStatus() };
 }
 
+function readInitialProStatus(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  applyPrimeTestLabProBypassOnLaunch();
+  return readProStatus();
+}
+
 export function ProProvider({ children }: { children: React.ReactNode }) {
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(readInitialProStatus);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
+
+  const completeProPurchase = useCallback(() => {
+    unlockProLocally();
+    setIsPro(true);
+    setSuccessVisible(true);
+    setPaywallOpen(false);
+  }, []);
 
   const refreshProState = useCallback((showSuccessOnActivate = false) => {
     const { activated, isPro: nextIsPro } = syncProFromDevice();
@@ -84,7 +108,7 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
 
   const requirePro = useCallback(
     (action: () => void) => {
-      if (isPro) {
+      if (hasProEntitlement(isPro)) {
         action();
         return;
       }
@@ -108,13 +132,23 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<ProContextValue>(
     () => ({
       isPro,
+      isProEntitled: hasProEntitlement(isPro),
       paywallOpen,
       openPaywall,
       closePaywall,
       requirePro,
       refreshProAccess,
+      completeProPurchase,
     }),
-    [isPro, paywallOpen, openPaywall, closePaywall, requirePro, refreshProAccess],
+    [
+      isPro,
+      paywallOpen,
+      openPaywall,
+      closePaywall,
+      requirePro,
+      refreshProAccess,
+      completeProPurchase,
+    ],
   );
 
   return (

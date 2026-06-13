@@ -29,6 +29,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(SystemUrlLauncherPlugin.class);
+        registerPlugin(CampReadyBillingPlugin.class);
         SplashScreen.installSplashScreen(this);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         super.onCreate(savedInstanceState);

@@ -1,3 +1,7 @@
+import { isNativePlatform } from "@/lib/system-url-launcher";
+
+export const IS_PRIME_TEST_LAB_BUILD = true;
+
 export const PRO_STORAGE_KEY = "campready_pro";
 
 export const STRIPE_CHECKOUT_URL =
@@ -117,12 +121,33 @@ export function tryActivateProFromCheckoutCallback(
   return true;
 }
 
-export function canCreateTrip(isPro: boolean, tripCount: number): boolean {
-  return isPro || tripCount < FREE_TRIP_LIMIT;
+export function applyPrimeTestLabProBypassOnLaunch(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  if (!IS_PRIME_TEST_LAB_BUILD || !isNativePlatform()) {
+    return;
+  }
+  unlockProLocally();
 }
 
-export function canCreateTemplate(isPro: boolean, templateCount: number): boolean {
-  return isPro || templateCount < FREE_TEMPLATE_LIMIT;
+export function isPrimeTestLabBypassActive(): boolean {
+  return IS_PRIME_TEST_LAB_BUILD && isNativePlatform();
+}
+
+export function hasProEntitlement(purchasedPro: boolean): boolean {
+  return purchasedPro;
+}
+
+export function canCreateTrip(purchasedPro: boolean, tripCount: number): boolean {
+  return hasProEntitlement(purchasedPro) || tripCount < FREE_TRIP_LIMIT;
+}
+
+export function canCreateTemplate(
+  purchasedPro: boolean,
+  templateCount: number,
+): boolean {
+  return hasProEntitlement(purchasedPro) || templateCount < FREE_TEMPLATE_LIMIT;
 }
 
 export type RestoreProResult = "activated" | "already_pro" | "not_found";

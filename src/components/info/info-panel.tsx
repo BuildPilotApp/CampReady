@@ -1,5 +1,6 @@
 "use client";
 
+import { HostedLegalLink } from "@/components/info/hosted-legal-link";
 import { OverlayModal } from "@/components/ui/overlay-modal";
 import {
   modalInputClassName,
@@ -19,7 +20,12 @@ import {
   TERMS_LAST_UPDATED,
   TERMS_SECTIONS,
 } from "@/lib/legal-copy";
-import { attemptRestoreProPurchase } from "@/lib/pro";
+import { attemptRestoreProPurchase, isPrimeTestLabBypassActive } from "@/lib/pro";
+import { canUseNativeGooglePlayBilling, restoreNativeCampReadyPro } from "@/lib/native-billing";
+import {
+  HOSTED_PRIVACY_POLICY_URL,
+  HOSTED_TERMS_OF_SERVICE_URL,
+} from "@/lib/legal-urls";
 import type { InfoView } from "@/types";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import { useId, useState } from "react";
@@ -304,14 +310,32 @@ function FeedbackForm({
 
 export function InfoPanel() {
   const { infoView, setInfoView, closeInfo } = useCampReady();
-  const { isPro, openPaywall } = usePro();
+  const { isPro, openPaywall, refreshProAccess } = usePro();
   const { showToast } = useAppToast();
 
   if (!infoView) return null;
 
   const goMenu = () => setInfoView("menu");
 
-  const handleRestorePro = () => {
+  const handleRestorePro = async () => {
+    if (isPrimeTestLabBypassActive()) {
+      showToast("All Pro features are unlocked during Play Store closed testing.");
+      return;
+    }
+
+    if (canUseNativeGooglePlayBilling()) {
+      const restored = await restoreNativeCampReadyPro();
+      if (restored) {
+        refreshProAccess();
+        showToast("Lifetime Pro unlocked on this device.");
+        return;
+      }
+      showToast(
+        "No Google Play purchase found for this account on this device.",
+      );
+      return;
+    }
+
     const result = attemptRestoreProPurchase();
     if (result === "activated") {
       showToast("Lifetime Pro unlocked on this device.");
@@ -429,6 +453,10 @@ export function InfoPanel() {
     return (
       <OverlayModal onClose={closeInfo}>
         <PanelHeader title="Terms of Service & Disclaimers" onBack={goMenu} />
+        <HostedLegalLink
+          href={HOSTED_TERMS_OF_SERVICE_URL}
+          label="View hosted Terms of Service"
+        />
         <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted">
           Last Updated: {TERMS_LAST_UPDATED}
         </p>
@@ -460,6 +488,10 @@ export function InfoPanel() {
     return (
       <OverlayModal onClose={closeInfo}>
         <PanelHeader title="Privacy Policy" onBack={goMenu} />
+        <HostedLegalLink
+          href={HOSTED_PRIVACY_POLICY_URL}
+          label="View hosted Privacy Policy"
+        />
         <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted">
           Last Updated: {PRIVACY_LAST_UPDATED}
         </p>

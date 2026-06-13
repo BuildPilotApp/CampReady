@@ -2,6 +2,8 @@
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InventoryTemplatePicker } from "@/components/dashboard/inventory-template-picker";
+import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
+import { TrustStrip } from "@/components/dashboard/trust-strip";
 import { WelcomeGuide } from "@/components/onboarding/welcome-guide";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { LocationInput, type LocationInputHandle } from "@/components/ui/location-input";
@@ -15,7 +17,7 @@ import {
   STARTER_TRIP_BUTTON_LABEL,
 } from "@/lib/gear-checklist-copy";
 import { isWelcomeDismissed } from "@/lib/onboarding";
-import { canCreateTrip, FREE_TRIP_LIMIT } from "@/lib/pro";
+import { canCreateTrip, FREE_TRIP_LIMIT, isPrimeTestLabBypassActive } from "@/lib/pro";
 import { getTripStats } from "@/lib/storage";
 import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
 import { getTemplateOptionLabel } from "@/lib/templates";
@@ -181,6 +183,8 @@ export function TripManager() {
   );
 
   const tripLimitReached = !canCreateTrip(isPro, trips.length);
+  const showFreePlanTeasers =
+    !isPro && !isPrimeTestLabBypassActive();
 
   const handleNewTripAttempt = (event: MouseEvent<HTMLElement>) => {
     if (!tripLimitReached) return;
@@ -201,12 +205,16 @@ export function TripManager() {
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-lg font-bold text-foreground">Trips</h2>
-        {!isPro && trips.length >= FREE_TRIP_LIMIT ? (
+        {!showFreePlanTeasers ? null : trips.length >= FREE_TRIP_LIMIT ? (
           <p className="text-xs font-medium text-muted">
             {trips.length} of {FREE_TRIP_LIMIT} trip{FREE_TRIP_LIMIT === 1 ? "" : "s"}
           </p>
         ) : null}
       </div>
+
+      <TrustStrip />
+
+      {!isPrimeTestLabBypassActive() ? <FreePlanUsageCard /> : null}
 
       {showWelcome ? (
         <WelcomeGuide onDismiss={() => setShowWelcome(false)} />

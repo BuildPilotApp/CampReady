@@ -506,8 +506,12 @@ export type ReplenishableKeyword = (typeof REPLENISHABLE_KEYWORDS)[number];
 /** @deprecated Use {@link GalleyKeyword}. */
 export type GenericGearKeyword = GalleyKeyword;
 
-/** Replace with your Amazon Associates tracking ID. */
-export const AMAZON_AFFILIATE_TAG = "YOUR_AMAZON_TAG_HERE";
+import {
+  AMAZON_AFFILIATE_TAG,
+  isAmazonAffiliateEnabled,
+} from "@/lib/affiliate-config";
+
+export { AMAZON_AFFILIATE_TAG, isAmazonAffiliateEnabled };
 
 /** Exact phrasing required by Amazon Associates program policies. */
 export const AMAZON_ASSOCIATE_DISCLOSURE =
@@ -854,6 +858,10 @@ export function buildAffiliateSearchQuery(itemName: string): string | null {
 
 /** Amazon search affiliate URL for recognized gear items, or null when not eligible. */
 export function buildAmazonAffiliateSearchUrl(itemName: string): string | null {
+  if (!isAmazonAffiliateEnabled() || !AMAZON_AFFILIATE_TAG) {
+    return null;
+  }
+
   const searchQuery = buildAffiliateSearchQuery(itemName);
   if (!searchQuery) {
     return null;

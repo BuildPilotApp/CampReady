@@ -1,0 +1,6 @@
+const GITHUB_PAGES_ORIGIN = "https://buildpilotapp.github.io";
+const APP_BASE_PATH = "/CampReady";
+
+export const HOSTED_PRIVACY_POLICY_URL = `${GITHUB_PAGES_ORIGIN}${APP_BASE_PATH}/PRIVACY_POLICY.md`;
+
+export const HOSTED_TERMS_OF_SERVICE_URL = `${GITHUB_PAGES_ORIGIN}${APP_BASE_PATH}/TERMS_OF_SERVICE.md`;
