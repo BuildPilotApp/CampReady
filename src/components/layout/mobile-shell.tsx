@@ -14,7 +14,7 @@ export function MobileShell({ children, header, footer }: MobileShellProps) {
   return (
     <div className="mobile-app-shell relative flex min-h-dvh flex-col bg-background text-foreground">
       {header ? (
-        <header className="mobile-safe-x mobile-safe-top sticky top-0 z-10 shrink-0 border-b border-border bg-background/95 backdrop-blur-sm">
+        <header className="mobile-safe-x mobile-safe-top sticky top-0 z-20 shrink-0 border-b border-border bg-background/95 backdrop-blur-sm">
           {header}
         </header>
       ) : null}

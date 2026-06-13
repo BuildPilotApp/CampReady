@@ -50,7 +50,7 @@ export function ChecklistView() {
             <AmazonAssociateDisclosure className="border-t border-border/50 pt-2.5" />
           </div>
 
-          <div className="relative z-30 rounded-xl border-2 border-border bg-surface px-3 py-3">
+          <div className="rounded-xl border-2 border-border bg-surface px-3 py-3">
             <div className="grid grid-cols-2 gap-2">
               <ImportListButton
                 tripId={activeTrip.id}
