@@ -97,19 +97,17 @@ public class CampReadyBillingPlugin extends Plugin implements PurchasesUpdatedLi
 
                 billingClient.queryProductDetailsAsync(
                     params,
-                    (billingResult, productDetailsResult) -> {
+                    (billingResult, productDetailsList) -> {
                         if (
                             billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK ||
-                            productDetailsResult == null ||
-                            productDetailsResult.getProductDetailsList().isEmpty()
+                            productDetailsList == null ||
+                            productDetailsList.isEmpty()
                         ) {
                             rejectPendingPurchase("Product is not available for purchase");
                             return;
                         }
 
-                        ProductDetails productDetails = productDetailsResult
-                            .getProductDetailsList()
-                            .get(0);
+                        ProductDetails productDetails = productDetailsList.get(0);
                         Activity activity = getActivity();
                         if (activity == null) {
                             rejectPendingPurchase("Activity is not available");
@@ -169,7 +167,7 @@ public class CampReadyBillingPlugin extends Plugin implements PurchasesUpdatedLi
 
                         boolean owned = false;
                         if (purchases != null) {
-                            for (Purchase purchase : purchases.getPurchasesList()) {
+                            for (Purchase purchase : purchases) {
                                 if (isOwnedProPurchase(purchase)) {
                                     owned = true;
                                     acknowledgeIfNeeded(purchase);
