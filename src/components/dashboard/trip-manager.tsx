@@ -21,6 +21,8 @@ import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
 import { getTemplateOptionLabel } from "@/lib/templates";
 import type { TripLocation, TripRecord } from "@/types";
 import { CalendarDays, ChevronDown, MapPin, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useKeyboardAwareScroll } from "@/hooks/use-keyboard-aware-scroll";
+import { scrollElementIntoKeyboardView } from "@/lib/scroll-into-keyboard-view";
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from "react";
 
 function formatTripDate(isoDate: string): string {
@@ -45,6 +47,7 @@ function sortTripsChronologically(trips: TripRecord[]): TripRecord[] {
 function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
   const { updateTrip } = useCampReady();
   const inputId = useId();
+  const keyboardScroll = useKeyboardAwareScroll();
   const [value, setValue] = useState(name);
 
   useEffect(() => {
@@ -71,7 +74,9 @@ function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
           setValue(next);
           persistName(next);
         }}
+        onFocus={keyboardScroll.onFocus}
         onBlur={() => {
+          keyboardScroll.onBlur();
           const next = value.trim();
           if (next) {
             persistName(value);
@@ -140,6 +145,8 @@ export function TripManager() {
   const [tripPendingDelete, setTripPendingDelete] = useState<TripRecord | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const newTripNameId = useId();
+  const newTripNameRef = useRef<HTMLInputElement>(null);
+  const keyboardScroll = useKeyboardAwareScroll();
   const newLocationRef = useRef<LocationInputHandle>(null);
   const createTripDetailsRef = useRef<HTMLDetailsElement>(null);
   const editTripDetailsRef = useRef<HTMLDetailsElement>(null);
@@ -151,7 +158,17 @@ export function TripManager() {
     }
     window.setTimeout(() => {
       editLocationRef.current?.focus();
-    }, 50);
+    }, 150);
+  };
+
+  const openCreateTripForm = () => {
+    if (!createTripDetailsRef.current) return;
+    createTripDetailsRef.current.open = true;
+    window.setTimeout(() => {
+      if (newTripNameRef.current) {
+        scrollElementIntoKeyboardView(newTripNameRef.current);
+      }
+    }, 150);
   };
 
   useEffect(() => {
@@ -214,9 +231,12 @@ export function TripManager() {
               Trip name
             </span>
             <input
+              ref={newTripNameRef}
               id={newTripNameId}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onFocus={keyboardScroll.onFocus}
+              onBlur={keyboardScroll.onBlur}
               className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
               placeholder="Moab Spring Break"
             />
@@ -281,15 +301,7 @@ export function TripManager() {
           <div className="mt-4 flex flex-col gap-2">
             <button
               type="button"
-              onClick={() => {
-                if (createTripDetailsRef.current) {
-                  createTripDetailsRef.current.open = true;
-                  createTripDetailsRef.current.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                  });
-                }
-              }}
+              onClick={openCreateTripForm}
               className="touch-target rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground active:opacity-90"
             >
               Create new trip

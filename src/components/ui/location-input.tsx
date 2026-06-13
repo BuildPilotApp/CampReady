@@ -1,6 +1,8 @@
 "use client";
 
+import { scrollElementIntoKeyboardView } from "@/lib/scroll-into-keyboard-view";
 import { geocodeLocation, searchGeocodeLocations } from "@/lib/weather";
+import { useKeyboardAwareScroll } from "@/hooks/use-keyboard-aware-scroll";
 import { isNetworkAvailable } from "@/lib/runtime/network-guard";
 import type { TripLocation } from "@/types";
 import { MapPin } from "lucide-react";
@@ -48,6 +50,7 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef(suggestions);
+    const keyboardScroll = useKeyboardAwareScroll();
 
     useEffect(() => {
       suggestionsRef.current = suggestions;
@@ -163,7 +166,9 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
         commitQuery: resolveTypedLocation,
         focus: () => {
           inputRef.current?.focus();
-          inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (inputRef.current) {
+            scrollElementIntoKeyboardView(inputRef.current);
+          }
         },
       }),
       [resolveTypedLocation],
@@ -197,10 +202,12 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
                 commitLocation(undefined);
               }
             }}
-            onFocus={() => {
+            onFocus={(event) => {
+              keyboardScroll.onFocus(event);
               if (suggestions.length > 0) setOpen(true);
             }}
             onBlur={() => {
+              keyboardScroll.onBlur();
               setTimeout(() => {
                 setOpen(false);
                 void resolveTypedLocation();
