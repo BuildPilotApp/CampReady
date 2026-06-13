@@ -3,7 +3,7 @@
  * Shopping cart links still appear for eligible gear when this is null;
  * the tag is appended only when configured so commission tracking stays optional.
  */
-export const AMAZON_AFFILIATE_TAG: string | null = null;
+export const AMAZON_AFFILIATE_TAG: string | null = "campready05-20";
 
 export function isAmazonAffiliateEnabled(): boolean {
   return (
