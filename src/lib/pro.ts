@@ -34,6 +34,11 @@ export function isCheckoutSuccessUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
 
+    const normalizedHref = parsed.href.replace(/\/+$/, "");
+    if (normalizedHref === NATIVE_CHECKOUT_SUCCESS_URL) {
+      return true;
+    }
+
     if (parsed.searchParams.get(CHECKOUT_SUCCESS_PARAM) === CHECKOUT_SUCCESS_VALUE) {
       return true;
     }
