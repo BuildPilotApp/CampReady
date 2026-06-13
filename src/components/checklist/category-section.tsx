@@ -106,16 +106,14 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
             </span>
           </span>
         </button>
-        <span className="pointer-events-none absolute left-1/2 top-1/2 max-w-[calc(100%-8.5rem)] -translate-x-1/2 -translate-y-1/2">
-          <span className="inline-flex max-w-full items-center truncate rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-xs font-semibold leading-none text-muted">
-            {weightLabel}
-          </span>
+        <span className="inline-flex max-w-[42%] shrink-0 items-center truncate rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-xs font-semibold leading-none text-muted sm:max-w-none">
+          {weightLabel}
         </span>
         <button
           type="button"
           onClick={handleEditClick}
           aria-expanded={isEditing}
-          className={`touch-target relative z-[1] inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold active:opacity-90 ${
+          className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold active:opacity-90 ${
             isEditing
               ? "border-accent bg-accent/15 text-foreground"
               : "border-border/60 text-muted active:text-foreground"

@@ -11,15 +11,21 @@ import {
   submitFeedback,
 } from "@/lib/feedback-submission";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
-import { TERMS_LAST_UPDATED, TERMS_SECTIONS, PRIVACY_LAST_UPDATED, PRIVACY_SECTIONS } from "@/lib/legal-copy";
+import { usePro } from "@/components/providers/pro-provider";
+import { useAppToast } from "@/components/ui/app-toast-provider";
+import {
+  PRIVACY_LAST_UPDATED,
+  PRIVACY_SECTIONS,
+  TERMS_LAST_UPDATED,
+  TERMS_SECTIONS,
+} from "@/lib/legal-copy";
+import { attemptRestoreProPurchase } from "@/lib/pro";
 import type { InfoView } from "@/types";
 import { ChevronLeft } from "lucide-react";
 import { useId, useState } from "react";
-import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
-import { usePro } from "@/components/providers/pro-provider";
 
 const ABOUT_TEXT =
-  "CampReady is a simple gear checklist for camping and road trips. Build a reusable inventory of the gear you own, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. CampReady is designed to be easy to scan with one hand, so you can focus on getting out the door without wondering what you left behind.";
+  "CampReady is a gear checklist for camping and road trips. Build a reusable inventory, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. Designed for one-handed use in the field.";
 
 interface UserGuideItem {
   text: string;
@@ -65,13 +71,10 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "Each gear item has optional weight (lbs) and storage fields, such as tote, bin, or shelf.",
       },
       {
-        text: "When you edit or create a checklist and trips exist, CampReady asks whether to load it onto a trip or edit inventory only. You pick which trip to replace.",
+        text: "Tap Load on a saved checklist to apply it to a trip, or Edit to change categories and items.",
       },
       {
-        text: "Saved checklists also appear when creating or editing a trip on the Dashboard.",
-      },
-      {
-        text: "You can copy a trip's packed list into inventory with Save trip list to inventory inside Gear inventory.",
+        text: "Use Save trip list at the top of Gear inventory to copy the current trip's gear into a reusable checklist.",
       },
     ],
   },
@@ -105,10 +108,7 @@ const USER_GUIDE: UserGuideSection[] = [
     title: "Trip details & weather",
     items: [
       {
-        text: "Expand Edit trip details on a trip card to change dates, location, or load a different saved checklist.",
-      },
-      {
-        text: "Add a location using suggestions or press Enter to match coordinates.",
+        text: "Tap Add a location on the weather card, or expand Edit trip details, to set a location for forecasts.",
       },
       {
         text: "Weather shows daily high/low temps and wind for each trip day.",
@@ -304,39 +304,40 @@ function FeedbackForm({
 
 export function InfoPanel() {
   const { infoView, setInfoView, closeInfo } = useCampReady();
-  const { isPro, openPaywall } = usePro();
+  const { isPro } = usePro();
+  const { showToast } = useAppToast();
 
   if (!infoView) return null;
 
   const goMenu = () => setInfoView("menu");
 
+  const handleRestorePro = () => {
+    const result = attemptRestoreProPurchase();
+    if (result === "activated") {
+      showToast("Lifetime Pro unlocked on this device.");
+      return;
+    }
+    if (result === "already_pro") {
+      showToast("Lifetime Pro is already active on this device.");
+      return;
+    }
+    showToast(
+      "No purchase found. Complete checkout in your browser, then return here or use the link in your Stripe receipt.",
+    );
+  };
+
   if (infoView === "menu") {
     const buttons: { id: InfoView; label: string }[] = [
       { id: "about", label: "About" },
       { id: "guide", label: "User Guide" },
-      { id: "privacy", label: "Privacy Policy" },
       { id: "terms", label: "Terms of Service & Disclaimers" },
+      { id: "privacy", label: "Privacy Policy" },
       { id: "feedback", label: "Feedback" },
       { id: "bug", label: "Report Bug" },
     ];
 
     return (
       <OverlayModal title="Information" onClose={closeInfo}>
-        <div className="mt-4 flex flex-col gap-4">
-          <FreePlanUsageCard />
-          {!isPro ? (
-            <button
-              type="button"
-              onClick={openPaywall}
-              className="touch-target rounded-xl border-2 border-teal-500/30 bg-teal-500/10 px-4 py-3 text-left active:opacity-90"
-            >
-              <p className="text-sm font-bold text-foreground">Upgrade to Lifetime Pro</p>
-              <p className="mt-1 text-xs leading-snug text-muted">
-                Unlimited trips and saved checklists, plus import — one-time $4.99.
-              </p>
-            </button>
-          ) : null}
-        </div>
         <ul className="mt-4 flex flex-col gap-3">
           {buttons.map((b) => (
             <li key={b.id}>
@@ -350,6 +351,15 @@ export function InfoPanel() {
             </li>
           ))}
         </ul>
+        {!isPro ? (
+          <button
+            type="button"
+            onClick={handleRestorePro}
+            className="touch-target mt-4 w-full py-2 text-center text-sm font-medium text-muted active:text-foreground"
+          >
+            Restore Pro purchase
+          </button>
+        ) : null}
       </OverlayModal>
     );
   }
@@ -358,6 +368,12 @@ export function InfoPanel() {
     return (
       <OverlayModal onClose={closeInfo}>
         <PanelHeader title="About" onBack={goMenu} />
+        <p className="mt-3 text-sm text-muted">
+          Plan:{" "}
+          <span className="font-semibold text-foreground">
+            {isPro ? "Lifetime Pro" : "Free"}
+          </span>
+        </p>
         <p className="mt-4 text-base leading-relaxed text-foreground">{ABOUT_TEXT}</p>
       </OverlayModal>
     );

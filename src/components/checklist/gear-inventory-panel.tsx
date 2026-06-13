@@ -1,30 +1,31 @@
 "use client";
 
-import { ApplyChecklistPrompt } from "@/components/checklist/apply-checklist-prompt";
-import { SaveChecklistTemplate } from "@/components/checklist/save-checklist-template";
-import { TemplateCategorySection } from "@/components/checklist/template-editor";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
+import { ApplyChecklistPrompt } from "@/components/checklist/apply-checklist-prompt";
+import { TemplateCategorySection } from "@/components/checklist/template-editor";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { usePro } from "@/components/providers/pro-provider";
-import { canCreateTemplate } from "@/lib/pro";
 import {
-  BUILD_GEAR_CHECKLIST_HINT,
+  CREATE_GEAR_CHECKLIST_HINT,
   SAVED_CHECKLISTS_EMPTY_MESSAGE,
   SAVED_CHECKLISTS_HEADER_SUBTITLE,
+  STARTER_CHECKLIST_BUTTON_LABEL,
 } from "@/lib/gear-checklist-copy";
+import { canCreateTemplate, FREE_TEMPLATE_LIMIT } from "@/lib/pro";
 import { getTemplateStats } from "@/lib/templates";
 import { usePersistedDraft } from "@/hooks/use-persisted-draft";
 import type { ChecklistTemplate, TripRecord } from "@/types";
-import { ChevronDown, ClipboardList, Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  Download,
+  Layers,
+  Pencil,
+  Plus,
+  Save,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-
-interface PendingChecklistAction {
-  templateId: string;
-  templateName: string;
-  fromCreate: boolean;
-  onEditOnly: () => void;
-}
 
 function sortTripsChronologically(trips: TripRecord[]): TripRecord[] {
   return [...trips].sort((a, b) => {
@@ -36,17 +37,19 @@ function sortTripsChronologically(trips: TripRecord[]): TripRecord[] {
   });
 }
 
-function SavedChecklistCard({
+function SavedChecklistRow({
   template,
   isEditing,
   onEdit,
-  onDeleteRequest,
+  onLoad,
 }: {
   template: ChecklistTemplate;
   isEditing: boolean;
   onEdit: () => void;
-  onDeleteRequest: () => void;
+  onLoad: () => void;
 }) {
+  const { deleteTemplate } = useCampReady();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const stats = getTemplateStats(template);
 
   return (
@@ -67,6 +70,14 @@ function SavedChecklistCard({
       </span>
       <button
         type="button"
+        onClick={onLoad}
+        className="touch-target inline-flex shrink-0 items-center gap-1 rounded-lg border-2 border-border px-2.5 py-1.5 text-xs font-bold text-foreground active:opacity-90"
+      >
+        <Download className="size-3.5" aria-hidden />
+        Load
+      </button>
+      <button
+        type="button"
         onClick={onEdit}
         className={`touch-target inline-flex shrink-0 items-center gap-1 rounded-lg border-2 px-2.5 py-1.5 text-xs font-bold active:opacity-90 ${
           isEditing
@@ -79,12 +90,23 @@ function SavedChecklistCard({
       </button>
       <button
         type="button"
-        onClick={onDeleteRequest}
+        onClick={() => setConfirmDelete(true)}
         className="touch-target-icon rounded-lg border-2 border-border text-muted active:bg-surface"
         aria-label={`Delete ${template.name}`}
       >
         <Trash2 className="size-3.5" aria-hidden />
       </button>
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete checklist?"
+        message={`Delete "${template.name}"? This cannot be undone.`}
+        confirmLabel="Delete checklist"
+        onConfirm={() => {
+          deleteTemplate(template.id);
+          setConfirmDelete(false);
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }
@@ -97,21 +119,19 @@ export function GearInventoryPanel() {
     editingTemplate,
     setEditingTemplate,
     createBlankTemplate,
+    createStarterChecklist,
+    createTemplateFromTrip,
     applyChecklistTemplateToTrip,
     updateTemplate,
     addTemplateCategory,
-    deleteTemplate,
   } = useCampReady();
   const { isPro, openPaywall } = usePro();
 
   const detailsRef = useRef<HTMLDetailsElement>(null);
-  const [pendingAction, setPendingAction] = useState<PendingChecklistAction | null>(
-    null,
-  );
+  const [loadTemplateId, setLoadTemplateId] = useState<string | null>(null);
   const [newChecklistName, setNewChecklistName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [templatePendingDelete, setTemplatePendingDelete] =
-    useState<ChecklistTemplate | null>(null);
+  const [saveTripListName, setSaveTripListName] = useState("");
 
   const templates = useMemo(
     () =>
@@ -126,8 +146,13 @@ export function GearInventoryPanel() {
     [database.trips],
   );
 
+  const loadTemplate = loadTemplateId
+    ? templates.find((template) => template.id === loadTemplateId)
+    : null;
+
   const template = editingTemplate;
   const editChecklistNameId = useId();
+  const saveTripListNameId = useId();
 
   const { draft: editName, setDraft: setEditName, handleBlur: handleEditNameBlur } =
     usePersistedDraft({
@@ -154,37 +179,6 @@ export function GearInventoryPanel() {
     }
   };
 
-  const requestChecklistAction = (
-    templateId: string,
-    templateName: string,
-    onEditOnly: () => void,
-    fromCreate = false,
-  ) => {
-    if (trips.length === 0) {
-      onEditOnly();
-      openPanel();
-      return;
-    }
-
-    setPendingAction({
-      templateId,
-      templateName,
-      fromCreate,
-      onEditOnly,
-    });
-  };
-
-  const handleEditTemplate = (template: ChecklistTemplate) => {
-    if (editingTemplateId === template.id) {
-      openPanel();
-      return;
-    }
-
-    requestChecklistAction(template.id, template.name, () => {
-      setEditingTemplate(template.id);
-    });
-  };
-
   const templateLimitReached = !canCreateTemplate(isPro, templates.length);
 
   const handleCreateChecklist = () => {
@@ -200,33 +194,57 @@ export function GearInventoryPanel() {
     if (!templateId) return;
 
     setNewChecklistName("");
+    setEditingTemplate(templateId);
+    openPanel();
+  };
 
-    requestChecklistAction(
-      templateId,
-      name,
-      () => {
-        setEditingTemplate(templateId);
-      },
-      true,
-    );
+  const handleLoadChecklist = (templateId: string) => {
+    if (trips.length === 0) return;
+
+    if (trips.length === 1) {
+      applyChecklistTemplateToTrip(trips[0]!.id, templateId);
+      return;
+    }
+
+    setLoadTemplateId(templateId);
   };
 
   const handleApplyToTrip = (tripId: string) => {
-    if (!pendingAction) return;
-
-    applyChecklistTemplateToTrip(tripId, pendingAction.templateId, {
-      skipConfirm: true,
-    });
-    setPendingAction(null);
-    setEditingTemplate(null);
+    if (!loadTemplateId) return;
+    applyChecklistTemplateToTrip(tripId, loadTemplateId);
+    setLoadTemplateId(null);
   };
 
-  const handleEditOnly = () => {
-    if (!pendingAction) return;
-    pendingAction.onEditOnly();
-    setPendingAction(null);
+  const handleEditTemplate = (savedTemplate: ChecklistTemplate) => {
+    if (editingTemplateId === savedTemplate.id) {
+      openPanel();
+      return;
+    }
+    setEditingTemplate(savedTemplate.id);
     openPanel();
   };
+
+  const handleSaveTripList = () => {
+    if (!activeTrip) return;
+    const name = saveTripListName.trim();
+    if (!name) return;
+
+    const templateCount = database.templates?.length ?? 0;
+    if (!canCreateTemplate(isPro, templateCount)) {
+      openPaywall();
+      return;
+    }
+
+    createTemplateFromTrip({
+      tripId: activeTrip.id,
+      name,
+      description: `Gear inventory from ${activeTrip.name}.`,
+    });
+    setSaveTripListName("");
+  };
+
+  const hasTripChecklistContent =
+    activeTrip?.categories.some((category) => category.items.length > 0) ?? false;
 
   const summaryDetail =
     templates.length > 0
@@ -258,47 +276,105 @@ export function GearInventoryPanel() {
         </summary>
 
         <div className="flex flex-col gap-4 border-t border-border px-4 py-4">
-          <FreePlanUsageCard />
+          {activeTrip && hasTripChecklistContent ? (
+            <div className="rounded-xl border-2 border-border bg-background p-4">
+              <div className="flex items-center gap-2">
+                <Save className="size-5 shrink-0 text-accent" aria-hidden />
+                <h3 className="text-sm font-bold text-foreground">
+                  Save trip list
+                </h3>
+              </div>
+              <p className="mt-1 text-xs leading-snug text-muted">
+                {CREATE_GEAR_CHECKLIST_HINT}
+              </p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label
+                  htmlFor={saveTripListNameId}
+                  className="flex min-w-0 flex-1 flex-col gap-1"
+                >
+                  <span className="text-xs font-bold uppercase tracking-wide text-muted">
+                    Checklist name
+                  </span>
+                  <input
+                    id={saveTripListNameId}
+                    value={saveTripListName}
+                    onChange={(e) => setSaveTripListName(e.target.value)}
+                    className="touch-target rounded-xl border-2 border-border bg-surface px-3 text-sm font-semibold text-foreground"
+                    placeholder="My Camp Setup"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={!saveTripListName.trim()}
+                  onClick={handleSaveTripList}
+                  className="touch-target inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Save className="size-4" aria-hidden />
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           <div>
-            <p className="text-xs leading-snug text-muted">
-              {SAVED_CHECKLISTS_HEADER_SUBTITLE}
-            </p>
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-xs leading-snug text-muted">
+                {SAVED_CHECKLISTS_HEADER_SUBTITLE}
+              </p>
+              {!isPro && templates.length >= FREE_TEMPLATE_LIMIT ? (
+                <p className="shrink-0 text-xs font-medium text-muted">
+                  {templates.length} of {FREE_TEMPLATE_LIMIT}
+                </p>
+              ) : null}
+            </div>
 
             <div className="mt-3 flex flex-col gap-2">
               {templates.length === 0 ? (
-                <p className="text-sm leading-relaxed text-muted">
-                  {SAVED_CHECKLISTS_EMPTY_MESSAGE}
-                </p>
+                <>
+                  <p className="text-sm leading-relaxed text-muted">
+                    {SAVED_CHECKLISTS_EMPTY_MESSAGE}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (templateLimitReached) {
+                        openPaywall();
+                        return;
+                      }
+                      createStarterChecklist();
+                      openPanel();
+                    }}
+                    className="touch-target inline-flex items-center justify-center gap-2 rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm font-bold text-foreground active:opacity-90"
+                  >
+                    <Sparkles className="size-4 text-accent" aria-hidden />
+                    {STARTER_CHECKLIST_BUTTON_LABEL}
+                  </button>
+                </>
               ) : (
                 templates.map((savedTemplate) => (
-                  <SavedChecklistCard
+                  <SavedChecklistRow
                     key={savedTemplate.id}
                     template={savedTemplate}
                     isEditing={editingTemplateId === savedTemplate.id}
                     onEdit={() => handleEditTemplate(savedTemplate)}
-                    onDeleteRequest={() => setTemplatePendingDelete(savedTemplate)}
+                    onLoad={() => handleLoadChecklist(savedTemplate.id)}
                   />
                 ))
               )}
             </div>
           </div>
 
-          <div className="rounded-xl border-2 border-border bg-background p-4">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="size-5 shrink-0 text-accent" aria-hidden />
-              <h3 className="text-sm font-bold text-foreground">Build gear checklist</h3>
-            </div>
-            <p className="mt-1 text-xs leading-snug text-muted">
-              {BUILD_GEAR_CHECKLIST_HINT}
-            </p>
-
-            {!editingTemplateId || !template ? (
-              <div className="mt-3 flex flex-col gap-2">
+          {!editingTemplateId || !template ? (
+            <div className="rounded-xl border-2 border-border bg-background p-4">
+              <h3 className="text-sm font-bold text-foreground">New checklist</h3>
+              <p className="mt-1 text-xs leading-snug text-muted">
+                Create a reusable gear list to load onto future trips.
+              </p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
                 <input
                   value={newChecklistName}
                   onChange={(e) => setNewChecklistName(e.target.value)}
-                  className="touch-target rounded-xl border-2 border-border bg-surface px-3 text-sm font-semibold text-foreground"
+                  className="touch-target min-w-0 flex-1 rounded-xl border-2 border-border bg-surface px-3 text-sm font-semibold text-foreground"
                   placeholder="My Camp Gear"
                   aria-label="New checklist name"
                 />
@@ -306,119 +382,108 @@ export function GearInventoryPanel() {
                   type="button"
                   disabled={!newChecklistName.trim()}
                   onClick={handleCreateChecklist}
-                  className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="touch-target inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Plus className="size-4" aria-hidden />
-                  Start new gear checklist
+                  Create
                 </button>
               </div>
-            ) : (
-              <div className="mt-3 flex flex-col gap-3">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                  <label htmlFor={editChecklistNameId} className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="text-xs font-bold uppercase tracking-wide text-muted">
-                      Checklist name
-                    </span>
-                    <input
-                      id={editChecklistNameId}
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      onBlur={handleEditNameBlur}
-                      className="touch-target rounded-xl border-2 border-border bg-surface px-3 text-sm font-semibold text-foreground"
-                    />
-                  </label>
+            </div>
+          ) : (
+            <div className="rounded-xl border-2 border-accent/40 bg-background p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label
+                  htmlFor={editChecklistNameId}
+                  className="flex min-w-0 flex-1 flex-col gap-1"
+                >
+                  <span className="text-xs font-bold uppercase tracking-wide text-muted">
+                    Editing checklist
+                  </span>
+                  <input
+                    id={editChecklistNameId}
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onBlur={handleEditNameBlur}
+                    className="touch-target rounded-xl border-2 border-border bg-surface px-3 text-sm font-semibold text-foreground"
+                  />
+                </label>
+                <div className="flex shrink-0 gap-2">
+                  {activeTrip ? (
+                    <button
+                      type="button"
+                      onClick={() => handleLoadChecklist(template.id)}
+                      className="touch-target inline-flex items-center justify-center gap-2 rounded-xl border-2 border-border bg-surface px-4 py-2.5 text-sm font-bold text-foreground active:opacity-90"
+                    >
+                      <Download className="size-4" aria-hidden />
+                      Load to trip
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => setEditingTemplate(null)}
-                    className="touch-target shrink-0 rounded-xl border-2 border-border bg-surface px-4 py-2.5 text-sm font-bold text-foreground active:opacity-90"
+                    className="touch-target rounded-xl border-2 border-border bg-surface px-4 py-2.5 text-sm font-bold text-foreground active:opacity-90"
                   >
                     Done
                   </button>
                 </div>
+              </div>
 
-                {template.categories.length === 0 ? (
-                  <p className="text-sm text-muted">
-                    Add a category below, then add gear items under each category.
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {template.categories.map((category) => (
-                      <TemplateCategorySection
-                        key={category.id}
-                        templateId={template.id}
-                        category={category}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <div className="rounded-lg border border-dashed border-border p-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                    Add category or tote
-                  </p>
-                  <div className="mt-1.5 flex gap-2">
-                    <input
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground"
-                      placeholder="Kitchen"
+              {template.categories.length === 0 ? (
+                <p className="mt-3 text-sm text-muted">
+                  Add a category below, then add gear items under each category.
+                </p>
+              ) : (
+                <div className="mt-3 flex flex-col gap-2">
+                  {template.categories.map((category) => (
+                    <TemplateCategorySection
+                      key={category.id}
+                      templateId={template.id}
+                      category={category}
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = newCategoryName.trim();
-                        if (!next) return;
-                        addTemplateCategory(template.id, next);
-                        setNewCategoryName("");
-                      }}
-                      className="touch-target-icon rounded-lg bg-accent text-accent-foreground active:opacity-90"
-                      aria-label="Add category"
-                    >
-                      <Plus className="size-4" aria-hidden />
-                    </button>
-                  </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-3 rounded-lg border border-dashed border-border p-2.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Add category or tote
+                </p>
+                <div className="mt-1.5 flex gap-2">
+                  <input
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground"
+                    placeholder="Kitchen"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = newCategoryName.trim();
+                      if (!next) return;
+                      addTemplateCategory(template.id, next);
+                      setNewCategoryName("");
+                    }}
+                    className="touch-target-icon rounded-lg bg-accent text-accent-foreground active:opacity-90"
+                    aria-label="Add category"
+                  >
+                    <Plus className="size-4" aria-hidden />
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
-
-          <SaveChecklistTemplate />
+            </div>
+          )}
         </div>
       </details>
 
-      {pendingAction ? (
+      {loadTemplate ? (
         <ApplyChecklistPrompt
-          templateName={pendingAction.templateName}
+          templateName={loadTemplate.name}
           trips={trips}
           defaultTripId={activeTrip?.id ?? trips[0]?.id ?? null}
           onApply={handleApplyToTrip}
-          onEditOnly={handleEditOnly}
-          onCancel={() => {
-            if (pendingAction.fromCreate) {
-              setEditingTemplate(null);
-            }
-            setPendingAction(null);
-          }}
+          onCancel={() => setLoadTemplateId(null)}
         />
       ) : null}
-
-      <ConfirmDialog
-        open={templatePendingDelete !== null}
-        title="Delete saved checklist?"
-        message={
-          templatePendingDelete
-            ? `Delete "${templatePendingDelete.name}"? This cannot be undone.`
-            : ""
-        }
-        confirmLabel="Delete checklist"
-        onConfirm={() => {
-          if (templatePendingDelete) {
-            deleteTemplate(templatePendingDelete.id);
-          }
-          setTemplatePendingDelete(null);
-        }}
-        onCancel={() => setTemplatePendingDelete(null)}
-      />
     </>
   );
 }

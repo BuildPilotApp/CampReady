@@ -16,6 +16,7 @@ import {
 
 export interface LocationInputHandle {
   commitQuery: () => Promise<TripLocation | undefined>;
+  focus: () => void;
 }
 
 interface LocationInputProps {
@@ -45,6 +46,7 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
     const [resolving, setResolving] = useState(false);
     const [offlineHint, setOfflineHint] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef(suggestions);
 
     useEffect(() => {
@@ -159,6 +161,10 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
       ref,
       () => ({
         commitQuery: resolveTypedLocation,
+        focus: () => {
+          inputRef.current?.focus();
+          inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        },
       }),
       [resolveTypedLocation],
     );
@@ -177,6 +183,7 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
             aria-hidden
           />
           <input
+            ref={inputRef}
             id={inputId}
             value={text}
             onChange={(e) => {

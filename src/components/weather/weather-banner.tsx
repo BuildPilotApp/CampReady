@@ -58,7 +58,11 @@ function WeatherStatusBadge({
   );
 }
 
-export function WeatherBanner() {
+interface WeatherBannerProps {
+  onAddLocation?: () => void;
+}
+
+export function WeatherBanner({ onAddLocation }: WeatherBannerProps) {
   const { activeTrip, updateTrip } = useCampReady();
   const { deferNetwork } = useAppPowerMode();
   const [refreshKey, setRefreshKey] = useState(0);
@@ -187,11 +191,15 @@ export function WeatherBanner() {
 
   if (!activeTrip?.location?.query?.trim()) {
     return (
-      <div className="mt-4 rounded-xl border-2 border-dashed border-border bg-background px-4 py-3">
+      <button
+        type="button"
+        onClick={onAddLocation}
+        className="mt-4 w-full rounded-xl border-2 border-dashed border-border bg-background px-4 py-3 text-left active:bg-surface"
+      >
         <p className="text-sm font-semibold text-muted">
           Add a location to your trip to see weather.
         </p>
-      </div>
+      </button>
     );
   }
 

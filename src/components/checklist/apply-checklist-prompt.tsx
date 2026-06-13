@@ -24,8 +24,8 @@ interface ApplyChecklistPromptProps {
   trips: TripRecord[];
   defaultTripId: string | null;
   onApply: (tripId: string) => void;
-  onEditOnly: () => void;
   onCancel: () => void;
+  onEditOnly?: () => void;
 }
 
 export function ApplyChecklistPrompt({
@@ -114,13 +114,15 @@ export function ApplyChecklistPrompt({
           >
             Load onto trip
           </button>
-          <button
-            type="button"
-            onClick={onEditOnly}
-            className="touch-target rounded-xl border-2 border-border bg-background px-4 py-3 text-base font-bold text-foreground active:opacity-90"
-          >
-            Edit inventory only
-          </button>
+          {onEditOnly ? (
+            <button
+              type="button"
+              onClick={onEditOnly}
+              className="touch-target rounded-xl border-2 border-border bg-background px-4 py-3 text-base font-bold text-foreground active:opacity-90"
+            >
+              Edit inventory only
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onCancel}
