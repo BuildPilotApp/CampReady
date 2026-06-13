@@ -20,8 +20,14 @@ import {
   TERMS_LAST_UPDATED,
   TERMS_SECTIONS,
 } from "@/lib/legal-copy";
-import { attemptRestoreProPurchase, isPrimeTestLabBypassActive } from "@/lib/pro";
+import { isPrimeTestLabBypassActive } from "@/lib/pro";
 import { canUseNativeGooglePlayBilling, restoreNativeCampReadyPro } from "@/lib/native-billing";
+import {
+  APP_VERSION,
+  DEVELOPER_NAME,
+  DEVELOPER_SUPPORT_EMAIL,
+  IS_PRIME_TEST_LAB_BUILD,
+} from "@/lib/build-config";
 import {
   HOSTED_PRIVACY_POLICY_URL,
   HOSTED_TERMS_OF_SERVICE_URL,
@@ -45,6 +51,12 @@ interface UserGuideSection {
 }
 
 const LIFETIME_PRO_LABEL = "CampReady Lifetime Pro";
+
+const USER_GUIDE_QUICK_START = [
+  "Create a trip on the Dashboard (dates and location optional).",
+  "Add gear on the Gear Checklist tab — or load a saved checklist from Gear inventory.",
+  "Tap each item to stage it, then tap again when it is packed.",
+] as const;
 
 const USER_GUIDE: UserGuideSection[] = [
   {
@@ -142,7 +154,7 @@ const USER_GUIDE: UserGuideSection[] = [
         lifetimePro: true,
       },
       {
-        text: "To upgrade, tap any Pro-only button (such as Import List, or Create new trip when you already have one trip) and follow the Lifetime Pro checkout. Pro unlocks on this device after purchase. No subscription is required.",
+        text: "To upgrade on Android, tap any Pro-only button (such as Import List, or Create new trip when you already have one trip) and complete checkout through Google Play. Pro unlocks on this device after purchase. No subscription is required.",
         lifetimePro: true,
       },
     ],
@@ -336,17 +348,8 @@ export function InfoPanel() {
       return;
     }
 
-    const result = attemptRestoreProPurchase();
-    if (result === "activated") {
-      showToast("Lifetime Pro unlocked on this device.");
-      return;
-    }
-    if (result === "already_pro") {
-      showToast("Lifetime Pro is already active on this device.");
-      return;
-    }
     showToast(
-      "No purchase found. Complete checkout in your browser, then return here or use the link in your Stripe receipt.",
+      "Lifetime Pro is available in the CampReady Android app through Google Play.",
     );
   };
 
@@ -420,6 +423,14 @@ export function InfoPanel() {
             {isPro ? "Lifetime Pro" : "Free"}
           </span>
         </p>
+        <p className="mt-2 text-xs text-muted">
+          Version {APP_VERSION}
+          {IS_PRIME_TEST_LAB_BUILD ? " · Play Store test build" : null}
+        </p>
+        <p className="mt-1 text-xs text-muted">
+          {DEVELOPER_NAME}
+          {DEVELOPER_SUPPORT_EMAIL ? ` · ${DEVELOPER_SUPPORT_EMAIL}` : null}
+        </p>
         <p className="mt-4 text-base leading-relaxed text-foreground">{ABOUT_TEXT}</p>
       </OverlayModal>
     );
@@ -429,7 +440,17 @@ export function InfoPanel() {
     return (
       <OverlayModal onClose={closeInfo}>
         <PanelHeader title="User Guide" onBack={goMenu} />
-        <ul className="mt-4 flex flex-col gap-5">
+        <div className="mt-4 rounded-xl border border-border bg-background/60 px-4 py-3">
+          <p className="text-sm font-bold text-foreground">Quick start</p>
+          <ol className="mt-2 list-decimal space-y-2 pl-5">
+            {USER_GUIDE_QUICK_START.map((step) => (
+              <li key={step} className="text-sm leading-relaxed text-muted">
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
+        <ul className="mt-5 flex flex-col gap-5">
           {USER_GUIDE.map((section) => (
             <li key={section.title}>
               <p className="text-base font-bold text-foreground">{section.title}</p>

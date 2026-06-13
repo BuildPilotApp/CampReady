@@ -15,6 +15,11 @@ import { canCreateTemplate, FREE_TEMPLATE_LIMIT, isPrimeTestLabBypassActive } fr
 import { getTemplateStats } from "@/lib/templates";
 import { usePersistedDraft } from "@/hooks/use-persisted-draft";
 import type { ChecklistTemplate, TripRecord } from "@/types";
+import { DismissibleHint } from "@/components/ui/dismissible-hint";
+import {
+  dismissOnboardingHint,
+  isOnboardingHintDismissed,
+} from "@/lib/onboarding-hints";
 import {
   ChevronDown,
   Download,
@@ -132,6 +137,9 @@ export function GearInventoryPanel() {
   const [newChecklistName, setNewChecklistName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [saveTripListName, setSaveTripListName] = useState("");
+  const [showInventoryHint, setShowInventoryHint] = useState(
+    () => !isOnboardingHintDismissed("gear-inventory"),
+  );
 
   const templates = useMemo(
     () =>
@@ -255,6 +263,20 @@ export function GearInventoryPanel() {
 
   return (
     <>
+      {showInventoryHint && templates.length === 0 ? (
+        <DismissibleHint
+          className="mt-1"
+          onDismiss={() => {
+            dismissOnboardingHint("gear-inventory");
+            setShowInventoryHint(false);
+          }}
+        >
+          <span className="font-semibold text-foreground">Gear inventory</span> holds
+          reusable checklists you can load onto any trip. Expand it when you are ready
+          to save your setup.
+        </DismissibleHint>
+      ) : null}
+
       <details
         ref={detailsRef}
         className="group mt-1 rounded-xl border-2 border-border bg-surface"

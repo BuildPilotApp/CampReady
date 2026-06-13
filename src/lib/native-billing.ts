@@ -1,5 +1,6 @@
 import { registerPlugin } from "@capacitor/core";
-import { IS_PRIME_TEST_LAB_BUILD, unlockProLocally } from "@/lib/pro";
+import { IS_PRIME_TEST_LAB_BUILD } from "@/lib/build-config";
+import { unlockProLocally } from "@/lib/pro";
 import { isNativePlatform } from "@/lib/system-url-launcher";
 
 export const CAMPREADY_PRO_PRODUCT_ID = "campready_pro_lifetime";

@@ -3,10 +3,14 @@
 import { PaywallModal } from "@/components/premium/paywall-modal";
 import { ProSuccessToast } from "@/components/premium/pro-success-toast";
 import {
+  canUseNativeGooglePlayBilling,
+  restoreNativeCampReadyPro,
+} from "@/lib/native-billing";
+import {
   applyPrimeTestLabProBypassOnLaunch,
   hasProEntitlement,
+  isPrimeTestLabBypassActive,
   readProStatus,
-  tryActivateProFromCheckoutCallback,
   unlockProLocally,
 } from "@/lib/pro";
 import {
@@ -25,16 +29,15 @@ interface ProContextValue {
   openPaywall: () => void;
   closePaywall: () => void;
   requirePro: (action: () => void) => void;
-  refreshProAccess: () => { activated: boolean; isPro: boolean };
+  refreshProAccess: () => { isPro: boolean };
   completeProPurchase: () => void;
 }
 
 const ProContext = createContext<ProContextValue | null>(null);
 
-function syncProFromDevice(): { activated: boolean; isPro: boolean } {
+function syncProFromDevice(): boolean {
   applyPrimeTestLabProBypassOnLaunch();
-  const activated = tryActivateProFromCheckoutCallback();
-  return { activated, isPro: readProStatus() };
+  return readProStatus();
 }
 
 function readInitialProStatus(): boolean {
@@ -57,24 +60,41 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
     setPaywallOpen(false);
   }, []);
 
-  const refreshProState = useCallback((showSuccessOnActivate = false) => {
-    const { activated, isPro: nextIsPro } = syncProFromDevice();
+  const refreshProState = useCallback(() => {
+    const nextIsPro = syncProFromDevice();
     setIsPro(nextIsPro);
-
-    if (activated && showSuccessOnActivate) {
-      setSuccessVisible(true);
-      setPaywallOpen(false);
-    }
+    return nextIsPro;
   }, []);
 
   useEffect(() => {
-    refreshProState(true);
+    refreshProState();
+
+    const restorePlayPurchase = async (): Promise<boolean> => {
+      if (isPrimeTestLabBypassActive() || !canUseNativeGooglePlayBilling()) {
+        return false;
+      }
+      const restored = await restoreNativeCampReadyPro();
+      if (restored) {
+        setIsPro(true);
+      }
+      return restored;
+    };
+
+    void restorePlayPurchase();
 
     const handleReturnToApp = () => {
       if (document.visibilityState !== "visible") {
         return;
       }
-      refreshProState(true);
+      void restorePlayPurchase().then((restored) => {
+        if (restored) {
+          setIsPro(true);
+          setSuccessVisible(true);
+          setPaywallOpen(false);
+        } else {
+          refreshProState();
+        }
+      });
     };
 
     window.addEventListener("focus", handleReturnToApp);
@@ -118,16 +138,9 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
   );
 
   const refreshProAccess = useCallback(() => {
-    const result = syncProFromDevice();
-    setIsPro(result.isPro);
-
-    if (result.activated) {
-      setSuccessVisible(true);
-      setPaywallOpen(false);
-    }
-
-    return result;
-  }, []);
+    const nextIsPro = refreshProState();
+    return { isPro: nextIsPro };
+  }, [refreshProState]);
 
   const value = useMemo<ProContextValue>(
     () => ({

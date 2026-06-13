@@ -15,7 +15,7 @@ Offline-first camping and road-trip packing utility. Plan trips, build reusable 
 
 ## Free vs Pro
 
-| | Free | Lifetime Pro ($4.99) |
+| | Free | Lifetime Pro |
 |---|------|----------------------|
 | Trips | 1 | Unlimited |
 | Saved checklists | 1 | Unlimited |
@@ -23,13 +23,20 @@ Offline-first camping and road-trip packing utility. Plan trips, build reusable 
 | Export | Yes | Yes |
 | Import / merge | — | Yes |
 
-Pro is a one-time purchase per device. After Stripe checkout, return to CampReady and Pro unlocks automatically.
+**Android:** Lifetime Pro is a one-time purchase through Google Play (`campready_pro_lifetime`). Pro unlocks on the device after purchase and can be restored via Google Play.
 
-**Stripe success URL (web):** configure your Payment Link to redirect to:
+**Web (GitHub Pages):** checklist features work in the browser; Pro purchase is available in the Android app.
 
-`https://buildpilotapp.github.io/CampReady/?checkout=success`
+## Release builds
 
-**Native builds:** use `campready://checkout/success` as the Payment Link success URL.
+Edit `src/lib/build-config.ts` before uploading to Play Console:
+
+| Build | `IS_PRIME_TEST_LAB_BUILD` |
+|-------|---------------------------|
+| PrimeTestLab / closed testing | `true` (current) |
+| Production | `false` |
+
+Then run `npm run cap:sync` and build a signed release AAB.
 
 ## Development
 

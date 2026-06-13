@@ -9,21 +9,34 @@ import {
 } from "@/components/checklist/import-list-button";
 import { FilterToggle } from "@/components/checklist/filter-toggle";
 import { GearInventoryPanel } from "@/components/checklist/gear-inventory-panel";
+import { DismissibleHint } from "@/components/ui/dismissible-hint";
+import { useAppToast } from "@/components/ui/app-toast-provider";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { usePro } from "@/components/providers/pro-provider";
 import {
   NO_ACTIVE_TRIP_MESSAGE,
   NO_TRIP_CATEGORIES_MESSAGE,
   PACK_TRIP_HINT,
 } from "@/lib/gear-checklist-copy";
 import { isGearItemRemaining } from "@/lib/gear-items";
+import {
+  dismissOnboardingHint,
+  isOnboardingHintDismissed,
+} from "@/lib/onboarding-hints";
+import { isPrimeTestLabBypassActive } from "@/lib/pro";
 import { Plus } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 export function ChecklistView() {
   const { activeTrip, activeTripStats, checklistFilter, addCategory } = useCampReady();
+  const { isPro, openPaywall } = usePro();
+  const { showToast } = useAppToast();
   const newCategoryInputId = useId();
   const [newCategoryName, setNewCategoryName] = useState("");
   const [importStatus, setImportStatus] = useState<ImportListStatus | null>(null);
+  const [showCategoryHint, setShowCategoryHint] = useState(
+    () => !isOnboardingHintDismissed("checklist-categories"),
+  );
 
   const categories = activeTrip?.categories ?? [];
 
@@ -35,6 +48,23 @@ export function ChecklistView() {
     activeTripStats !== null &&
     activeTripStats.totalItems > 0 &&
     activeTripStats.packedItems === activeTripStats.totalItems;
+
+  useEffect(() => {
+    if (!activeTripStats || activeTripStats.totalItems === 0) return;
+    if (activeTripStats.percentPacked !== 100) return;
+    if (isPro || isPrimeTestLabBypassActive()) return;
+    if (isOnboardingHintDismissed("first-trip-packed")) return;
+
+    dismissOnboardingHint("first-trip-packed");
+    showToast(
+      "All packed! Pro unlocks unlimited trips and saved lists whenever you are ready.",
+    );
+  }, [activeTripStats, isPro, showToast]);
+
+  const dismissCategoryHint = () => {
+    dismissOnboardingHint("checklist-categories");
+    setShowCategoryHint(false);
+  };
 
   return (
     <div className="relative min-h-full">
@@ -75,6 +105,13 @@ export function ChecklistView() {
 
           <FilterToggle />
 
+          {showCategoryHint && categories.length === 0 ? (
+            <DismissibleHint onDismiss={dismissCategoryHint}>
+              Expand <span className="font-semibold text-foreground">Add category or tote</span>{" "}
+              below to start your pack list, or load a saved checklist from Gear inventory.
+            </DismissibleHint>
+          ) : null}
+
           <div className="checklist-fab-scroll-padding flex flex-col gap-2.5">
             {categories.length === 0 ? (
               <section className="rounded-xl border-2 border-border bg-surface px-4 py-6 text-center">
@@ -96,6 +133,15 @@ export function ChecklistView() {
                 <p className="mt-2 text-sm text-muted">
                   Switch to &ldquo;All&rdquo; to review everything in the vehicle.
                 </p>
+                {!isPro && !isPrimeTestLabBypassActive() ? (
+                  <button
+                    type="button"
+                    onClick={openPaywall}
+                    className="touch-target mt-4 rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm font-bold text-foreground active:opacity-90"
+                  >
+                    See Lifetime Pro
+                  </button>
+                ) : null}
               </section>
             ) : null}
 

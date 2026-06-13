@@ -5,17 +5,20 @@ import { InfoPanel } from "@/components/info/info-panel";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { AppRuntimeProvider } from "@/components/providers/app-runtime-provider";
 import { CampReadyProvider, useCampReady } from "@/components/providers/camp-ready-provider";
-import { ProProvider } from "@/components/providers/pro-provider";
+import { ProProvider, usePro } from "@/components/providers/pro-provider";
 import { ChecklistView } from "@/components/views/checklist-view";
 import { DashboardView } from "@/components/views/dashboard-view";
-import { AppToastProvider } from "@/components/ui/app-toast-provider";
+import { AppToastProvider, useAppToast } from "@/components/ui/app-toast-provider";
 import { GlobalNotificationProvider } from "@/components/providers/global-notification-provider";
 import { ImportValidationBanner } from "@/components/ui/import-validation-banner";
 import { StorageLimitBanner } from "@/components/ui/storage-limit-banner";
 import { StorageRecoveryBanner } from "@/components/ui/storage-recovery-banner";
 import { Fab } from "@/components/ui/fab";
+import { PlanStatusChip } from "@/components/premium/plan-status-chip";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
+import { isPrimeTestLabBypassActive } from "@/lib/pro";
 import { Tent, RotateCcw, Info } from "lucide-react";
+import { useCallback } from "react";
 
 function AppHeader() {
   const {
@@ -24,13 +27,18 @@ function AppHeader() {
     activeTripStats,
     openInfoMenu,
   } = useCampReady();
+  const { isPro } = usePro();
+  const showPlanChip = !isPro && !isPrimeTestLabBypassActive();
 
   return (
     <>
       <div className="flex items-center gap-3 py-3 lg:hidden">
         <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
+            {showPlanChip ? <PlanStatusChip /> : null}
+          </div>
           <p className="truncate text-sm font-medium text-muted">
             {activeTab === "dashboard"
               ? "Trip dashboard"
@@ -62,7 +70,10 @@ function AppHeader() {
       <div className="hidden items-center gap-3 py-3 lg:flex">
         <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
+            {showPlanChip ? <PlanStatusChip /> : null}
+          </div>
           <p className="truncate text-sm font-medium text-muted">
             {activeTrip
               ? `${activeTrip.name} · Dashboard & checklist`
@@ -94,7 +105,12 @@ function AppHeader() {
 
 function CampReadyFooter() {
   const { activeTab, activeTrip, resetAllItems } = useCampReady();
-  const { armed, handleClick, ref } = useDestructiveConfirm(resetAllItems);
+  const { showToast } = useAppToast();
+  const handleReset = useCallback(() => {
+    resetAllItems();
+    showToast("All items set back to Needed.");
+  }, [resetAllItems, showToast]);
+  const { armed, handleClick, ref } = useDestructiveConfirm(handleReset);
 
   const fabProps = {
     ref,

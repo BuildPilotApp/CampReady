@@ -6,10 +6,7 @@ import {
   purchaseCampReadyPro,
   restoreNativeCampReadyPro,
 } from "@/lib/native-billing";
-import {
-  isPrimeTestLabBypassActive,
-  STRIPE_CHECKOUT_URL,
-} from "@/lib/pro";
+import { isPrimeTestLabBypassActive } from "@/lib/pro";
 import { Check, RefreshCw, Shield, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 
@@ -71,29 +68,23 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
       return;
     }
 
-    if (nativeBilling) {
-      setRestoreMessage(null);
-      const restored = await restoreNativeCampReadyPro();
-      if (restored) {
-        refreshProAccess();
-        setRestoreMessage("Pro access restored on this device.");
-        return;
-      }
-
+    if (!nativeBilling) {
       setRestoreMessage(
-        "No Google Play purchase found for this account on this device.",
+        "Lifetime Pro is available in the CampReady Android app through Google Play.",
       );
       return;
     }
 
-    const result = refreshProAccess();
-    if (result.isPro) {
+    setRestoreMessage(null);
+    const restored = await restoreNativeCampReadyPro();
+    if (restored) {
+      refreshProAccess();
       setRestoreMessage("Pro access restored on this device.");
       return;
     }
 
     setRestoreMessage(
-      "No purchase found yet. Complete checkout in your browser, then return here and tap Restore again.",
+      "No Google Play purchase found for this account on this device.",
     );
   };
 
@@ -176,7 +167,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
                 disabled={purchasing}
                 className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90 disabled:opacity-70"
               >
-                {purchasing ? "Opening Google Play…" : "Unlock forever — $4.99 one-time"}
+                {purchasing ? "Opening Google Play…" : "Unlock forever — one-time purchase"}
               </button>
 
               <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
@@ -195,27 +186,16 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
             </>
           ) : (
             <>
-              <a
-                href={STRIPE_CHECKOUT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90"
-              >
-                Unlock forever — $4.99 one-time
-              </a>
-
-              <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
-                Secure checkout opens in your browser. Return to CampReady afterward —
-                Pro unlocks automatically on this device.
+              <p className="mt-7 text-center text-sm leading-relaxed text-zinc-400">
+                Lifetime Pro is available in the CampReady Android app through
+                Google Play.
               </p>
-
               <button
                 type="button"
-                onClick={handleRestore}
-                className="touch-target mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-200 active:bg-zinc-800"
+                onClick={onClose}
+                className="touch-target mt-4 flex w-full items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-200 active:bg-zinc-800"
               >
-                <RefreshCw className="size-4" aria-hidden />
-                Restore Pro access
+                Got it
               </button>
             </>
           )}

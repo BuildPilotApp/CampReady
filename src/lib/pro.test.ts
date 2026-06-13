@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { IS_PRIME_TEST_LAB_BUILD } from "@/lib/build-config";
 import {
   canCreateTemplate,
   canCreateTrip,
-  isCheckoutSuccessUrl,
+  isPrimeTestLabBypassActive,
 } from "@/lib/pro";
 
 describe("pro gating", () => {
@@ -27,20 +28,12 @@ describe("pro gating", () => {
   });
 });
 
-describe("checkout success detection", () => {
-  it("recognizes the web success query parameter", () => {
-    expect(
-      isCheckoutSuccessUrl(
-        "https://buildpilotapp.github.io/CampReady/?checkout=success",
-      ),
-    ).toBe(true);
+describe("release build config", () => {
+  it("documents PrimeTestLab mode for closed testing", () => {
+    expect(IS_PRIME_TEST_LAB_BUILD).toBe(true);
   });
 
-  it("recognizes the native success path", () => {
-    expect(isCheckoutSuccessUrl("campready://checkout/success")).toBe(true);
-  });
-
-  it("ignores unrelated URLs", () => {
-    expect(isCheckoutSuccessUrl("https://example.com/")).toBe(false);
+  it("only bypasses billing on native when PrimeTestLab mode is on", () => {
+    expect(isPrimeTestLabBypassActive()).toBe(false);
   });
 });

@@ -7,7 +7,7 @@ import {
   validateChecklistImport,
 } from "@/lib/import-checklist";
 import { CHECKLIST_ACTION_BUTTON_CLASS } from "@/components/checklist/checklist-action-button-styles";
-import { Check, ChevronDown, Upload } from "lucide-react";
+import { Check, ChevronDown, Lock, Upload } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 export interface ImportListStatus {
@@ -112,6 +112,8 @@ export function ImportListButton({
   const label =
     state === "success" ? "Imported" : state === "error" ? "Import failed" : "Import List";
 
+  const showProLock = !isProEntitled;
+
   return (
     <div className={className}>
       <input
@@ -129,7 +131,11 @@ export function ImportListButton({
           <Upload className="size-4 shrink-0 text-accent" aria-hidden />
         )}
         <span className="truncate">{label}</span>
-        <ChevronDown className="size-3.5 shrink-0 opacity-0" aria-hidden />
+        {showProLock ? (
+          <Lock className="size-3.5 shrink-0 text-muted" aria-hidden />
+        ) : (
+          <ChevronDown className="size-3.5 shrink-0 opacity-0" aria-hidden />
+        )}
       </button>
     </div>
   );
