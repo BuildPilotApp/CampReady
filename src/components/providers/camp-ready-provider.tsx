@@ -6,22 +6,13 @@ import {
   mergeImportedCategories,
   type ImportMergeResult,
 } from "@/lib/import-checklist";
+import { cloneCategories, clearDatabase, createCategory, createGearItem, createTrip, createEmptyDatabase, ensureSeededDatabase, getTripStats, hasValidLocalStorageSnapshot, hydrateDatabase, readDatabaseSync, touchTrip, writeDatabaseSync, type HydrationRecoveryReason } from "@/lib/storage";
+import { dismissWelcome } from "@/lib/onboarding";
 import {
-  cloneCategories,
-  clearDatabase,
-  createCategory,
-  createGearItem,
-  createTrip,
-  createEmptyDatabase,
-  ensureSeededDatabase,
-  getTripStats,
-  hasValidLocalStorageSnapshot,
-  hydrateDatabase,
-  readDatabaseSync,
-  touchTrip,
-  writeDatabaseSync,
-  type HydrationRecoveryReason,
-} from "@/lib/storage";
+  buildStarterCategories,
+  STARTER_CHECKLIST_NAME,
+  STARTER_TRIP_NAME,
+} from "@/lib/starter-checklist";
 import {
   clearUiSessionState,
   DEFAULT_CATEGORY_COLLAPSED,
@@ -31,10 +22,10 @@ import {
 import { flushPendingFeedbackSubmissions } from "@/lib/feedback-submission";
 import { onReturnToForeground } from "@/lib/runtime/app-power-mode";
 import { isNetworkAvailable } from "@/lib/runtime/network-guard";
-import { buildStarterCategories } from "@/lib/starter-checklist";
 import {
   CUSTOM_TEMPLATE_ID,
 } from "@/lib/templates";
+import { formatLocalIsoDate } from "@/lib/date-utils";
 import type {
   AppTab,
   CampReadyDatabase,
@@ -103,8 +94,10 @@ interface CampReadyContextValue {
   applyChecklistTemplateToTrip: (
     tripId: string,
     templateId: string,
-    options?: { skipConfirm?: boolean },
   ) => void;
+
+  createStarterTrip: () => void;
+  createStarterChecklist: () => string | undefined;
 
   updateTemplate: (
     templateId: string,
@@ -156,13 +149,6 @@ interface CampReadyContextValue {
   restoreBackupCategories: (
     categories: ChecklistExportCategory[],
   ) => ImportMergeResult | null;
-  loadStarterExperience: (input: {
-    tripName: string;
-    templateName: string;
-    templateDescription: string;
-    startDate: string;
-    endDate: string;
-  }) => void;
 }
 
 const CampReadyContext = createContext<CampReadyContextValue | null>(null);
@@ -422,6 +408,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       setActiveTab("checklist");
       setCollapsedCategories({});
       setChecklistFilter("all");
+      dismissWelcome();
     },
     [database, persist],
   );
@@ -495,11 +482,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   );
 
   const applyChecklistTemplateToTrip = useCallback(
-    (
-      tripId: string,
-      templateId: string,
-      options?: { skipConfirm?: boolean },
-    ) => {
+    (tripId: string, templateId: string) => {
       if (!database) return;
       const trip = database.trips.find((t) => t.id === tripId);
       if (!trip) return;
@@ -519,6 +502,50 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     },
     [database, persist],
   );
+
+  const createStarterTrip = useCallback(() => {
+    if (!database) return;
+
+    const startDate = formatLocalIsoDate(new Date());
+    const end = new Date();
+    end.setDate(end.getDate() + 2);
+    const endDate = formatLocalIsoDate(end);
+
+    const trip: TripRecord = {
+      ...createTrip({
+        name: STARTER_TRIP_NAME,
+        startDate,
+        endDate,
+      }),
+      categories: cloneCategories(buildStarterCategories()),
+    };
+
+    persist({
+      ...database,
+      trips: [trip, ...database.trips],
+      activeTripId: trip.id,
+    });
+    setActiveTab("checklist");
+    setCollapsedCategories({});
+    setChecklistFilter("all");
+    dismissWelcome();
+  }, [database, persist]);
+
+  const createStarterChecklist = useCallback(() => {
+    if (!database) return undefined;
+
+    const template: ChecklistTemplate = {
+      id: crypto.randomUUID(),
+      name: STARTER_CHECKLIST_NAME,
+      description: "Example categories and gear for a weekend trip.",
+      categories: cloneCategories(buildStarterCategories()),
+    };
+
+    persist({ ...database, templates: [template, ...database.templates] });
+    setEditingTemplateId(template.id);
+    dismissWelcome();
+    return template.id;
+  }, [database, persist]);
 
   const updateTemplate = useCallback(
     (
@@ -880,48 +907,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
-  const loadStarterExperience = useCallback(
-    (input: {
-      tripName: string;
-      templateName: string;
-      templateDescription: string;
-      startDate: string;
-      endDate: string;
-    }) => {
-      if (!database || database.trips.length > 0) return;
-
-      const starterCategories = buildStarterCategories();
-      const template: ChecklistTemplate = {
-        id: crypto.randomUUID(),
-        name: input.templateName.trim() || "Weekend Car Camping",
-        description:
-          input.templateDescription.trim() ||
-          "Starter gear list for car camping and short road trips.",
-        categories: cloneCategories(starterCategories),
-      };
-
-      const trip: TripRecord = {
-        ...createTrip({
-          name: input.tripName.trim() || "Weekend Camping",
-          startDate: input.startDate,
-          endDate: input.endDate,
-        }),
-        categories: cloneCategories(starterCategories),
-      };
-
-      persist({
-        ...database,
-        trips: [trip],
-        templates: [template],
-        activeTripId: trip.id,
-      });
-      setActiveTab("checklist");
-      setCollapsedCategories({});
-      setChecklistFilter("all");
-    },
-    [database, persist],
-  );
-
   const value = useMemo<CampReadyContextValue | null>(() => {
     if (!database) {
       return null;
@@ -952,6 +937,8 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       createBlankTemplate,
       createTemplateFromTrip,
       applyChecklistTemplateToTrip,
+      createStarterTrip,
+      createStarterChecklist,
       updateTemplate,
       deleteTemplate,
       addTemplateCategory,
@@ -973,7 +960,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       dismissStorageRecovery,
       resetAllData,
       restoreBackupCategories,
-      loadStarterExperience,
     };
   }, [
     ready,
@@ -997,6 +983,8 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     createBlankTemplate,
     createTemplateFromTrip,
     applyChecklistTemplateToTrip,
+    createStarterTrip,
+    createStarterChecklist,
     updateTemplate,
     deleteTemplate,
     addTemplateCategory,
@@ -1018,7 +1006,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     dismissStorageRecovery,
     resetAllData,
     restoreBackupCategories,
-    loadStarterExperience,
   ]);
 
   if (!value) {

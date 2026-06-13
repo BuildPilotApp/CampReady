@@ -1,6 +1,5 @@
 "use client";
 
-import { FirstRunGuide } from "@/components/onboarding/first-run-guide";
 import { MobileShell } from "@/components/layout/mobile-shell";
 import { InfoPanel } from "@/components/info/info-panel";
 import { BottomNav } from "@/components/navigation/bottom-nav";
@@ -15,11 +14,8 @@ import { ImportValidationBanner } from "@/components/ui/import-validation-banner
 import { StorageLimitBanner } from "@/components/ui/storage-limit-banner";
 import { StorageRecoveryBanner } from "@/components/ui/storage-recovery-banner";
 import { Fab } from "@/components/ui/fab";
-import { PlanStatusChip } from "@/components/premium/plan-status-chip";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
-import { shouldShowOnboarding } from "@/lib/onboarding-state";
 import { Tent, RotateCcw, Info } from "lucide-react";
-import { useEffect, useState } from "react";
 
 function AppHeader() {
   const {
@@ -29,26 +25,12 @@ function AppHeader() {
     openInfoMenu,
   } = useCampReady();
 
-  const infoButton = (
-    <button
-      type="button"
-      onClick={openInfoMenu}
-      aria-label="Open information menu"
-      className="touch-target inline-flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-surface text-accent active:opacity-90"
-    >
-      <Info className="size-6" strokeWidth={2.25} aria-hidden />
-    </button>
-  );
-
   return (
     <>
       <div className="flex items-center gap-3 py-3 lg:hidden">
         <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
-            <PlanStatusChip />
-          </div>
+          <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
           <p className="truncate text-sm font-medium text-muted">
             {activeTab === "dashboard"
               ? "Trip dashboard"
@@ -67,16 +49,20 @@ function AppHeader() {
             </p>
           ) : null}
         </div>
-        {infoButton}
+        <button
+          type="button"
+          onClick={openInfoMenu}
+          aria-label="Open information menu"
+          className="touch-target inline-flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-surface text-accent active:opacity-90"
+        >
+          <Info className="size-6" strokeWidth={2.25} aria-hidden />
+        </button>
       </div>
 
       <div className="hidden items-center gap-3 py-3 lg:flex">
         <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
-            <PlanStatusChip />
-          </div>
+          <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
           <p className="truncate text-sm font-medium text-muted">
             {activeTrip
               ? `${activeTrip.name} · Dashboard & checklist`
@@ -93,7 +79,14 @@ function AppHeader() {
             </p>
           ) : null}
         </div>
-        {infoButton}
+        <button
+          type="button"
+          onClick={openInfoMenu}
+          aria-label="Open information menu"
+          className="touch-target inline-flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-surface text-accent active:opacity-90"
+        >
+          <Info className="size-6" strokeWidth={2.25} aria-hidden />
+        </button>
       </div>
     </>
   );
@@ -124,27 +117,6 @@ function CampReadyFooter() {
         <BottomNav />
       </div>
     </div>
-  );
-}
-
-function OnboardingGate({ children }: { children: React.ReactNode }) {
-  const { database, ready } = useCampReady();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
-  useEffect(() => {
-    if (!ready) {
-      return;
-    }
-    setShowOnboarding(shouldShowOnboarding(database));
-  }, [ready, database]);
-
-  return (
-    <>
-      {children}
-      {showOnboarding ? (
-        <FirstRunGuide onDismiss={() => setShowOnboarding(false)} />
-      ) : null}
-    </>
   );
 }
 
@@ -185,9 +157,7 @@ export function CampReadyApp() {
         <AppToastProvider>
           <ProProvider>
             <CampReadyProvider>
-              <OnboardingGate>
-                <CampReadyShell />
-              </OnboardingGate>
+              <CampReadyShell />
             </CampReadyProvider>
           </ProProvider>
         </AppToastProvider>

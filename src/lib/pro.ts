@@ -4,13 +4,6 @@ export const STRIPE_CHECKOUT_URL =
   "https://buy.stripe.com/eVqcN65Un6wY6Iiah2cV202";
 
 /**
- * Stripe Payment Link success URL for the GitHub Pages deployment.
- * Configure this in the Stripe dashboard so Pro unlocks on return.
- */
-export const WEB_CHECKOUT_SUCCESS_URL =
-  "https://buildpilotapp.github.io/CampReady/?checkout=success";
-
-/**
  * Configure this as the Stripe Payment Link success URL for native builds
  * (Android/iOS WebView or Capacitor). The app listens for this callback on
  * launch and when returning from the system browser.
@@ -45,11 +38,10 @@ export function isCheckoutSuccessUrl(url: string): boolean {
       return true;
     }
 
-    const normalizedPath = parsed.pathname.replace(/\/+$/, "") || "/";
+    const normalizedPath = parsed.pathname.replace(/\/+$/, "");
     if (
       normalizedPath.endsWith("/checkout/success") ||
-      normalizedPath === "/checkout/success" ||
-      (parsed.hostname === "checkout" && normalizedPath === "/success")
+      normalizedPath === "checkout/success"
     ) {
       return true;
     }
@@ -126,4 +118,32 @@ export function canCreateTrip(isPro: boolean, tripCount: number): boolean {
 
 export function canCreateTemplate(isPro: boolean, templateCount: number): boolean {
   return isPro || templateCount < FREE_TEMPLATE_LIMIT;
+}
+
+export type RestoreProResult = "activated" | "already_pro" | "not_found";
+
+/**
+ * Re-checks the current URL and device storage for a completed Stripe checkout.
+ * Use after returning from the payment browser tab.
+ */
+export function attemptRestoreProPurchase(): RestoreProResult {
+  if (typeof window === "undefined") {
+    return "not_found";
+  }
+
+  if (readProStatus()) {
+    return "already_pro";
+  }
+
+  if (tryActivateProFromCheckoutCallback()) {
+    return "activated";
+  }
+
+  return "not_found";
+}
+
+/** Documented success URL pattern for Stripe Payment Link configuration. */
+export function getWebCheckoutSuccessUrl(baseUrl: string): string {
+  const normalized = baseUrl.replace(/\/+$/, "");
+  return `${normalized}/?checkout=success`;
 }

@@ -20,5 +20,8 @@ export const NO_ACTIVE_TRIP_MESSAGE =
 export const EMPTY_TRIPS_MESSAGE =
   "Create a trip below, or use the weekend starter to explore packing right away.";
 
+export const NO_TRIP_CATEGORIES_MESSAGE =
+  "Add a category below — try Kitchen, Shelter, or Clothing — then add gear items.";
+
 export const STARTER_TRIP_BUTTON_LABEL = "Start with weekend example";
 export const STARTER_CHECKLIST_BUTTON_LABEL = "Load weekend starter";
