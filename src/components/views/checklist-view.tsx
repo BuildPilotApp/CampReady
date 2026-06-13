@@ -12,6 +12,7 @@ import { GearInventoryPanel } from "@/components/checklist/gear-inventory-panel"
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import {
   NO_ACTIVE_TRIP_MESSAGE,
+  NO_TRIP_CATEGORIES_MESSAGE,
   PACK_TRIP_HINT,
 } from "@/lib/gear-checklist-copy";
 import { isGearItemRemaining } from "@/lib/gear-items";
@@ -77,9 +78,7 @@ export function ChecklistView() {
           <div className="checklist-fab-scroll-padding flex flex-col gap-2.5">
             {categories.length === 0 ? (
               <section className="rounded-xl border-2 border-border bg-surface px-4 py-6 text-center">
-                <p className="text-sm text-muted">
-                  Add a category below to start your packing list.
-                </p>
+                <p className="text-sm text-muted">{NO_TRIP_CATEGORIES_MESSAGE}</p>
               </section>
             ) : (
               categories.map((category) => (

@@ -11,10 +11,12 @@ import {
   submitFeedback,
 } from "@/lib/feedback-submission";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
-import { TERMS_LAST_UPDATED, TERMS_SECTIONS } from "@/lib/legal-copy";
+import { TERMS_LAST_UPDATED, TERMS_SECTIONS, PRIVACY_LAST_UPDATED, PRIVACY_SECTIONS } from "@/lib/legal-copy";
 import type { InfoView } from "@/types";
 import { ChevronLeft } from "lucide-react";
 import { useId, useState } from "react";
+import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
+import { usePro } from "@/components/providers/pro-provider";
 
 const ABOUT_TEXT =
   "CampReady is a simple gear checklist for camping and road trips. Build a reusable inventory of the gear you own, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. CampReady is designed to be easy to scan with one hand, so you can focus on getting out the door without wondering what you left behind.";
@@ -302,6 +304,7 @@ function FeedbackForm({
 
 export function InfoPanel() {
   const { infoView, setInfoView, closeInfo } = useCampReady();
+  const { isPro, openPaywall } = usePro();
 
   if (!infoView) return null;
 
@@ -311,6 +314,7 @@ export function InfoPanel() {
     const buttons: { id: InfoView; label: string }[] = [
       { id: "about", label: "About" },
       { id: "guide", label: "User Guide" },
+      { id: "privacy", label: "Privacy Policy" },
       { id: "terms", label: "Terms of Service & Disclaimers" },
       { id: "feedback", label: "Feedback" },
       { id: "bug", label: "Report Bug" },
@@ -318,6 +322,21 @@ export function InfoPanel() {
 
     return (
       <OverlayModal title="Information" onClose={closeInfo}>
+        <div className="mt-4 flex flex-col gap-4">
+          <FreePlanUsageCard />
+          {!isPro ? (
+            <button
+              type="button"
+              onClick={openPaywall}
+              className="touch-target rounded-xl border-2 border-teal-500/30 bg-teal-500/10 px-4 py-3 text-left active:opacity-90"
+            >
+              <p className="text-sm font-bold text-foreground">Upgrade to Lifetime Pro</p>
+              <p className="mt-1 text-xs leading-snug text-muted">
+                Unlimited trips and saved checklists, plus import — one-time $4.99.
+              </p>
+            </button>
+          ) : null}
+        </div>
         <ul className="mt-4 flex flex-col gap-3">
           {buttons.map((b) => (
             <li key={b.id}>
@@ -384,6 +403,37 @@ export function InfoPanel() {
         </p>
         <ul className="mt-5 flex flex-col gap-6">
           {TERMS_SECTIONS.map((section) => (
+            <li
+              key={section.title}
+              className="rounded-xl border border-border bg-background/60 px-4 py-3"
+            >
+              <h3 className="text-sm font-bold leading-snug text-foreground">
+                {section.title}
+              </h3>
+              {section.body.split("\n\n").map((paragraph, index) => (
+                <p
+                  key={index}
+                  className="mt-2 text-sm leading-relaxed text-muted"
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </OverlayModal>
+    );
+  }
+
+  if (infoView === "privacy") {
+    return (
+      <OverlayModal onClose={closeInfo}>
+        <PanelHeader title="Privacy Policy" onBack={goMenu} />
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-muted">
+          Last Updated: {PRIVACY_LAST_UPDATED}
+        </p>
+        <ul className="mt-5 flex flex-col gap-6">
+          {PRIVACY_SECTIONS.map((section) => (
             <li
               key={section.title}
               className="rounded-xl border border-border bg-background/60 px-4 py-3"

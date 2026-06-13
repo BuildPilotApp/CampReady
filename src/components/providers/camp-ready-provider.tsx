@@ -31,9 +31,9 @@ import {
 import { flushPendingFeedbackSubmissions } from "@/lib/feedback-submission";
 import { onReturnToForeground } from "@/lib/runtime/app-power-mode";
 import { isNetworkAvailable } from "@/lib/runtime/network-guard";
+import { buildStarterCategories } from "@/lib/starter-checklist";
 import {
   CUSTOM_TEMPLATE_ID,
-  getTemplateOptionLabel,
 } from "@/lib/templates";
 import type {
   AppTab,
@@ -156,6 +156,13 @@ interface CampReadyContextValue {
   restoreBackupCategories: (
     categories: ChecklistExportCategory[],
   ) => ImportMergeResult | null;
+  loadStarterExperience: (input: {
+    tripName: string;
+    templateName: string;
+    templateDescription: string;
+    startDate: string;
+    endDate: string;
+  }) => void;
 }
 
 const CampReadyContext = createContext<CampReadyContextValue | null>(null);
@@ -496,21 +503,6 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       if (!database) return;
       const trip = database.trips.find((t) => t.id === tripId);
       if (!trip) return;
-
-      if (!options?.skipConfirm) {
-        const templateName = getTemplateOptionLabel(
-          templateId,
-          database.templates,
-        );
-        const message =
-          templateId === CUSTOM_TEMPLATE_ID
-            ? "Clear this trip's gear checklist? All categories and items will be removed."
-            : `Load "${templateName}" onto this trip? Current items and pack status will be replaced.`;
-
-        if (!window.confirm(message)) {
-          return;
-        }
-      }
 
       const template = resolveChecklistTemplate(database, templateId);
       const categories = template ? cloneCategories(template.categories) : [];
@@ -888,6 +880,48 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const loadStarterExperience = useCallback(
+    (input: {
+      tripName: string;
+      templateName: string;
+      templateDescription: string;
+      startDate: string;
+      endDate: string;
+    }) => {
+      if (!database || database.trips.length > 0) return;
+
+      const starterCategories = buildStarterCategories();
+      const template: ChecklistTemplate = {
+        id: crypto.randomUUID(),
+        name: input.templateName.trim() || "Weekend Car Camping",
+        description:
+          input.templateDescription.trim() ||
+          "Starter gear list for car camping and short road trips.",
+        categories: cloneCategories(starterCategories),
+      };
+
+      const trip: TripRecord = {
+        ...createTrip({
+          name: input.tripName.trim() || "Weekend Camping",
+          startDate: input.startDate,
+          endDate: input.endDate,
+        }),
+        categories: cloneCategories(starterCategories),
+      };
+
+      persist({
+        ...database,
+        trips: [trip],
+        templates: [template],
+        activeTripId: trip.id,
+      });
+      setActiveTab("checklist");
+      setCollapsedCategories({});
+      setChecklistFilter("all");
+    },
+    [database, persist],
+  );
+
   const value = useMemo<CampReadyContextValue | null>(() => {
     if (!database) {
       return null;
@@ -939,6 +973,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       dismissStorageRecovery,
       resetAllData,
       restoreBackupCategories,
+      loadStarterExperience,
     };
   }, [
     ready,
@@ -983,6 +1018,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     dismissStorageRecovery,
     resetAllData,
     restoreBackupCategories,
+    loadStarterExperience,
   ]);
 
   if (!value) {

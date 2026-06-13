@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CampReady
 
-## Getting Started
+Offline-first camping and road-trip packing utility. Plan trips, build reusable gear lists, and pack item-by-item with one-tap staging and checkoff — built for one-handed use in the field.
 
-First, run the development server:
+**Live app:** [buildpilotapp.github.io/CampReady](https://buildpilotapp.github.io/CampReady/)
+
+## Features
+
+- **Trip dashboard** — dates, location, packing progress, and weather
+- **Gear checklist** — Needed → Staged → Packed workflow with category status colors
+- **Saved gear lists** — reusable inventories you can load onto any trip
+- **Export** — copy as text, download CSV, or save an app backup (free)
+- **Import & merge** — restore backups without duplicates (Lifetime Pro)
+- **Privacy-first** — no accounts, no analytics; data stays on your device
+
+## Free vs Pro
+
+| | Free | Lifetime Pro ($4.99) |
+|---|------|----------------------|
+| Trips | 1 | Unlimited |
+| Saved checklists | 1 | Unlimited |
+| Pack workflow | Full | Full |
+| Export | Yes | Yes |
+| Import / merge | — | Yes |
+
+Pro is a one-time purchase per device. After Stripe checkout, return to CampReady and Pro unlocks automatically.
+
+**Stripe success URL (web):** configure your Payment Link to redirect to:
+
+`https://buildpilotapp.github.io/CampReady/?checkout=success`
+
+**Native builds:** use `campready://checkout/success` as the Payment Link success URL.
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # static export to out/
+npm test           # unit tests
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Mobile (Capacitor)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run cap:sync   # build + copy to android/ and ios/
+npm run cap:android
+npm run cap:ios
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy
 
-## Learn More
+Pushes to `main` deploy automatically to GitHub Pages via GitHub Actions (`.github/workflows/deploy.yml`).
 
-To learn more about Next.js, take a look at the following resources:
+## Privacy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md). The in-app Information menu also includes the full privacy policy.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private — all rights reserved unless otherwise noted.

@@ -1,6 +1,7 @@
 "use client";
 
 import { AddItemDialog } from "@/components/ui/add-item-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import {
   usePersistedDraft,
@@ -22,6 +23,7 @@ function TemplateItemFields({
     item,
     onSave: (patch) => updateTemplateItem(templateId, item.id, patch),
   });
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
     <div className="py-2">
@@ -35,11 +37,7 @@ function TemplateItemFields({
         />
         <button
           type="button"
-          onClick={() => {
-            if (window.confirm(`Delete "${item.name}" from this checklist?`)) {
-              deleteTemplateItem(templateId, item.id);
-            }
-          }}
+          onClick={() => setDeleteOpen(true)}
           className="touch-target-icon rounded-lg border border-border text-muted active:bg-background"
           aria-label={`Delete ${item.name}`}
         >
@@ -65,6 +63,17 @@ function TemplateItemFields({
           aria-label={`Storage for ${item.name}`}
         />
       </div>
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete gear item?"
+        message={`Remove "${item.name}" from this checklist?`}
+        confirmLabel="Delete item"
+        onConfirm={() => {
+          deleteTemplateItem(templateId, item.id);
+          setDeleteOpen(false);
+        }}
+        onCancel={() => setDeleteOpen(false)}
+      />
     </div>
   );
 }
@@ -82,6 +91,7 @@ export function TemplateCategorySection({
     addTemplateItem,
   } = useCampReady();
   const [addItemOpen, setAddItemOpen] = useState(false);
+  const [deleteCategoryOpen, setDeleteCategoryOpen] = useState(false);
   const categoryNameId = useId();
   const { draft: categoryName, setDraft: setCategoryName, handleBlur } =
     usePersistedDraft({
@@ -160,20 +170,24 @@ export function TemplateCategorySection({
 
         <button
           type="button"
-          onClick={() => {
-            if (
-              window.confirm(
-                `Delete category "${category.name}" and all of its items?`,
-              )
-            ) {
-              deleteTemplateCategory(templateId, category.id);
-            }
-          }}
+          onClick={() => setDeleteCategoryOpen(true)}
           className="touch-target mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-bold text-foreground active:bg-surface"
         >
           <Trash2 className="size-4 text-muted" aria-hidden />
           Delete category
         </button>
+
+        <ConfirmDialog
+          open={deleteCategoryOpen}
+          title="Delete category?"
+          message={`Delete "${category.name}" and all of its items from this checklist?`}
+          confirmLabel="Delete category"
+          onConfirm={() => {
+            deleteTemplateCategory(templateId, category.id);
+            setDeleteCategoryOpen(false);
+          }}
+          onCancel={() => setDeleteCategoryOpen(false)}
+        />
       </div>
     </details>
   );

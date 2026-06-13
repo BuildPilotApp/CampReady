@@ -4,6 +4,13 @@ export const STRIPE_CHECKOUT_URL =
   "https://buy.stripe.com/eVqcN65Un6wY6Iiah2cV202";
 
 /**
+ * Stripe Payment Link success URL for the GitHub Pages deployment.
+ * Configure this in the Stripe dashboard so Pro unlocks on return.
+ */
+export const WEB_CHECKOUT_SUCCESS_URL =
+  "https://buildpilotapp.github.io/CampReady/?checkout=success";
+
+/**
  * Configure this as the Stripe Payment Link success URL for native builds
  * (Android/iOS WebView or Capacitor). The app listens for this callback on
  * launch and when returning from the system browser.
@@ -38,10 +45,11 @@ export function isCheckoutSuccessUrl(url: string): boolean {
       return true;
     }
 
-    const normalizedPath = parsed.pathname.replace(/\/+$/, "");
+    const normalizedPath = parsed.pathname.replace(/\/+$/, "") || "/";
     if (
       normalizedPath.endsWith("/checkout/success") ||
-      normalizedPath === "checkout/success"
+      normalizedPath === "/checkout/success" ||
+      (parsed.hostname === "checkout" && normalizedPath === "/success")
     ) {
       return true;
     }

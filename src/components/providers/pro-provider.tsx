@@ -18,6 +18,7 @@ interface ProContextValue {
   openPaywall: () => void;
   closePaywall: () => void;
   requirePro: (action: () => void) => void;
+  refreshProAccess: () => { activated: boolean; isPro: boolean };
 }
 
 const ProContext = createContext<ProContextValue | null>(null);
@@ -92,6 +93,18 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
     [isPro, openPaywall],
   );
 
+  const refreshProAccess = useCallback(() => {
+    const result = syncProFromDevice();
+    setIsPro(result.isPro);
+
+    if (result.activated) {
+      setSuccessVisible(true);
+      setPaywallOpen(false);
+    }
+
+    return result;
+  }, []);
+
   const value = useMemo<ProContextValue>(
     () => ({
       isPro,
@@ -99,8 +112,9 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
       openPaywall,
       closePaywall,
       requirePro,
+      refreshProAccess,
     }),
-    [isPro, paywallOpen, openPaywall, closePaywall, requirePro],
+    [isPro, paywallOpen, openPaywall, closePaywall, requirePro, refreshProAccess],
   );
 
   return (

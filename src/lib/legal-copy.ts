@@ -1,4 +1,38 @@
 export const TERMS_LAST_UPDATED = "June 2026";
+export const PRIVACY_LAST_UPDATED = "June 2026";
+
+export const PRIVACY_SECTIONS = [
+  {
+    title: "Our Commitment",
+    body: `CampReady does not collect, transmit, or share personal user data or tracking information with remote servers. There are no analytics SDKs, advertising identifiers, or third-party data brokers integrated into the app.`,
+  },
+  {
+    title: "Data Stored on Your Device",
+    body: `All trip details, gear checklists, templates, packing status, and preferences are stored locally on your device. Your data remains under your control and is not uploaded to CampReady servers.`,
+  },
+  {
+    title: "Network Activity",
+    body: `CampReady may make limited network requests only when you explicitly use optional features, such as weather forecasts for a trip location, location suggestions while typing a place name, opening affiliate product links when you tap the shopping cart icon on an eligible gear item, or completing a Pro upgrade through Stripe in your system browser.
+
+These requests are initiated by your actions. CampReady does not perform background tracking or silent data collection.`,
+  },
+  {
+    title: "Accounts & Authentication",
+    body: `CampReady does not require an account, email address, or sign-in to use the core checklist features.`,
+  },
+  {
+    title: "Children's Privacy",
+    body: `CampReady is not directed at children under 13, and we do not knowingly collect personal information from anyone.`,
+  },
+  {
+    title: "Changes to This Policy",
+    body: `We may update this policy as the app evolves. Material changes will be reflected by updating the "Last Updated" date above.`,
+  },
+  {
+    title: "Contact",
+    body: `For privacy questions, use the Feedback option in the CampReady information menu.`,
+  },
+] as const;
 
 export const TERMS_SECTIONS = [
   {

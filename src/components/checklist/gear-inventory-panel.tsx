@@ -3,6 +3,8 @@
 import { ApplyChecklistPrompt } from "@/components/checklist/apply-checklist-prompt";
 import { SaveChecklistTemplate } from "@/components/checklist/save-checklist-template";
 import { TemplateCategorySection } from "@/components/checklist/template-editor";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { usePro } from "@/components/providers/pro-provider";
 import { canCreateTemplate } from "@/lib/pro";
@@ -38,12 +40,13 @@ function SavedChecklistCard({
   template,
   isEditing,
   onEdit,
+  onDeleteRequest,
 }: {
   template: ChecklistTemplate;
   isEditing: boolean;
   onEdit: () => void;
+  onDeleteRequest: () => void;
 }) {
-  const { deleteTemplate } = useCampReady();
   const stats = getTemplateStats(template);
 
   return (
@@ -76,15 +79,7 @@ function SavedChecklistCard({
       </button>
       <button
         type="button"
-        onClick={() => {
-          if (
-            window.confirm(
-              `Delete checklist "${template.name}"? This cannot be undone.`,
-            )
-          ) {
-            deleteTemplate(template.id);
-          }
-        }}
+        onClick={onDeleteRequest}
         className="touch-target-icon rounded-lg border-2 border-border text-muted active:bg-surface"
         aria-label={`Delete ${template.name}`}
       >
@@ -105,6 +100,7 @@ export function GearInventoryPanel() {
     applyChecklistTemplateToTrip,
     updateTemplate,
     addTemplateCategory,
+    deleteTemplate,
   } = useCampReady();
   const { isPro, openPaywall } = usePro();
 
@@ -114,6 +110,8 @@ export function GearInventoryPanel() {
   );
   const [newChecklistName, setNewChecklistName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [templatePendingDelete, setTemplatePendingDelete] =
+    useState<ChecklistTemplate | null>(null);
 
   const templates = useMemo(
     () =>
@@ -260,6 +258,8 @@ export function GearInventoryPanel() {
         </summary>
 
         <div className="flex flex-col gap-4 border-t border-border px-4 py-4">
+          <FreePlanUsageCard />
+
           <div>
             <p className="text-xs leading-snug text-muted">
               {SAVED_CHECKLISTS_HEADER_SUBTITLE}
@@ -277,6 +277,7 @@ export function GearInventoryPanel() {
                     template={savedTemplate}
                     isEditing={editingTemplateId === savedTemplate.id}
                     onEdit={() => handleEditTemplate(savedTemplate)}
+                    onDeleteRequest={() => setTemplatePendingDelete(savedTemplate)}
                   />
                 ))
               )}
@@ -400,6 +401,24 @@ export function GearInventoryPanel() {
           }}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={templatePendingDelete !== null}
+        title="Delete saved checklist?"
+        message={
+          templatePendingDelete
+            ? `Delete "${templatePendingDelete.name}"? This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete checklist"
+        onConfirm={() => {
+          if (templatePendingDelete) {
+            deleteTemplate(templatePendingDelete.id);
+          }
+          setTemplatePendingDelete(null);
+        }}
+        onCancel={() => setTemplatePendingDelete(null)}
+      />
     </>
   );
 }

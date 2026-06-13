@@ -70,3 +70,9 @@ export function enumerateDateRange(startIso: string, endIso: string): string[] {
 export function todayIso(): string {
   return formatLocalIsoDate(new Date());
 }
+
+export function addDaysIso(iso: string, days: number): string {
+  const date = parseIsoDate(iso);
+  date.setDate(date.getDate() + days);
+  return formatLocalIsoDate(date);
+}

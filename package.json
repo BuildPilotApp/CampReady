@@ -8,6 +8,8 @@
     "build:mobile": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "cap:sync": "npm run build:mobile && npx cap sync",
     "cap:copy": "npm run build:mobile && npx cap copy",
     "cap:android": "npm run cap:sync && npx cap open android",
@@ -39,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

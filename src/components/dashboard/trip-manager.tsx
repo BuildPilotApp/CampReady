@@ -6,12 +6,17 @@ import { ProgressRing } from "@/components/ui/progress-ring";
 import { LocationInput, type LocationInputHandle } from "@/components/ui/location-input";
 import { TripDateRangeInput } from "@/components/ui/trip-date-range-input";
 import { WeatherBanner } from "@/components/weather/weather-banner";
+import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { usePro } from "@/components/providers/pro-provider";
 import { todayIso } from "@/lib/date-utils";
+import {
+  NO_TRIPS_EMPTY_BODY,
+  NO_TRIPS_EMPTY_TITLE,
+} from "@/lib/gear-checklist-copy";
 import { canCreateTrip } from "@/lib/pro";
 import { getTripStats } from "@/lib/storage";
-import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
+import { CUSTOM_TEMPLATE_ID, getTemplateOptionLabel } from "@/lib/templates";
 import type { TripLocation, TripRecord } from "@/types";
 import { CalendarDays, ChevronDown, MapPin, Plus, Trash2 } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from "react";
@@ -81,23 +86,44 @@ function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
 function TripChecklistTemplateEditor({ tripId }: { tripId: string }) {
   const { database, applyChecklistTemplateToTrip } = useCampReady();
   const [templateId, setTemplateId] = useState<string>(CUSTOM_TEMPLATE_ID);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const templateName = getTemplateOptionLabel(templateId, database.templates ?? []);
+  const confirmMessage =
+    templateId === CUSTOM_TEMPLATE_ID
+      ? "Clear this trip's gear checklist? All categories and items will be removed."
+      : `Load "${templateName}" onto this trip? Current items and pack status will be replaced.`;
 
   return (
-    <InventoryTemplatePicker
-      templateId={templateId}
-      onTemplateIdChange={setTemplateId}
-      savedTemplates={database.templates ?? []}
-      hint="Load a saved gear checklist from your inventory, or choose New to build as you pack."
-      footer={
-        <button
-          type="button"
-          onClick={() => applyChecklistTemplateToTrip(tripId, templateId)}
-          className="touch-target rounded-xl bg-accent px-4 py-3 text-base font-bold text-accent-foreground active:opacity-90"
-        >
-          Apply gear checklist
-        </button>
-      }
-    />
+    <>
+      <InventoryTemplatePicker
+        templateId={templateId}
+        onTemplateIdChange={setTemplateId}
+        savedTemplates={database.templates ?? []}
+        hint="Load a saved gear checklist from your inventory, or choose New to build as you pack."
+        footer={
+          <button
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            className="touch-target rounded-xl bg-accent px-4 py-3 text-base font-bold text-accent-foreground active:opacity-90"
+          >
+            Apply gear checklist
+          </button>
+        }
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Apply gear checklist?"
+        message={confirmMessage}
+        confirmLabel="Apply"
+        variant="default"
+        onConfirm={() => {
+          applyChecklistTemplateToTrip(tripId, templateId);
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 }
 
@@ -119,6 +145,7 @@ export function TripManager() {
   const [tripPendingDelete, setTripPendingDelete] = useState<TripRecord | null>(null);
   const newTripNameId = useId();
   const newLocationRef = useRef<LocationInputHandle>(null);
+  const createTripDetailsRef = useRef<HTMLDetailsElement>(null);
 
   const trips = useMemo(
     () => sortTripsChronologically(database.trips ?? []),
@@ -133,11 +160,22 @@ export function TripManager() {
     openPaywall();
   };
 
+  const openCreateTripForm = () => {
+    if (createTripDetailsRef.current) {
+      createTripDetailsRef.current.open = true;
+    }
+  };
+
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-bold text-foreground">Trips</h2>
 
-      <details className="rounded-xl border-2 border-border bg-surface p-4">
+      <FreePlanUsageCard />
+
+      <details
+        ref={createTripDetailsRef}
+        className="rounded-xl border-2 border-border bg-surface p-4"
+      >
         <summary
           onClick={handleNewTripAttempt}
           className="touch-target flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-foreground"
@@ -215,10 +253,16 @@ export function TripManager() {
 
       {trips.length === 0 ? (
         <section className="rounded-xl border-2 border-border bg-surface px-4 py-8 text-center">
-          <p className="text-base font-semibold text-foreground">No trips yet</p>
-          <p className="mt-2 text-sm text-muted">
-            Create a trip above, then build and pack your gear checklist.
-          </p>
+          <p className="text-base font-semibold text-foreground">{NO_TRIPS_EMPTY_TITLE}</p>
+          <p className="mt-2 text-sm leading-snug text-muted">{NO_TRIPS_EMPTY_BODY}</p>
+          <button
+            type="button"
+            onClick={openCreateTripForm}
+            className="touch-target mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground active:opacity-90"
+          >
+            <Plus className="size-4" aria-hidden />
+            Create your first trip
+          </button>
         </section>
       ) : (
         <ul className="flex flex-col gap-3">
