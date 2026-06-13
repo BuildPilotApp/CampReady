@@ -856,16 +856,17 @@ export function buildAffiliateSearchQuery(itemName: string): string | null {
   return `${prefix} ${cleanedItemName}`;
 }
 
-/** Amazon search affiliate URL for recognized gear items, or null when not eligible. */
+/** Amazon search URL for recognized gear items, or null when not eligible. */
 export function buildAmazonAffiliateSearchUrl(itemName: string): string | null {
-  if (!isAmazonAffiliateEnabled() || !AMAZON_AFFILIATE_TAG) {
-    return null;
-  }
-
   const searchQuery = buildAffiliateSearchQuery(itemName);
   if (!searchQuery) {
     return null;
   }
 
-  return `https://www.amazon.com/s?k=${encodeURIComponent(searchQuery)}&tag=${AMAZON_AFFILIATE_TAG}`;
+  const baseUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchQuery)}`;
+  if (isAmazonAffiliateEnabled() && AMAZON_AFFILIATE_TAG) {
+    return `${baseUrl}&tag=${AMAZON_AFFILIATE_TAG}`;
+  }
+
+  return baseUrl;
 }
