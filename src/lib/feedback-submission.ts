@@ -2,7 +2,7 @@ const FORMSPREE_ENDPOINT = "https://formspree.io/f/mvznqzpd";
 const LOCAL_SUBMISSIONS_KEY = "campready:submissions";
 
 export const FEEDBACK_SUCCESS_SENT =
-  "Thank you! Your message was sent to our team for review.";
+  "Thank you. Your message was sent to our team.";
 export const FEEDBACK_SUCCESS_SAVED =
   "Thank you. Your message was saved on this device.";
 

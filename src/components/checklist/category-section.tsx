@@ -95,7 +95,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
             }`}
             aria-hidden
           />
-          <span className="min-w-0 py-1">
+          <span className="min-w-0 flex-1 py-1">
             <span className="block truncate text-base font-bold leading-tight text-foreground">
               {category.name}
             </span>
@@ -105,10 +105,10 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
               {packedCount} / {itemCount} packed
             </span>
           </span>
+          <span className="inline-flex max-w-[42%] shrink-0 items-center truncate rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-xs font-semibold leading-none text-muted sm:max-w-none">
+            {weightLabel}
+          </span>
         </button>
-        <span className="inline-flex max-w-[42%] shrink-0 items-center truncate rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-xs font-semibold leading-none text-muted sm:max-w-none">
-          {weightLabel}
-        </span>
         <button
           type="button"
           onClick={handleEditClick}

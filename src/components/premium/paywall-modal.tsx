@@ -47,7 +47,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4"
+      className="mobile-overlay-safe-bottom fixed inset-0 z-[60] flex items-end justify-center bg-black/70 px-0 pt-0 sm:items-center sm:p-4"
       role="presentation"
       onClick={onClose}
     >
@@ -55,10 +55,10 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
         role="dialog"
         aria-labelledby="paywall-title"
         aria-modal="true"
-        className="max-h-[92dvh] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-t-3xl border border-zinc-700/80 bg-zinc-950 shadow-2xl shadow-black/60 sm:rounded-3xl"
+        className="max-h-[min(calc(92dvh-env(safe-area-inset-bottom,0px)-3rem),720px)] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-t-3xl border border-zinc-700/80 bg-zinc-950 shadow-2xl shadow-black/60 sm:max-h-[92dvh] sm:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative px-5 pb-6 pt-5 sm:px-6 sm:pb-7 sm:pt-6">
+        <div className="relative px-5 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] pt-5 sm:px-6 sm:pb-7 sm:pt-6">
           <button
             type="button"
             onClick={onClose}

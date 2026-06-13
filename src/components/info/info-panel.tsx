@@ -21,7 +21,7 @@ import {
 } from "@/lib/legal-copy";
 import { attemptRestoreProPurchase } from "@/lib/pro";
 import type { InfoView } from "@/types";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Sparkles } from "lucide-react";
 import { useId, useState } from "react";
 
 const ABOUT_TEXT =
@@ -304,7 +304,7 @@ function FeedbackForm({
 
 export function InfoPanel() {
   const { infoView, setInfoView, closeInfo } = useCampReady();
-  const { isPro } = usePro();
+  const { isPro, openPaywall } = usePro();
   const { showToast } = useAppToast();
 
   if (!infoView) return null;
@@ -336,8 +336,23 @@ export function InfoPanel() {
       { id: "bug", label: "Report Bug" },
     ];
 
+    const handleUpgrade = () => {
+      closeInfo();
+      openPaywall();
+    };
+
     return (
       <OverlayModal title="Information" onClose={closeInfo}>
+        {!isPro ? (
+          <button
+            type="button"
+            onClick={handleUpgrade}
+            className="touch-target mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-3 text-base font-bold text-zinc-950 shadow-md shadow-amber-500/20 active:opacity-90"
+          >
+            <Sparkles className="size-5" aria-hidden />
+            Upgrade to CampReady Pro
+          </button>
+        ) : null}
         <ul className="mt-4 flex flex-col gap-3">
           {buttons.map((b) => (
             <li key={b.id}>
