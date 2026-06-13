@@ -81,13 +81,13 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
       className={`overflow-hidden rounded-xl border border-zinc-800 bg-surface dark:border-zinc-800 ${statusStyles.border}`}
     >
       <div
-        className={`flex min-h-11 w-full items-stretch gap-1 px-2 ${statusStyles.header}`}
+        className={`relative flex min-h-11 w-full items-center gap-1.5 px-2 ${statusStyles.header}`}
       >
         <button
           type="button"
           onClick={() => toggleCategory(category.id)}
           aria-expanded={!collapsed}
-          className="touch-target flex min-w-0 flex-1 items-center gap-3 px-2 text-left active:opacity-90"
+          className="touch-target flex min-w-0 flex-1 items-center gap-2 px-2 text-left active:opacity-90"
         >
           <ChevronDown
             className={`size-5 shrink-0 text-accent transition-transform ${
@@ -95,23 +95,27 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
             }`}
             aria-hidden
           />
-          <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="text-base font-bold text-foreground">{category.name}</span>
-              <span className="inline-flex rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-xs font-semibold text-muted">
-                {weightLabel}
-              </span>
+          <span className="min-w-0 py-1">
+            <span className="block truncate text-base font-bold leading-tight text-foreground">
+              {category.name}
             </span>
-            <span className={`text-xs font-semibold ${statusStyles.subtitle}`}>
+            <span
+              className={`mt-0.5 block text-xs font-semibold leading-tight ${statusStyles.subtitle}`}
+            >
               {packedCount} / {itemCount} packed
             </span>
           </span>
         </button>
+        <span className="pointer-events-none absolute left-1/2 top-1/2 max-w-[calc(100%-8.5rem)] -translate-x-1/2 -translate-y-1/2">
+          <span className="inline-flex max-w-full items-center truncate rounded-full border border-border/70 bg-background/70 px-2 py-0.5 text-xs font-semibold leading-none text-muted">
+            {weightLabel}
+          </span>
+        </span>
         <button
           type="button"
           onClick={handleEditClick}
           aria-expanded={isEditing}
-          className={`touch-target inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold active:opacity-90 ${
+          className={`touch-target relative z-[1] inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold active:opacity-90 ${
             isEditing
               ? "border-accent bg-accent/15 text-foreground"
               : "border-border/60 text-muted active:text-foreground"

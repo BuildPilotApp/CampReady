@@ -77,8 +77,8 @@ export function AddItemDialog({
             placeholder="Headlamp"
           />
         </label>
-        <div className="flex gap-2">
-          <label className="flex flex-col gap-1">
+        <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2">
+          <label className="flex min-w-0 flex-col gap-1">
             <span className="text-xs font-bold uppercase tracking-wide text-muted">
               Weight (lbs)
             </span>
@@ -86,18 +86,18 @@ export function AddItemDialog({
               inputMode="decimal"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              className={`${modalInputClassName} w-20`}
+              className={`${modalInputClassName} min-w-0`}
               placeholder="lbs"
             />
           </label>
-          <label className="flex min-w-0 flex-1 flex-col gap-1">
+          <label className="flex min-w-0 flex-col gap-1">
             <span className="text-xs font-bold uppercase tracking-wide text-muted">
               Storage
             </span>
             <input
               value={storage}
               onChange={(e) => setStorage(e.target.value)}
-              className={modalInputClassName}
+              className={`${modalInputClassName} min-w-0`}
               placeholder="Tote, bin, shelf…"
             />
           </label>

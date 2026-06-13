@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { usePersistedGearItemDraft } from "@/hooks/use-persisted-draft";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { buildAmazonAffiliateSearchUrl } from "@/lib/affiliate-links";
-import { openExternalUrl } from "@/lib/open-external-url";
+import { openAffiliateUrl } from "@/lib/open-external-url";
 import type { GearItem } from "@/types";
 import { ShoppingCart, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
@@ -55,7 +55,7 @@ function AffiliateGearLinkButton({
     if (!url) {
       return;
     }
-    const result = await openExternalUrl(url);
+    const result = await openAffiliateUrl(url);
     if (!result.ok) {
       showToast(result.message, "error");
     }

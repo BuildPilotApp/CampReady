@@ -130,7 +130,29 @@ body {
 }
 
 .mobile-safe-bottom {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Bottom sheet modals — stay above Android/iOS system navigation. */
+.mobile-overlay-safe-bottom {
+  padding-bottom: max(3rem, env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .mobile-overlay-safe-bottom {
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Reserve space for the Reset All FAB above bottom nav on narrow screens. */
+.checklist-fab-scroll-padding {
+  padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .checklist-fab-scroll-padding {
+    padding-bottom: 6rem;
+  }
 }
 
 .touch-target {

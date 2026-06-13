@@ -49,7 +49,7 @@ export function ChecklistView() {
             <AmazonAssociateDisclosure className="border-t border-border/50 pt-2.5" />
           </div>
 
-          <div className="relative z-20 overflow-visible rounded-xl border-2 border-border bg-surface px-3 py-3">
+          <div className="rounded-xl border-2 border-border bg-surface px-3 py-3">
             <div className="grid grid-cols-2 gap-2">
               <ImportListButton
                 tripId={activeTrip.id}
@@ -72,11 +72,9 @@ export function ChecklistView() {
             ) : null}
           </div>
 
-          <div className="relative z-10">
-            <FilterToggle />
-          </div>
+          <FilterToggle />
 
-          <div className="flex flex-col gap-2.5 pb-32 lg:pb-24">
+          <div className="checklist-fab-scroll-padding flex flex-col gap-2.5">
             {categories.length === 0 ? (
               <section className="rounded-xl border-2 border-border bg-surface px-4 py-6 text-center">
                 <p className="text-sm text-muted">
@@ -102,7 +100,7 @@ export function ChecklistView() {
               </section>
             ) : null}
 
-            <details className="rounded-xl border border-dashed border-border bg-surface/60">
+            <details className="w-full rounded-xl border border-dashed border-border bg-surface/60">
               <summary className="touch-target cursor-pointer list-none px-4 py-3 text-sm font-semibold text-muted active:text-foreground">
                 Add category or tote
               </summary>
@@ -126,7 +124,7 @@ export function ChecklistView() {
                     addCategory(name);
                     setNewCategoryName("");
                   }}
-                  className="touch-target-icon rounded-lg bg-accent text-accent-foreground active:opacity-90"
+                  className="touch-target-icon shrink-0 rounded-lg bg-accent text-accent-foreground active:opacity-90"
                   aria-label="Add category or tote"
                 >
                   <Plus className="size-5" aria-hidden />
