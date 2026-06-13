@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "app.campready.mobile",
+  appId: "com.buildpilotapps.campready",
   appName: "CampReady",
   webDir: "out",
   backgroundColor: "#09090b",

@@ -1,4 +1,4 @@
-package app.campready.mobile;
+package com.buildpilotapps.campready;
 
 import android.app.Application;
 import androidx.appcompat.app.AppCompatDelegate;

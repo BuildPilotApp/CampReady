@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("app.campready.mobile", appContext.getPackageName());
+        assertEquals("com.buildpilotapps.campready", appContext.getPackageName());
     }
 }

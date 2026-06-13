@@ -1,4 +1,4 @@
-package app.campready.mobile;
+package com.buildpilotapps.campready;
 
 import android.content.Intent;
 import android.net.Uri;

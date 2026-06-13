@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "app.campready.mobile"
+    namespace = "com.buildpilotapps.campready"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.campready.mobile"
+        applicationId "com.buildpilotapps.campready"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
