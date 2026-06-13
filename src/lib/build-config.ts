@@ -21,4 +21,4 @@ export const DEVELOPER_NAME = "BuildPilot Apps";
  * Optional Play Console support email for privacy/contact copy.
  * Set before production (e.g. "support@yourdomain.com") or leave null to use in-app Feedback only.
  */
-export const DEVELOPER_SUPPORT_EMAIL: string | null = null;
+export const DEVELOPER_SUPPORT_EMAIL: string | null = "carpleteapp@gmail.com";
