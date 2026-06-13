@@ -399,6 +399,13 @@ export function InfoPanel() {
             Restore Pro purchase
           </button>
         ) : null}
+        <p className="mt-6 rounded-lg border border-border/50 bg-surface/60 px-3 py-2.5 text-center text-xs leading-relaxed text-muted">
+          <span className="font-medium text-foreground/75">Works offline</span>
+          <span aria-hidden> · </span>
+          <span className="font-medium text-foreground/75">No account needed</span>
+          <span aria-hidden> · </span>
+          <span className="font-medium text-foreground/75">Data stays on device</span>
+        </p>
       </OverlayModal>
     );
   }

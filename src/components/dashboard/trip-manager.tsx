@@ -3,7 +3,6 @@
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InventoryTemplatePicker } from "@/components/dashboard/inventory-template-picker";
 import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
-import { TrustStrip } from "@/components/dashboard/trust-strip";
 import { WelcomeGuide } from "@/components/onboarding/welcome-guide";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { LocationInput, type LocationInputHandle } from "@/components/ui/location-input";
@@ -211,8 +210,6 @@ export function TripManager() {
           </p>
         ) : null}
       </div>
-
-      <TrustStrip />
 
       {!isPrimeTestLabBypassActive() ? <FreePlanUsageCard /> : null}
 
