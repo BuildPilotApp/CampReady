@@ -371,7 +371,26 @@ export function ChecklistView() {
         <section className="mt-5 rounded-xl border-2 border-border bg-surface px-4 py-6 text-center">
           <p className="text-sm font-semibold text-foreground">Trip packing</p>
           <p className="mt-2 text-sm leading-snug text-muted">{NO_ACTIVE_TRIP_MESSAGE}</p>
-          <ExportListButton trip={null} className="mx-auto mt-4 max-w-56" />
+          <div className="mx-auto mt-4 grid max-w-72 grid-cols-2 gap-2">
+            <ImportListButton
+              tripId={null}
+              className="min-w-0"
+              onStatusChange={setImportStatus}
+            />
+            <ExportListButton trip={null} className="min-w-0" />
+          </div>
+          {importStatus ? (
+            <p
+              role="status"
+              className={`mt-2 text-right text-xs font-semibold leading-snug ${
+                importStatus.type === "error"
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-muted"
+              }`}
+            >
+              {importStatus.message}
+            </p>
+          ) : null}
         </section>
       )}
 
