@@ -166,20 +166,23 @@ body {
 }
 
 @media (max-width: 639px) {
-  .information-menu-overlay {
+  .information-menu-overlay,
+  .welcome-screen-overlay {
     padding-bottom: max(
       5.5rem,
       calc(env(safe-area-inset-bottom, 0px) + 4.25rem)
     );
   }
 
-  .information-menu-panel {
+  .information-menu-panel,
+  .welcome-screen-panel {
     padding: 1.5rem;
   }
 }
 
 @media (max-width: 639px) and (max-height: 740px) {
-  .information-menu-overlay {
+  .information-menu-overlay,
+  .welcome-screen-overlay {
     padding-bottom: max(
       4.25rem,
       calc(env(safe-area-inset-bottom, 0px) + 3rem)

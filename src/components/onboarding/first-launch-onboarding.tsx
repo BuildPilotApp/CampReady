@@ -8,6 +8,9 @@ import {
 import { CheckCircle2, ChevronLeft, ChevronRight, Tent } from "lucide-react";
 import { useEffect, useState } from "react";
 
+const WELCOME_OVERLAY_CLASS_NAME = "welcome-screen-overlay";
+const WELCOME_PANEL_CLASS_NAME = "welcome-screen-panel";
+
 export function FirstLaunchOnboarding() {
   const [visible, setVisible] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
@@ -31,14 +34,14 @@ export function FirstLaunchOnboarding() {
 
   return (
     <div
-      className="mobile-overlay-safe-bottom fixed inset-0 z-50 flex items-end justify-center bg-foreground/35 px-4 pt-4 sm:items-center sm:p-4"
+      className={`mobile-overlay-safe-bottom ${WELCOME_OVERLAY_CLASS_NAME} fixed inset-0 z-50 flex items-end justify-center bg-foreground/35 px-4 pt-4 sm:items-center sm:p-4`}
       role="presentation"
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="first-launch-onboarding-title"
-        className="w-full max-w-[var(--mobile-max-width)] rounded-2xl border-2 border-border bg-surface p-5 shadow-lg"
+        className={`max-h-[min(calc(85dvh-env(safe-area-inset-bottom,0px)-1rem),640px)] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-2xl border-2 border-border bg-surface p-5 shadow-lg ${WELCOME_PANEL_CLASS_NAME}`}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="inline-flex size-12 items-center justify-center rounded-full bg-accent/15 text-accent">
