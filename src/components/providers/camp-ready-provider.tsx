@@ -135,6 +135,13 @@ interface CampReadyContextValue {
     weight_lbs?: number;
     storageLocation?: string;
   }) => void;
+  addChecklistItem: (input: {
+    categoryId?: string;
+    categoryName?: string;
+    name: string;
+    weight_lbs?: number;
+    storageLocation?: string;
+  }) => { itemName: string; categoryId: string; categoryName: string } | null;
   updateItem: (itemId: string, patch: Partial<Omit<GearItem, "id" | "category">>) => void;
   deleteItem: (itemId: string) => void;
   cycleItemStatus: (itemId: string) => void;
@@ -760,6 +767,61 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const addChecklistItem = useCallback(
+    (input: {
+      categoryId?: string;
+      categoryName?: string;
+      name: string;
+      weight_lbs?: number;
+      storageLocation?: string;
+    }) => {
+      if (!database?.activeTripId) return null;
+
+      const itemName = input.name.trim() || "New Item";
+      const requestedCategoryName = input.categoryName?.trim() || "Gear";
+      let targetCategoryId = input.categoryId;
+      let targetCategoryName = requestedCategoryName;
+
+      persist(
+        updateTripById(database, database.activeTripId, (trip) => {
+          const existingCategory = targetCategoryId
+            ? trip.categories.find((category) => category.id === targetCategoryId)
+            : undefined;
+          const category = existingCategory ?? createCategory({ name: requestedCategoryName });
+          targetCategoryId = category.id;
+          targetCategoryName = category.name;
+
+          const item = createGearItem({
+            name: itemName,
+            category: category.id,
+            weight_lbs: input.weight_lbs,
+            storageLocation: input.storageLocation?.trim() || undefined,
+          });
+
+          return {
+            ...trip,
+            categories: existingCategory
+              ? trip.categories.map((currentCategory) =>
+                  currentCategory.id === category.id
+                    ? { ...currentCategory, items: [item, ...currentCategory.items] }
+                    : currentCategory,
+                )
+              : [...trip.categories, { ...category, items: [item] }],
+          };
+        }),
+      );
+
+      setChecklistFilter("all");
+      setCollapsedCategories((current) => ({
+        ...current,
+        [targetCategoryId!]: false,
+      }));
+
+      return { itemName, categoryId: targetCategoryId!, categoryName: targetCategoryName };
+    },
+    [database, persist],
+  );
+
   const updateItem = useCallback(
     (itemId: string, patch: Partial<Omit<GearItem, "id" | "category">>) => {
       if (!database?.activeTripId) return;
@@ -951,6 +1013,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       updateCategory,
       deleteCategory,
       addItem,
+      addChecklistItem,
       updateItem,
       deleteItem,
       cycleItemStatus,
@@ -997,6 +1060,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     updateCategory,
     deleteCategory,
     addItem,
+    addChecklistItem,
     updateItem,
     deleteItem,
     cycleItemStatus,

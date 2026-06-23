@@ -26,7 +26,18 @@ allprojects {
         resolutionStrategy {
             force "androidx.core:core:$androidxCoreVersion"
             force "androidx.core:core-ktx:$androidxCoreVersion"
+            force "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+            eachDependency { details ->
+                if (details.requested.group == "org.jetbrains.kotlin") {
+                    if (details.requested.name == "kotlin-stdlib-jdk7" || details.requested.name == "kotlin-stdlib-jdk8") {
+                        details.useTarget("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+                        details.because("kotlin-stdlib-jdk7/jdk8 duplicate classes merged into kotlin-stdlib")
+                    }
+                }
+            }
         }
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7"
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
     }
 }
 

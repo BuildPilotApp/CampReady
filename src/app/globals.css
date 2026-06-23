@@ -1,9 +1,36 @@
 @import "tailwindcss";
 
-/* Dark-only app: `dark:` utilities always apply; `.dark` / data-theme are extra guards for WebView. */
-@custom-variant dark (&:where(*));
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light;
+  --background: #f7fbf4;
+  --foreground: #142318;
+  --muted: #58705f;
+  --border: #bfd0c1;
+  --accent: #15803d;
+  --accent-foreground: #f0fdf4;
+  --surface: #ffffff;
+  --ring-track: #d9e7dc;
+  --ring-progress: #16a34a;
+  --touch-target: 3rem;
+  --app-max-width: 480px;
+  --mobile-max-width: var(--app-max-width);
+  --mobile-system-nav-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+  --mobile-page-bottom: calc(2rem + var(--mobile-system-nav-bottom));
+  --status-missing-bg: #fee2e2;
+  --status-missing-fg: #991b1b;
+  --status-missing-border: #ef4444;
+  --status-staged-bg: #fef3c7;
+  --status-staged-fg: #92400e;
+  --status-staged-border: #f59e0b;
+  --status-packed-bg: #dcfce7;
+  --status-packed-fg: #166534;
+  --status-packed-border: #22c55e;
+}
+
+:root[data-theme="dark"],
+:root.dark {
   color-scheme: dark;
   --background: #0a120c;
   --foreground: #f0fdf4;
@@ -14,9 +41,6 @@
   --surface: #132218;
   --ring-track: #2a4030;
   --ring-progress: #4ade80;
-  --touch-target: 3rem;
-  --app-max-width: 480px;
-  --mobile-max-width: var(--app-max-width);
   --status-missing-bg: #450a0a;
   --status-missing-fg: #fecaca;
   --status-missing-border: #ef4444;
@@ -50,7 +74,6 @@
 
 html {
   height: 100%;
-  color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
   text-size-adjust: 100%;
 }
@@ -130,12 +153,38 @@ body {
 }
 
 .mobile-safe-bottom {
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--mobile-system-nav-bottom);
+}
+
+.mobile-page-safe-bottom {
+  padding-bottom: var(--mobile-page-bottom);
 }
 
 /* Bottom sheet modals — stay above Android/iOS system navigation. */
 .mobile-overlay-safe-bottom {
   padding-bottom: max(3rem, env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 639px) {
+  .information-menu-overlay {
+    padding-bottom: max(
+      5.5rem,
+      calc(env(safe-area-inset-bottom, 0px) + 4.25rem)
+    );
+  }
+
+  .information-menu-panel {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 639px) and (max-height: 740px) {
+  .information-menu-overlay {
+    padding-bottom: max(
+      4.25rem,
+      calc(env(safe-area-inset-bottom, 0px) + 3rem)
+    );
+  }
 }
 
 @media (min-width: 640px) {

@@ -1,5 +1,5 @@
 import { SystemThemeProvider } from "@/components/providers/system-theme-provider";
-import { FORCE_DARK_THEME_INIT_SCRIPT } from "@/lib/theme/system-theme";
+import { THEME_INIT_SCRIPT } from "@/lib/theme/system-theme";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
@@ -34,14 +34,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark h-full" data-theme="dark" suppressHydrationWarning>
       <head>
-        <meta name="color-scheme" content="dark" />
+        <meta name="color-scheme" content="dark light" />
         <Script
-          id="force-dark-theme-init"
+          id="app-theme-init"
           strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: FORCE_DARK_THEME_INIT_SCRIPT }}
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
         />
       </head>
-      <body className="min-h-full bg-zinc-950 text-foreground antialiased">
+      <body className="min-h-full bg-background text-foreground antialiased">
         <SystemThemeProvider>
           <div className="app-viewport-canvas">
             <div className="app-viewport-frame">{children}</div>

@@ -7,6 +7,8 @@ interface OverlayModalProps {
   onClose: () => void;
   children: ReactNode;
   labelledBy?: string;
+  containerClassName?: string;
+  panelClassName?: string;
 }
 
 export function OverlayModal({
@@ -14,12 +16,14 @@ export function OverlayModal({
   onClose,
   children,
   labelledBy,
+  containerClassName,
+  panelClassName,
 }: OverlayModalProps) {
   const titleId = labelledBy ?? (title ? "overlay-modal-title" : undefined);
 
   return (
     <div
-      className="mobile-overlay-safe-bottom fixed inset-0 z-50 flex items-end justify-center bg-foreground/35 px-4 pt-4 sm:items-center sm:p-4"
+      className={`mobile-overlay-safe-bottom fixed inset-0 z-50 flex items-end justify-center bg-foreground/35 px-4 pt-4 sm:items-center sm:p-4 ${containerClassName ?? ""}`.trim()}
       role="presentation"
       onClick={onClose}
     >
@@ -27,7 +31,7 @@ export function OverlayModal({
         role="dialog"
         aria-labelledby={titleId}
         aria-modal="true"
-        className="max-h-[min(calc(85dvh-env(safe-area-inset-bottom,0px)-1rem),640px)] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-2xl border-2 border-border bg-surface p-5 shadow-lg"
+        className={`max-h-[min(calc(85dvh-env(safe-area-inset-bottom,0px)-1rem),640px)] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-2xl border-2 border-border bg-surface p-5 shadow-lg ${panelClassName ?? ""}`.trim()}
         onClick={(event) => event.stopPropagation()}
       >
         {title ? (

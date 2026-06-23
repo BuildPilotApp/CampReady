@@ -3,7 +3,6 @@
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InventoryTemplatePicker } from "@/components/dashboard/inventory-template-picker";
 import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
-import { WelcomeGuide } from "@/components/onboarding/welcome-guide";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { LocationInput, type LocationInputHandle } from "@/components/ui/location-input";
 import { TripDateRangeInput } from "@/components/ui/trip-date-range-input";
@@ -15,7 +14,6 @@ import {
   EMPTY_TRIPS_MESSAGE,
   STARTER_TRIP_BUTTON_LABEL,
 } from "@/lib/gear-checklist-copy";
-import { isWelcomeDismissed } from "@/lib/onboarding";
 import { canCreateTrip, FREE_TRIP_LIMIT, isPrimeTestLabBypassActive } from "@/lib/pro";
 import { getTripStats } from "@/lib/storage";
 import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
@@ -144,7 +142,6 @@ export function TripManager() {
   const [newLocation, setNewLocation] = useState<TripLocation | undefined>();
   const [templateId, setTemplateId] = useState<string>(CUSTOM_TEMPLATE_ID);
   const [tripPendingDelete, setTripPendingDelete] = useState<TripRecord | null>(null);
-  const [showWelcome, setShowWelcome] = useState(false);
   const newTripNameId = useId();
   const newTripNameRef = useRef<HTMLInputElement>(null);
   const keyboardScroll = useKeyboardAwareScroll();
@@ -172,10 +169,6 @@ export function TripManager() {
     }, 150);
   };
 
-  useEffect(() => {
-    setShowWelcome(!isWelcomeDismissed() && (database.trips ?? []).length === 0);
-  }, [database.trips]);
-
   const trips = useMemo(
     () => sortTripsChronologically(database.trips ?? []),
     [database.trips],
@@ -197,7 +190,6 @@ export function TripManager() {
       return;
     }
     createStarterTrip();
-    setShowWelcome(false);
   };
 
   return (
@@ -212,10 +204,6 @@ export function TripManager() {
       </div>
 
       {!isPrimeTestLabBypassActive() ? <FreePlanUsageCard /> : null}
-
-      {showWelcome ? (
-        <WelcomeGuide onDismiss={() => setShowWelcome(false)} />
-      ) : null}
 
       <details
         ref={createTripDetailsRef}

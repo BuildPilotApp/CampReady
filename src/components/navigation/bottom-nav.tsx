@@ -2,7 +2,8 @@
 
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import type { AppTab } from "@/types";
-import { ClipboardList, LayoutDashboard } from "lucide-react";
+import { ClipboardList, LayoutDashboard, Settings } from "lucide-react";
+import Link from "next/link";
 
 const TABS: { id: AppTab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -43,6 +44,14 @@ export function BottomNav() {
           </button>
         );
       })}
+      <Link
+        href="/settings/"
+        onClick={closeInfo}
+        className="touch-target flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-semibold text-muted active:bg-background"
+      >
+        <Settings className="size-6 shrink-0" strokeWidth={2} aria-hidden />
+        Settings
+      </Link>
     </nav>
   );
 }

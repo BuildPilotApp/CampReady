@@ -1,30 +1,85 @@
 export const WELCOME_DISMISSED_KEY = "campready:welcome-dismissed";
+export const ONBOARDING_COMPLETED_KEY = "campready:onboarding:v1:completed";
+
+function getLocalStorageValue(key: string): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function setLocalStorageValue(key: string, value: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // The app still works if storage is unavailable; onboarding may reappear.
+  }
+}
 
 export function isWelcomeDismissed(): boolean {
   if (typeof window === "undefined") {
     return true;
   }
-  return localStorage.getItem(WELCOME_DISMISSED_KEY) === "true";
+  return getLocalStorageValue(WELCOME_DISMISSED_KEY) === "true";
 }
 
 export function dismissWelcome(): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-  localStorage.setItem(WELCOME_DISMISSED_KEY, "true");
+  setLocalStorageValue(WELCOME_DISMISSED_KEY, "true");
 }
 
-export const WELCOME_STEPS = [
+export function isFirstLaunchOnboardingComplete(): boolean {
+  return (
+    getLocalStorageValue(ONBOARDING_COMPLETED_KEY) === "true" ||
+    getLocalStorageValue(WELCOME_DISMISSED_KEY) === "true"
+  );
+}
+
+export function shouldShowFirstLaunchOnboarding(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return !isFirstLaunchOnboardingComplete();
+}
+
+export function completeFirstLaunchOnboarding(): void {
+  setLocalStorageValue(ONBOARDING_COMPLETED_KEY, "true");
+  dismissWelcome();
+}
+
+export const FIRST_LAUNCH_ONBOARDING_STEPS = [
   {
-    title: "Create a trip",
-    body: "Add dates and a location on the Dashboard. Weather appears when a place is set.",
+    eyebrow: "Welcome",
+    title: "Plan each trip before you pack",
+    body: "CampReady keeps trips, dates, locations, reusable gear inventories, and pack status organized on this device.",
   },
   {
-    title: "Build your gear list",
-    body: "Add categories and items on the Gear Checklist tab, or load the optional weekend starter.",
+    eyebrow: "Dashboard",
+    title: "Start on the Dashboard",
+    body: "Create a trip, load the weekend example, add dates and a location, and watch progress and weather from one place.",
   },
   {
-    title: "Pack item by item",
-    body: "Tap each item to stage it, then tap again when it is packed in your vehicle.",
+    eyebrow: "Gear Checklist",
+    title: "Add gear or load inventory",
+    body: "Use Add gear for quick entries, expand Gear inventory for saved checklists, or download blank templates when you are starting from scratch.",
+  },
+  {
+    eyebrow: "Pack Mode",
+    title: "Tap from needed to packed",
+    body: "Tap items through Needed, Staged, and Packed, filter what remains, and keep an eye on total packed weight.",
+  },
+  {
+    eyebrow: "Backups & Settings",
+    title: "Keep your setup portable",
+    body: "Export text, CSV, or app backups, import files with Lifetime Pro, and use Settings to switch the app theme.",
   },
 ] as const;

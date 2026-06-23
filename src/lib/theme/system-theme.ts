@@ -1,26 +1,52 @@
-/** Dark palette tokens shared by class and media-query selectors. */
-export const DARK_THEME_CLASS = "dark";
-export const DARK_THEME_ATTR = "data-theme";
-export const DARK_THEME_ATTR_VALUE = "dark";
+export type AppTheme = "dark" | "light";
 
-/** Inline JS shared by the init script and native WebView injection. */
-export const FORCE_DARK_THEME_JS = `(function(){try{var r=document.documentElement;r.classList.add("dark");r.classList.remove("light");r.setAttribute("data-theme","dark");r.style.colorScheme="dark";if(document.body){document.body.style.colorScheme="dark";}}catch(e){}})();`;
+export const THEME_STORAGE_KEY = "campready:theme";
+export const THEME_ATTR = "data-theme";
 
-export const FORCE_DARK_THEME_INIT_SCRIPT = FORCE_DARK_THEME_JS;
+export function isAppTheme(value: string | null): value is AppTheme {
+  return value === "dark" || value === "light";
+}
 
-/** Always apply the root dark markers — app is dark-only on every platform. */
-export function forceDarkThemeClass(): void {
+export function getStoredTheme(): AppTheme {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return isAppTheme(stored) ? stored : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+/** Inline JS avoids a flash of the wrong palette before React hydrates. */
+export const THEME_INIT_SCRIPT = `(function(){try{var k="${THEME_STORAGE_KEY}";var t=localStorage.getItem(k);if(t!=="light"&&t!=="dark"){t="dark";}var r=document.documentElement;r.classList.toggle("dark",t==="dark");r.classList.toggle("light",t==="light");r.setAttribute("${THEME_ATTR}",t);r.style.colorScheme=t;if(document.body){document.body.style.colorScheme=t;}}catch(e){}})();`;
+
+export function applyTheme(theme: AppTheme): void {
   if (typeof document === "undefined") {
     return;
   }
 
   const root = document.documentElement;
-  root.classList.add(DARK_THEME_CLASS);
-  root.classList.remove("light");
-  root.setAttribute(DARK_THEME_ATTR, DARK_THEME_ATTR_VALUE);
-  root.style.colorScheme = "dark";
+  root.classList.toggle("dark", theme === "dark");
+  root.classList.toggle("light", theme === "light");
+  root.setAttribute(THEME_ATTR, theme);
+  root.style.colorScheme = theme;
 
   if (document.body) {
-    document.body.style.colorScheme = "dark";
+    document.body.style.colorScheme = theme;
+  }
+}
+
+export function storeTheme(theme: AppTheme): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Theme stays applied in memory for the current session.
   }
 }

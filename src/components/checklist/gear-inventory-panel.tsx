@@ -59,48 +59,50 @@ function SavedChecklistRow({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 ${
+      className={`flex flex-wrap items-start gap-2 rounded-xl border-2 px-3 py-2.5 ${
         isEditing ? "border-accent bg-accent/5" : "border-border bg-background"
       }`}
     >
-      <span className="min-w-0 flex-1">
+      <span className="min-w-0 flex-1 basis-40 self-center">
         <span className="block truncate text-sm font-bold text-foreground">
           {template.name}
         </span>
-        <span className="mt-0.5 block text-xs font-semibold text-muted">
+        <span className="mt-0.5 block truncate text-xs font-semibold text-muted">
           {stats.categoryCount} categor{stats.categoryCount === 1 ? "y" : "ies"}
           {" · "}
           {stats.itemCount} item{stats.itemCount === 1 ? "" : "s"}
         </span>
       </span>
-      <button
-        type="button"
-        onClick={onLoad}
-        className="touch-target inline-flex shrink-0 items-center gap-1 rounded-lg border-2 border-border px-2.5 py-1.5 text-xs font-bold text-foreground active:opacity-90"
-      >
-        <Download className="size-3.5" aria-hidden />
-        Load
-      </button>
-      <button
-        type="button"
-        onClick={onEdit}
-        className={`touch-target inline-flex shrink-0 items-center gap-1 rounded-lg border-2 px-2.5 py-1.5 text-xs font-bold active:opacity-90 ${
-          isEditing
-            ? "border-accent bg-accent text-accent-foreground"
-            : "border-border text-foreground"
-        }`}
-      >
-        <Pencil className="size-3.5" aria-hidden />
-        {isEditing ? "Editing" : "Edit"}
-      </button>
-      <button
-        type="button"
-        onClick={() => setConfirmDelete(true)}
-        className="touch-target-icon rounded-lg border-2 border-border text-muted active:bg-surface"
-        aria-label={`Delete ${template.name}`}
-      >
-        <Trash2 className="size-3.5" aria-hidden />
-      </button>
+      <span className="flex shrink-0 flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          onClick={onLoad}
+          className="touch-target inline-flex shrink-0 items-center justify-center gap-1 rounded-lg border-2 border-border px-2.5 py-1.5 text-xs font-bold text-foreground active:opacity-90"
+        >
+          <Download className="size-3.5" aria-hidden />
+          Load
+        </button>
+        <button
+          type="button"
+          onClick={onEdit}
+          className={`touch-target inline-flex shrink-0 items-center justify-center gap-1 rounded-lg border-2 px-2.5 py-1.5 text-xs font-bold active:opacity-90 ${
+            isEditing
+              ? "border-accent bg-accent text-accent-foreground"
+              : "border-border text-foreground"
+          }`}
+        >
+          <Pencil className="size-3.5" aria-hidden />
+          {isEditing ? "Editing" : "Edit"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          className="touch-target-icon rounded-lg border-2 border-border text-muted active:bg-surface"
+          aria-label={`Delete ${template.name}`}
+        >
+          <Trash2 className="size-3.5" aria-hidden />
+        </button>
+      </span>
       <ConfirmDialog
         open={confirmDelete}
         title="Delete checklist?"

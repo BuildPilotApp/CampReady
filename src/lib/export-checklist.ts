@@ -1,7 +1,13 @@
-import { tripToExportDocument } from "@/lib/checklist-export-format";
+import {
+  CHECKLIST_EXPORT_FORMAT,
+  CHECKLIST_EXPORT_VERSION,
+  tripToExportDocument,
+} from "@/lib/checklist-export-format";
 import { downloadTextFile } from "@/lib/download-text-file";
 import { STATUS_LABELS } from "@/lib/gear-status";
 import type { TripRecord } from "@/types";
+
+const TEMPLATE_FILENAME_BASE = "campready-gear-inventory-template";
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-") || "trip";
@@ -73,6 +79,31 @@ export function formatChecklistAsCsv(trip: TripRecord): string {
   return rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
 }
 
+export function formatGearInventoryCsvTemplate(): string {
+  return [["Category", "Item", "Status", "Weight (lbs)", "Storage"]]
+    .map((row) => row.map(escapeCsv).join(","))
+    .join("\n");
+}
+
+export function formatGearInventoryJsonTemplate(): string {
+  return JSON.stringify(
+    {
+      version: CHECKLIST_EXPORT_VERSION,
+      format: CHECKLIST_EXPORT_FORMAT,
+      tripName: "Gear Inventory Template",
+      exportedAt: new Date().toISOString(),
+      instructions: [
+        "Add categories before importing this file into CampReady.",
+        "Each item status must be one of: missing, staged, packed.",
+        "Weight is optional and should be a number in pounds.",
+      ],
+      categories: [],
+    },
+    null,
+    2,
+  );
+}
+
 export function formatChecklistAsJson(trip: TripRecord): string {
   return JSON.stringify(tripToExportDocument(trip), null, 2);
 }
@@ -92,6 +123,22 @@ export async function downloadChecklistCsv(trip: TripRecord): Promise<boolean> {
     csv,
     `${sanitizeFilename(trip.name)}-pack-list.csv`,
     "text/csv",
+  );
+}
+
+export async function downloadGearInventoryCsvTemplate(): Promise<boolean> {
+  return downloadTextFile(
+    formatGearInventoryCsvTemplate(),
+    `${TEMPLATE_FILENAME_BASE}.csv`,
+    "text/csv",
+  );
+}
+
+export async function downloadGearInventoryJsonTemplate(): Promise<boolean> {
+  return downloadTextFile(
+    formatGearInventoryJsonTemplate(),
+    `${TEMPLATE_FILENAME_BASE}.json`,
+    "application/json",
   );
 }
 

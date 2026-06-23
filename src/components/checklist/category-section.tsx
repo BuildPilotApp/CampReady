@@ -78,7 +78,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
 
   return (
     <section
-      className={`overflow-hidden rounded-xl border border-zinc-800 bg-surface dark:border-zinc-800 ${statusStyles.border}`}
+      className={`overflow-hidden rounded-xl border border-border bg-surface ${statusStyles.border}`}
     >
       <div
         className={`relative flex min-h-11 w-full items-center gap-1.5 px-2 ${statusStyles.header}`}

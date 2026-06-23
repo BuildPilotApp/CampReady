@@ -5,13 +5,15 @@ import {
   copyChecklistText,
   downloadChecklistAppBackup,
   downloadChecklistCsv,
+  downloadGearInventoryCsvTemplate,
+  downloadGearInventoryJsonTemplate,
 } from "@/lib/export-checklist";
 import type { TripRecord } from "@/types";
 import { Archive, Check, ChevronDown, Download, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface ExportListButtonProps {
-  trip: TripRecord;
+  trip?: TripRecord | null;
   className?: string;
 }
 
@@ -31,9 +33,14 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
   const [feedback, setFeedback] = useState<ExportFeedback | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const hasItems = trip.categories.some(
+  const hasListItems = trip?.categories.some(
     (category) => category.items.length > 0,
-  );
+  ) ?? false;
+  const label = copied
+    ? "Copied"
+    : hasListItems
+      ? "Export List"
+      : "Download Template";
 
   useEffect(() => {
     if (!open) return;
@@ -67,11 +74,12 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
   }, [feedback]);
 
   const handleToggle = () => {
-    if (!hasItems) return;
     setOpen((current) => !current);
   };
 
   const handleCopyText = async () => {
+    if (!trip) return;
+
     try {
       await copyChecklistText(trip);
       setCopied(true);
@@ -88,9 +96,11 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
   };
 
   const handleDownloadCsv = async () => {
+    if (!trip) return;
+
     const saved = await downloadChecklistCsv(trip);
     setFeedback(
-      saved || !hasItems
+      saved || !hasListItems
         ? null
         : {
             type: "error",
@@ -101,6 +111,8 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
   };
 
   const handleDownloadAppBackup = async () => {
+    if (!trip) return;
+
     const saved = await downloadChecklistAppBackup(trip);
     setFeedback(
       saved
@@ -108,6 +120,32 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
         : {
             type: "error",
             message: "Could not download app backup.",
+          },
+    );
+    setOpen(false);
+  };
+
+  const handleDownloadCsvTemplate = async () => {
+    const saved = await downloadGearInventoryCsvTemplate();
+    setFeedback(
+      saved
+        ? null
+        : {
+            type: "error",
+            message: "Could not download CSV template.",
+          },
+    );
+    setOpen(false);
+  };
+
+  const handleDownloadJsonTemplate = async () => {
+    const saved = await downloadGearInventoryJsonTemplate();
+    setFeedback(
+      saved
+        ? null
+        : {
+            type: "error",
+            message: "Could not download JSON template.",
           },
     );
     setOpen(false);
@@ -121,7 +159,6 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
       <button
         type="button"
         onClick={handleToggle}
-        disabled={!hasItems}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-describedby={feedback ? "export-list-feedback" : undefined}
@@ -132,10 +169,10 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
         ) : (
           <Download className="size-4 shrink-0 text-accent" aria-hidden />
         )}
-        <span className="truncate">{copied ? "Copied" : "Export List"}</span>
+        <span className="truncate">{label}</span>
         <ChevronDown
           className={`size-3.5 shrink-0 text-muted transition-transform ${
-            hasItems ? (open ? "rotate-180" : "") : "opacity-0"
+            open ? "rotate-180" : ""
           }`}
           aria-hidden
         />
@@ -155,39 +192,70 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
         </p>
       ) : null}
 
-      {open && hasItems ? (
+      {open ? (
         <div
           role="menu"
           className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border-2 border-border bg-surface shadow-lg shadow-black/30"
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => void handleCopyText()}
-            className={EXPORT_MENU_ITEM_CLASS}
-          >
-            <FileText className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
-            Copy as text
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => void handleDownloadCsv()}
-            className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
-          >
-            <Download className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
-            Download CSV
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => void handleDownloadAppBackup()}
-            className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
-          >
-            <Archive className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
-            Download App Backup
-          </button>
+          {hasListItems ? (
+            <>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void handleCopyText()}
+                className={EXPORT_MENU_ITEM_CLASS}
+              >
+                <FileText className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
+                Copy as text
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void handleDownloadCsv()}
+                className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
+              >
+                <Download className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
+                Download CSV
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void handleDownloadAppBackup()}
+                className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
+              >
+                <Archive className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
+                Download App Backup
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="border-b border-border px-4 py-3">
+                <p className="text-sm font-bold text-foreground">Start with a clean template</p>
+                <p className="mt-1 text-xs leading-snug text-muted">
+                  Use these professionally formatted files to build your first gear inventory.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void handleDownloadCsvTemplate()}
+                className={EXPORT_MENU_ITEM_CLASS}
+              >
+                <Download className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
+                Blank CSV Template
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void handleDownloadJsonTemplate()}
+                className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
+              >
+                <Archive className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
+                Blank JSON Template
+              </button>
+            </>
+          )}
         </div>
       ) : null}
     </div>

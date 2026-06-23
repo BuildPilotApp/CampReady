@@ -18,7 +18,9 @@ export function MobileShell({ children, header, footer }: MobileShellProps) {
           {header}
         </header>
       ) : null}
-      <main className="mobile-safe-x flex-1">
+      <main
+        className={`mobile-safe-x flex-1${footer ? "" : " mobile-page-safe-bottom"}`}
+      >
         {children}
       </main>
       {footer ? (

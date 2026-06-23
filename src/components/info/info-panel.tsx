@@ -25,7 +25,6 @@ import { canUseNativeGooglePlayBilling, restoreNativeCampReadyPro } from "@/lib/
 import {
   APP_VERSION,
   DEVELOPER_NAME,
-  DEVELOPER_SUPPORT_EMAIL,
   IS_PRIME_TEST_LAB_BUILD,
 } from "@/lib/build-config";
 import {
@@ -34,10 +33,14 @@ import {
 } from "@/lib/legal-urls";
 import type { InfoView } from "@/types";
 import { ChevronLeft, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
 import { useId, useState } from "react";
 
 const ABOUT_TEXT =
-  "CampReady is a gear checklist for camping and road trips. Build a reusable inventory, load it onto trips, and pack item-by-item with one-tap staging and checkoff. Add trip dates and a location to see weather on the Dashboard. Designed for one-handed use in the field.";
+  "CampReady is a trip planner and gear checklist for camping and road trips. Create trips, build reusable gear inventories, load them onto pack lists, and move item-by-item from Needed to Staged to Packed. Add trip dates and a location to see weather on the Dashboard. Designed for one-handed use in the field, with a split dashboard and checklist layout on larger screens.";
+
+const INFORMATION_OVERLAY_CLASS_NAME = "information-menu-overlay";
+const INFORMATION_PANEL_CLASS_NAME = "information-menu-panel";
 
 interface UserGuideItem {
   text: string;
@@ -53,9 +56,10 @@ interface UserGuideSection {
 const LIFETIME_PRO_LABEL = "CampReady Lifetime Pro";
 
 const USER_GUIDE_QUICK_START = [
-  "Create a trip on the Dashboard (dates and location optional).",
-  "Add gear on the Gear Checklist tab — or load a saved checklist from Gear inventory.",
-  "Tap each item to stage it, then tap again when it is packed.",
+  "Create a trip on the Dashboard, or tap Start with weekend example to explore the app.",
+  "Open Gear Checklist, then use Add gear, Add category or tote, or Gear inventory to build the pack list.",
+  "Tap each item once to stage it and again when it is packed in the vehicle.",
+  "Use Export List for text, CSV, or app backups; Lifetime Pro also unlocks Import List.",
 ] as const;
 
 const USER_GUIDE: UserGuideSection[] = [
@@ -63,16 +67,19 @@ const USER_GUIDE: UserGuideSection[] = [
     title: "Getting started",
     items: [
       {
-        text: "Open the Dashboard to create trips, track packing progress, and view weather.",
+        text: "Open the Dashboard to create trips, select the trip you are packing, track progress, and view trip weather.",
       },
       {
-        text: "The app starts with no trips. Tap Create new trip to add your first one.",
+        text: "The app starts with no trips. Tap Create new trip to add your first trip, or Start with weekend example to load a sample trip and checklist.",
       },
       {
-        text: "When creating or editing a trip, open Gear checklist to choose New or a saved checklist from your inventory.",
+        text: "Dates and location are optional, but adding them enables trip-day weather on the selected trip card.",
       },
       {
-        text: "Select a trip on the Dashboard, then switch to the Gear Checklist tab to pack.",
+        text: "When creating or editing a trip, choose New to start fresh or select a saved checklist from Gear inventory.",
+      },
+      {
+        text: "On phones, switch between Dashboard and Gear Checklist from the bottom navigation. On larger screens, both views appear side by side.",
       },
     ],
   },
@@ -83,16 +90,19 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "Saved checklists are reusable lists of the gear you own, organized by category.",
       },
       {
-        text: "On the Gear Checklist tab, expand Gear inventory to manage saved lists and build new ones. It stays collapsed by default so packing stays front and center.",
+        text: "On the Gear Checklist tab, expand Gear inventory to create, edit, load, or delete saved lists. It stays collapsed by default so packing stays front and center.",
       },
       {
-        text: "Each gear item has optional weight (lbs) and storage fields, such as tote, bin, or shelf.",
+        text: "Tap Load on a saved checklist to apply it to a trip. If you have multiple trips, CampReady asks which trip should receive the checklist.",
       },
       {
-        text: "Tap Load on a saved checklist to apply it to a trip, or Edit to change categories and items.",
+        text: "Use Save trip list at the top of Gear inventory to copy the selected trip's current gear into a reusable checklist.",
       },
       {
-        text: "Use Save trip list at the top of Gear inventory to copy the current trip's gear into a reusable checklist.",
+        text: "Each gear item can include optional weight in pounds and a storage location, such as tote, bin, shelf, or vehicle area.",
+      },
+      {
+        text: "When no trip is selected, Export List changes to Download Template so you can download blank CSV or JSON files for building an inventory outside the app.",
       },
     ],
   },
@@ -103,22 +113,25 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "With a trip selected, the Pack for section lists that trip's gear checklist.",
       },
       {
-        text: "Add categories or totes to group gear, such as Kitchen, Shelter, or Tools.",
+        text: "Use Add gear to add items without leaving the checklist. You can choose an existing category or create a new category at the same time.",
+      },
+      {
+        text: "Use Add category or tote to create groups such as Kitchen, Shelter, Clothing, or Tools before adding detailed items.",
       },
       {
         text: "Category headers use a soft color tint: red for Needed, yellow for Staged, and green when fully Packed, so you can spot what still needs attention.",
       },
       {
-        text: "Each item shows a Needed, Staged, or Packed badge that matches its status color. Tap an item to advance: Needed → Staged → Packed.",
+        text: "Each item shows a Needed, Staged, or Packed badge that matches its status color. Tap an item to advance: Needed -> Staged -> Packed.",
       },
       {
         text: "Use Edit at the top of a category to rename the category, add or remove items, or adjust weight and storage details.",
       },
       {
-        text: "Use All or To pack to filter the list. Reset All (floating button) sets every item back to Needed.",
+        text: "Use All or To pack to filter the list. Reset All sets every item back to Needed after confirmation.",
       },
       {
-        text: "Export List: in the pack list toolbar, tap Export List to copy your checklist as text, download a CSV spreadsheet, or choose Download App Backup to save a .json file you can re-import later with Lifetime Pro. Available when the trip has at least one item.",
+        text: "Export List: in the pack list toolbar, copy your checklist as text, download a CSV spreadsheet, or choose Download App Backup to save a .json file you can re-import later with Lifetime Pro. Available when the trip has at least one item.",
       },
     ],
   },
@@ -133,6 +146,9 @@ const USER_GUIDE: UserGuideSection[] = [
       },
       {
         text: "Within 10 days: Live Forecast. Beyond that: Historical Average.",
+      },
+      {
+        text: "Edit trip details also lets you rename the trip, change dates, update the location, or replace the trip's checklist with New or a saved inventory.",
       },
     ],
   },
@@ -150,12 +166,30 @@ const USER_GUIDE: UserGuideSection[] = [
         lifetimePro: true,
       },
       {
-        text: "Import List: merge a previously exported pack list back into a trip. On the Gear Checklist tab, tap Import List in the pack list toolbar (next to Export List). Select an app backup (.json) or CSV file from Export List. Categories and items that already exist are combined by name. Nothing is duplicated, and your current pack status on matching items is kept. Weight and storage details update when the import file includes them.",
+        text: "Import List: merge a previously exported pack list back into the selected trip. On the Gear Checklist tab, tap Import List in the pack list toolbar next to Export List. Select an app backup (.json) or CSV file from Export List. Categories and items that already exist are combined by name, matching items keep their current pack status, and weight or storage details update when the file includes them.",
         lifetimePro: true,
       },
       {
         text: "To upgrade on Android, tap any Pro-only button (such as Import List, or Create new trip when you already have one trip) and complete checkout through Google Play. Pro unlocks on this device after purchase. No subscription is required.",
         lifetimePro: true,
+      },
+      {
+        text: "If you already purchased Pro, open the Information menu and tap Restore Pro purchase. During Play Store closed testing, Pro features are unlocked automatically in the Android app.",
+        lifetimePro: true,
+      },
+    ],
+  },
+  {
+    title: "Settings",
+    items: [
+      {
+        text: "Tap Settings from the header or bottom navigation to switch between Dark and Light themes for this device.",
+      },
+      {
+        text: "Settings also shows the app version, build type, and developer details.",
+      },
+      {
+        text: "Theme is an app preference. It does not change trip, checklist, or Pro purchase data.",
       },
     ],
   },
@@ -166,7 +200,10 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "Choose New when creating a trip if you want to build a fresh checklist as you pack.",
       },
       {
-        text: "Save a checklist once you have your gear inventory set up, then reuse it on every trip.",
+        text: "Save a checklist once you have your gear inventory set up, then reuse it on future trips.",
+      },
+      {
+        text: "Download a blank CSV or JSON template before building a large inventory outside the app, then import it later with Lifetime Pro.",
       },
       {
         text: "Data saves automatically on this device. No account required.",
@@ -207,6 +244,27 @@ function PanelHeader({
       ) : null}
       <h2 className="text-lg font-bold text-foreground">{title}</h2>
     </div>
+  );
+}
+
+function InformationModal({
+  title,
+  onClose,
+  children,
+}: {
+  title?: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <OverlayModal
+      title={title}
+      onClose={onClose}
+      containerClassName={INFORMATION_OVERLAY_CLASS_NAME}
+      panelClassName={INFORMATION_PANEL_CLASS_NAME}
+    >
+      {children}
+    </OverlayModal>
   );
 }
 
@@ -369,53 +427,58 @@ export function InfoPanel() {
     };
 
     return (
-      <OverlayModal title="Information" onClose={closeInfo}>
-        {!isPro ? (
-          <button
-            type="button"
-            onClick={handleUpgrade}
-            className="touch-target mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-3 text-base font-bold text-zinc-950 shadow-md shadow-amber-500/20 active:opacity-90"
-          >
-            <Sparkles className="size-5" aria-hidden />
-            Upgrade to CampReady Pro
-          </button>
-        ) : null}
-        <ul className="mt-4 flex flex-col gap-3">
-          {buttons.map((b) => (
-            <li key={b.id}>
-              <button
-                type="button"
-                onClick={() => setInfoView(b.id)}
-                className="touch-target flex min-h-14 w-full items-center justify-center rounded-xl border-2 border-border bg-background px-4 text-base font-bold text-foreground active:bg-surface"
-              >
-                {b.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-        {!isPro ? (
-          <button
-            type="button"
-            onClick={handleRestorePro}
-            className="touch-target mt-4 w-full py-2 text-center text-sm font-medium text-muted active:text-foreground"
-          >
-            Restore Pro purchase
-          </button>
-        ) : null}
-        <p className="mt-6 rounded-lg border border-border/50 bg-surface/60 px-3 py-2.5 text-center text-xs leading-relaxed text-muted">
-          <span className="font-medium text-foreground/75">Works offline</span>
-          <span aria-hidden> · </span>
-          <span className="font-medium text-foreground/75">No account needed</span>
-          <span aria-hidden> · </span>
-          <span className="font-medium text-foreground/75">Data stays on device</span>
-        </p>
-      </OverlayModal>
+      <InformationModal
+        title="Information"
+        onClose={closeInfo}
+      >
+        <div className="mt-5 flex flex-col gap-4">
+          {!isPro ? (
+            <button
+              type="button"
+              onClick={handleUpgrade}
+              className="touch-target flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-3 text-base font-bold text-zinc-950 shadow-md shadow-amber-500/20 active:opacity-90"
+            >
+              <Sparkles className="size-5" aria-hidden />
+              Upgrade to CampReady Pro
+            </button>
+          ) : null}
+          <ul className="flex flex-col gap-3.5">
+            {buttons.map((b) => (
+              <li key={b.id}>
+                <button
+                  type="button"
+                  onClick={() => setInfoView(b.id)}
+                  className="touch-target flex min-h-14 w-full items-center justify-center rounded-xl border-2 border-border bg-background px-4 text-base font-bold text-foreground active:bg-surface"
+                >
+                  {b.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {!isPro ? (
+            <button
+              type="button"
+              onClick={handleRestorePro}
+              className="touch-target w-full py-2 text-center text-sm font-medium text-muted active:text-foreground"
+            >
+              Restore Pro purchase
+            </button>
+          ) : null}
+          <p className="rounded-lg border border-border/50 bg-surface/60 px-3 py-3 text-center text-xs leading-relaxed text-muted">
+            <span className="font-medium text-foreground/75">Works offline</span>
+            <span aria-hidden> · </span>
+            <span className="font-medium text-foreground/75">No account needed</span>
+            <span aria-hidden> · </span>
+            <span className="font-medium text-foreground/75">Data stays on device</span>
+          </p>
+        </div>
+      </InformationModal>
     );
   }
 
   if (infoView === "about") {
     return (
-      <OverlayModal onClose={closeInfo}>
+      <InformationModal onClose={closeInfo}>
         <PanelHeader title="About" onBack={goMenu} />
         <p className="mt-3 text-sm text-muted">
           Plan:{" "}
@@ -429,16 +492,15 @@ export function InfoPanel() {
         </p>
         <p className="mt-1 text-xs text-muted">
           {DEVELOPER_NAME}
-          {DEVELOPER_SUPPORT_EMAIL ? ` · ${DEVELOPER_SUPPORT_EMAIL}` : null}
         </p>
         <p className="mt-4 text-base leading-relaxed text-foreground">{ABOUT_TEXT}</p>
-      </OverlayModal>
+      </InformationModal>
     );
   }
 
   if (infoView === "guide") {
     return (
-      <OverlayModal onClose={closeInfo}>
+      <InformationModal onClose={closeInfo}>
         <PanelHeader title="User Guide" onBack={goMenu} />
         <div className="mt-4 rounded-xl border border-border bg-background/60 px-4 py-3">
           <p className="text-sm font-bold text-foreground">Quick start</p>
@@ -473,13 +535,13 @@ export function InfoPanel() {
             </li>
           ))}
         </ul>
-      </OverlayModal>
+      </InformationModal>
     );
   }
 
   if (infoView === "terms") {
     return (
-      <OverlayModal onClose={closeInfo}>
+      <InformationModal onClose={closeInfo}>
         <PanelHeader title="Terms of Service & Disclaimers" onBack={goMenu} />
         <HostedLegalLink
           href={HOSTED_TERMS_OF_SERVICE_URL}
@@ -508,13 +570,13 @@ export function InfoPanel() {
             </li>
           ))}
         </ul>
-      </OverlayModal>
+      </InformationModal>
     );
   }
 
   if (infoView === "privacy") {
     return (
-      <OverlayModal onClose={closeInfo}>
+      <InformationModal onClose={closeInfo}>
         <PanelHeader title="Privacy Policy" onBack={goMenu} />
         <HostedLegalLink
           href={HOSTED_PRIVACY_POLICY_URL}
@@ -543,25 +605,25 @@ export function InfoPanel() {
             </li>
           ))}
         </ul>
-      </OverlayModal>
+      </InformationModal>
     );
   }
 
   if (infoView === "feedback") {
     return (
-      <OverlayModal onClose={closeInfo}>
+      <InformationModal onClose={closeInfo}>
         <FeedbackForm
           type="feedback"
           prompt="Let us know how this app can make your life easier."
           onBack={goMenu}
         />
-      </OverlayModal>
+      </InformationModal>
     );
   }
 
   return (
-    <OverlayModal onClose={closeInfo}>
+    <InformationModal onClose={closeInfo}>
       <FeedbackForm type="bug" prompt="Tell us what's broken." onBack={goMenu} />
-    </OverlayModal>
+    </InformationModal>
   );
 }

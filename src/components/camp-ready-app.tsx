@@ -3,6 +3,7 @@
 import { MobileShell } from "@/components/layout/mobile-shell";
 import { InfoPanel } from "@/components/info/info-panel";
 import { BottomNav } from "@/components/navigation/bottom-nav";
+import { FirstLaunchOnboarding } from "@/components/onboarding/first-launch-onboarding";
 import { AppRuntimeProvider } from "@/components/providers/app-runtime-provider";
 import { CampReadyProvider, useCampReady } from "@/components/providers/camp-ready-provider";
 import { ProProvider, usePro } from "@/components/providers/pro-provider";
@@ -17,7 +18,8 @@ import { Fab } from "@/components/ui/fab";
 import { PlanStatusChip } from "@/components/premium/plan-status-chip";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
-import { Tent, RotateCcw, Info } from "lucide-react";
+import { Tent, RotateCcw, Info, Settings } from "lucide-react";
+import Link from "next/link";
 import { useCallback } from "react";
 
 function AppHeader() {
@@ -57,6 +59,13 @@ function AppHeader() {
             </p>
           ) : null}
         </div>
+        <Link
+          href="/settings/"
+          aria-label="Open settings"
+          className="touch-target inline-flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-surface text-muted active:opacity-90"
+        >
+          <Settings className="size-6" strokeWidth={2.25} aria-hidden />
+        </Link>
         <button
           type="button"
           onClick={openInfoMenu}
@@ -90,6 +99,13 @@ function AppHeader() {
             </p>
           ) : null}
         </div>
+        <Link
+          href="/settings/"
+          aria-label="Open settings"
+          className="touch-target inline-flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-surface text-muted active:opacity-90"
+        >
+          <Settings className="size-6" strokeWidth={2.25} aria-hidden />
+        </Link>
         <button
           type="button"
           onClick={openInfoMenu}
@@ -162,6 +178,7 @@ function CampReadyShell() {
       </div>
 
       {infoView ? <InfoPanel /> : null}
+      <FirstLaunchOnboarding />
     </MobileShell>
   );
 }
