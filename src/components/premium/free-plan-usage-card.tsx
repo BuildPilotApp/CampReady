@@ -11,7 +11,7 @@ import {
   FREE_TRIP_LIMIT,
   isPrimeTestLabBypassActive,
 } from "@/lib/pro";
-import { Sparkles } from "lucide-react";
+import { Tent } from "lucide-react";
 
 export function FreePlanUsageCard() {
   const { database } = useCampReady();
@@ -49,7 +49,7 @@ export function FreePlanUsageCard() {
           onClick={openPaywall}
           className="touch-target inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500/90 to-teal-500/90 px-3 py-2 text-xs font-bold text-zinc-950 active:opacity-90"
         >
-          <Sparkles className="size-3.5" aria-hidden />
+          <Tent className="size-3.5" strokeWidth={2.25} aria-hidden />
           Pro
         </button>
       </div>

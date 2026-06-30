@@ -37,7 +37,7 @@ export function PlanStatusChip({ onUpgradeClick, className = "" }: PlanStatusChi
       className={`inline-flex shrink-0 items-center rounded-full border border-border bg-background/80 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-muted active:border-accent/40 active:text-foreground ${className}`.trim()}
       aria-label={`${summary}. Upgrade to Pro.`}
     >
-      {summary}
+      Free Plan
     </button>
   );
 }
