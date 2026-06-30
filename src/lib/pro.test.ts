@@ -29,8 +29,8 @@ describe("pro gating", () => {
 });
 
 describe("release build config", () => {
-  it("documents PrimeTestLab mode for closed testing", () => {
-    expect(IS_PRIME_TEST_LAB_BUILD).toBe(true);
+  it("documents production mode for Play Store release", () => {
+    expect(IS_PRIME_TEST_LAB_BUILD).toBe(false);
   });
 
   it("only bypasses billing on native when PrimeTestLab mode is on", () => {

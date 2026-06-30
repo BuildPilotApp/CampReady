@@ -1,18 +1,18 @@
 /**
  * Release build switches — read before every Play Store upload.
  *
- * PrimeTestLab / closed testing (current):
+ * PrimeTestLab / closed testing:
  *   IS_PRIME_TEST_LAB_BUILD = true
  *
- * Production release (after testing):
+ * Production release (current):
  *   IS_PRIME_TEST_LAB_BUILD = false
  *   Then rebuild (`npm run cap:sync`) and upload a new signed AAB.
  */
 
-export const IS_PRIME_TEST_LAB_BUILD = true;
+export const IS_PRIME_TEST_LAB_BUILD = false;
 
 /** Matches package.json version and android versionName. */
-export const APP_VERSION = "1.0.1";
+export const APP_VERSION = "1.0.2";
 
 /** Shown in About and legal screens. Update before production if needed. */
 export const DEVELOPER_NAME = "BuildPilot Apps";

@@ -174,7 +174,7 @@ const USER_GUIDE: UserGuideSection[] = [
         lifetimePro: true,
       },
       {
-        text: "If you already purchased Pro, open the Information menu and tap Restore Pro purchase. During Play Store closed testing, Pro features are unlocked automatically in the Android app.",
+        text: "If you already purchased Pro, open the Information menu and tap Restore Pro purchase to unlock Pro again on this device.",
         lifetimePro: true,
       },
     ],
