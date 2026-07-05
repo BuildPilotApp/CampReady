@@ -48,7 +48,7 @@ export function AppToastProvider({ children }: { children: ReactNode }) {
       {children}
       {toasts.length > 0 ? (
         <div
-          className="pointer-events-none fixed inset-x-0 bottom-[max(5.5rem,env(safe-area-inset-bottom))] z-[70] flex flex-col items-center gap-2 px-4"
+          className="pointer-events-none fixed inset-x-0 bottom-[max(5.5rem,var(--safe-area-bottom))] z-[70] flex flex-col items-center gap-2 px-4"
           aria-live="polite"
         >
           {toasts.map((toast) => (

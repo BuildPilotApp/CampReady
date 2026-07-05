@@ -13,9 +13,13 @@ const config: CapacitorConfig = {
   },
   server: {
     androidScheme: "https",
-    // Intentionally no server.url — assets must load from bundled webDir (out/).
+    // Intentionally no server.url because assets must load from bundled webDir (out/).
   },
   plugins: {
+    SystemBars: {
+      insetsHandling: "css",
+      style: "DARK",
+    },
     SplashScreen: {
       launchShowDuration: 800,
       launchAutoHide: true,
@@ -23,8 +27,6 @@ const config: CapacitorConfig = {
       backgroundColor: "#09090b",
       androidSplashResourceName: "splash",
       androidScaleType: "FIT_CENTER",
-      splashFullScreen: true,
-      splashImmersive: true,
       showSpinner: false,
       useDialog: false,
     },

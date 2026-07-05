@@ -26,7 +26,7 @@ export const Fab = forwardRef<HTMLButtonElement, FabProps>(function Fab(
           : "bg-accent text-accent-foreground"
       } ${className}`}
       style={{
-        right: "max(0.75rem, env(safe-area-inset-right))",
+        right: "max(0.75rem, var(--safe-area-right))",
         bottom: "100%",
         marginBottom: "0.75rem",
       }}

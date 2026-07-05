@@ -41,7 +41,7 @@ export function FirstLaunchOnboarding() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="first-launch-onboarding-title"
-        className={`max-h-[min(calc(85dvh-env(safe-area-inset-bottom,0px)-1rem),640px)] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-2xl border-2 border-border bg-surface p-5 shadow-lg ${WELCOME_PANEL_CLASS_NAME}`}
+        className={`max-h-[min(calc(85dvh-var(--safe-area-bottom)-1rem),640px)] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-2xl border-2 border-border bg-surface p-5 shadow-lg ${WELCOME_PANEL_CLASS_NAME}`}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="inline-flex size-12 items-center justify-center rounded-full bg-accent/15 text-accent">

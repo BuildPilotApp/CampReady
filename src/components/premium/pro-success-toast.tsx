@@ -11,7 +11,7 @@ export function ProSuccessToast({ onDismiss }: ProSuccessToastProps) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-x-0 top-0 z-[70] flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))]"
+      className="fixed inset-x-0 top-0 z-[70] flex justify-center px-4 pt-[max(0.75rem,var(--safe-area-top))]"
     >
       <div className="flex w-full max-w-[var(--mobile-max-width)] items-start gap-3 rounded-2xl border border-teal-500/40 bg-zinc-950 px-4 py-3 shadow-xl shadow-black/40">
         <span className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-teal-500/15 text-teal-400">

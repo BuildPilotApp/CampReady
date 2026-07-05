@@ -16,7 +16,11 @@
   --touch-target: 3rem;
   --app-max-width: 480px;
   --mobile-max-width: var(--app-max-width);
-  --mobile-system-nav-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+  --safe-area-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-area-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-area-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --safe-area-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --mobile-system-nav-bottom: max(2rem, var(--safe-area-bottom));
   --mobile-page-bottom: calc(2rem + var(--mobile-system-nav-bottom));
   --status-missing-bg: #fee2e2;
   --status-missing-fg: #991b1b;
@@ -144,12 +148,12 @@ body {
 }
 
 .mobile-safe-x {
-  padding-inline: max(1rem, env(safe-area-inset-left))
-    max(1rem, env(safe-area-inset-right));
+  padding-inline: max(1rem, var(--safe-area-left))
+    max(1rem, var(--safe-area-right));
 }
 
 .mobile-safe-top {
-  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-top: max(0.75rem, var(--safe-area-top));
 }
 
 .mobile-safe-bottom {
@@ -160,9 +164,9 @@ body {
   padding-bottom: var(--mobile-page-bottom);
 }
 
-/* Bottom sheet modals — stay above Android/iOS system navigation. */
+/* Bottom sheet modals stay above Android/iOS system navigation. */
 .mobile-overlay-safe-bottom {
-  padding-bottom: max(3rem, env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(3rem, var(--safe-area-bottom));
 }
 
 @media (max-width: 639px) {
@@ -170,7 +174,15 @@ body {
   .welcome-screen-overlay {
     padding-bottom: max(
       5.5rem,
-      calc(env(safe-area-inset-bottom, 0px) + 4.25rem)
+      calc(var(--safe-area-bottom) + 4.25rem)
+    );
+  }
+
+  .information-submenu-overlay {
+    align-items: center;
+    padding-top: max(
+      5.5rem,
+      calc(var(--safe-area-top) + 4.25rem)
     );
   }
 
@@ -185,20 +197,27 @@ body {
   .welcome-screen-overlay {
     padding-bottom: max(
       4.25rem,
-      calc(env(safe-area-inset-bottom, 0px) + 3rem)
+      calc(var(--safe-area-bottom) + 3rem)
+    );
+  }
+
+  .information-submenu-overlay {
+    padding-top: max(
+      4.25rem,
+      calc(var(--safe-area-top) + 3rem)
     );
   }
 }
 
 @media (min-width: 640px) {
   .mobile-overlay-safe-bottom {
-    padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+    padding-bottom: max(1.25rem, var(--safe-area-bottom));
   }
 }
 
 /* Reserve space for the Reset All FAB above bottom nav on narrow screens. */
 .checklist-fab-scroll-padding {
-  padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(9rem + var(--safe-area-bottom));
 }
 
 @media (min-width: 1024px) {
@@ -247,7 +266,7 @@ summary {
   list-style: none;
 }
 
-/* Keyboard focus — visible ring for touch-first outdoor UI (no hover reliance). */
+/* Keyboard focus uses a visible ring for touch-first outdoor UI (no hover reliance). */
 button:focus-visible,
 a:focus-visible,
 summary:focus-visible,
@@ -264,7 +283,7 @@ select:focus-visible {
   outline-offset: 0;
 }
 
-/* No hover-dependent UI — outdoor / touch only */
+/* No hover-dependent UI for outdoor and touch use only */
 @media (hover: hover) {
   a:hover,
   button:hover {

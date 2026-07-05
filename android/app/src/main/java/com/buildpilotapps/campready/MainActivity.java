@@ -3,12 +3,11 @@ package com.buildpilotapps.campready;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Window;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.splashscreen.SplashScreen;
-import androidx.core.view.WindowCompat;
 import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
 import com.getcapacitor.BridgeActivity;
@@ -31,9 +30,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SystemUrlLauncherPlugin.class);
         registerPlugin(CampReadyBillingPlugin.class);
         SplashScreen.installSplashScreen(this);
+        EdgeToEdge.enable(this);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         super.onCreate(savedInstanceState);
-        applyDarkSystemChrome();
         scheduleForcedDarkTheme();
     }
 
@@ -47,7 +46,6 @@ public class MainActivity extends BridgeActivity {
     public void onResume() {
         super.onResume();
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        applyDarkSystemChrome();
         scheduleForcedDarkTheme();
     }
 
@@ -56,21 +54,7 @@ public class MainActivity extends BridgeActivity {
         super.onConfigurationChanged(newConfig);
         // OEM skins re-apply uiMode on rotation, fold, or system theme toggles.
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-        applyDarkSystemChrome();
         scheduleForcedDarkTheme();
-    }
-
-    private void applyDarkSystemChrome() {
-        Window window = getWindow();
-        if (window != null) {
-            window.setStatusBarColor(WEBVIEW_BACKGROUND);
-            window.setNavigationBarColor(WEBVIEW_BACKGROUND);
-
-            WindowCompat.setDecorFitsSystemWindows(window, true);
-            var insets = WindowCompat.getInsetsController(window, window.getDecorView());
-            insets.setAppearanceLightStatusBars(false);
-            insets.setAppearanceLightNavigationBars(false);
-        }
     }
 
     private void scheduleForcedDarkTheme() {

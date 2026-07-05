@@ -14,7 +14,7 @@ const FEATURES = [
   {
     icon: Check,
     title: "Unlimited trips",
-    description: "Plan every weekend, season, and rig at once — no juggling.",
+    description: "Plan every weekend, season, and rig at once without juggling.",
   },
   {
     icon: Sparkles,
@@ -26,7 +26,7 @@ const FEATURES = [
     icon: Shield,
     title: "Import & merge pack lists",
     description:
-      "Restore backups and merge CSV or JSON exports without duplicates.",
+      "Merge CSV gear lists into trips without duplicates.",
   },
 ] as const;
 
@@ -98,10 +98,10 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
         role="dialog"
         aria-labelledby="paywall-title"
         aria-modal="true"
-        className="max-h-[min(calc(92dvh-env(safe-area-inset-bottom,0px)-3rem),720px)] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-t-3xl border border-zinc-700/80 bg-zinc-950 shadow-2xl shadow-black/60 sm:max-h-[92dvh] sm:rounded-3xl"
+        className="max-h-[min(calc(92dvh-var(--safe-area-bottom)-3rem),720px)] w-full max-w-[var(--mobile-max-width)] overflow-y-auto rounded-t-3xl border border-zinc-700/80 bg-zinc-950 shadow-2xl shadow-black/60 sm:max-h-[92dvh] sm:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative px-5 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] pt-5 sm:px-6 sm:pb-7 sm:pt-6">
+        <div className="relative px-5 pb-[max(1.5rem,var(--safe-area-bottom))] pt-5 sm:px-6 sm:pb-7 sm:pt-6">
           <button
             type="button"
             onClick={onClose}
@@ -126,7 +126,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
               {primeTestLabBypass
                 ? "During Google Play closed testing, every Pro feature is available at no charge on this build."
-                : "The free tier includes the full packing workflow for one trip and one saved checklist. Pro removes every limit — forever, on this device."}
+                : "The free tier includes the full packing workflow for one trip and one saved checklist. Pro removes every limit forever on this device."}
             </p>
           </div>
 
@@ -167,7 +167,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
                 disabled={purchasing}
                 className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90 disabled:opacity-70"
               >
-                {purchasing ? "Opening Google Play…" : "Unlock forever — one-time purchase"}
+                {purchasing ? "Opening Google Play…" : "Unlock forever with a one-time purchase"}
               </button>
 
               <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
