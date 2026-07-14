@@ -264,7 +264,7 @@ export function SettingsPage() {
           <h2 className="text-base font-bold text-foreground">Backup & Restore</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Save all trips, dates, locations, pack status, and reusable gear inventories
-            to a CampReady backup file for moving phones or keeping a copy.
+            to a CampReady backup JSON file for moving phones or keeping a copy.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
@@ -287,7 +287,7 @@ export function SettingsPage() {
           <input
             ref={restoreInputRef}
             type="file"
-            accept=".campready,application/json"
+            accept="application/json,text/plain,.json,.campready,*/*"
             className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];

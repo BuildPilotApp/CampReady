@@ -19,7 +19,7 @@ export type CampReadyBackupValidationResult =
 
 function backupFilename(): string {
   const date = new Date().toISOString().slice(0, 10);
-  return `campready-backup-${date}.campready`;
+  return `campready-backup-${date}.json`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -46,7 +46,7 @@ export async function downloadCampReadyBackup(
   return downloadTextFile(
     formatCampReadyBackup(database),
     backupFilename(),
-    "application/vnd.campready.backup+json",
+    "application/json",
   );
 }
 
