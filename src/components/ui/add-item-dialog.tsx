@@ -1,7 +1,9 @@
 "use client";
 
+import { useUnits } from "@/components/providers/units-provider";
 import { OverlayModal } from "@/components/ui/overlay-modal";
 import { modalInputClassName } from "@/components/ui/modal-field-styles";
+import { displayWeightToLbs, weightUnitLabel } from "@/lib/units";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
@@ -24,6 +26,8 @@ export function AddItemDialog({
   onClose,
   onAdd,
 }: AddItemDialogProps) {
+  const { units } = useUnits();
+  const weightLabel = weightUnitLabel(units);
   const [name, setName] = useState("");
   const [weight, setWeight] = useState("");
   const [storage, setStorage] = useState("");
@@ -37,10 +41,9 @@ export function AddItemDialog({
     if (!trimmedName) {
       return;
     }
-    const weightValue = Number.parseFloat(weight);
     onAdd({
       name: trimmedName,
-      weight_lbs: Number.isFinite(weightValue) ? weightValue : undefined,
+      weight_lbs: displayWeightToLbs(weight, units),
       storageLocation: storage.trim() || undefined,
     });
     setName("");
@@ -80,14 +83,14 @@ export function AddItemDialog({
         <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2">
           <label className="flex min-w-0 flex-col gap-1">
             <span className="text-xs font-bold uppercase tracking-wide text-muted">
-              Weight (lbs)
+              Weight ({weightLabel})
             </span>
             <input
               inputMode="decimal"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
               className={`${modalInputClassName} min-w-0`}
-              placeholder="lbs"
+              placeholder={weightLabel}
             />
           </label>
           <label className="flex min-w-0 flex-col gap-1">

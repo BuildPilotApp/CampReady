@@ -3,10 +3,12 @@
 import { AddItemDialog } from "@/components/ui/add-item-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { useUnits } from "@/components/providers/units-provider";
 import {
   usePersistedDraft,
   usePersistedGearItemDraft,
 } from "@/hooks/use-persisted-draft";
+import { weightUnitLabel } from "@/lib/units";
 import type { Category, GearItem } from "@/types";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
@@ -19,6 +21,8 @@ function TemplateItemFields({
   item: GearItem;
 }) {
   const { updateTemplateItem, deleteTemplateItem } = useCampReady();
+  const { units } = useUnits();
+  const weightLabel = weightUnitLabel(units);
   const { draft, setField, handleBlur } = usePersistedGearItemDraft({
     item,
     onSave: (patch) => updateTemplateItem(templateId, item.id, patch),
@@ -51,8 +55,8 @@ function TemplateItemFields({
           onChange={(e) => setField("weight", e.target.value)}
           onBlur={handleBlur}
           className="touch-target w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground min-[381px]:w-[4.25rem]"
-          placeholder="lbs"
-          aria-label={`Weight for ${item.name}`}
+          placeholder={weightLabel}
+          aria-label={`Weight (${weightLabel}) for ${item.name}`}
         />
         <input
           value={draft.storageLocation}
@@ -106,7 +110,7 @@ export function TemplateCategorySection({
     });
 
   return (
-    <details className="group/category overflow-hidden rounded-xl border border-border bg-background" open>
+    <details className="group/category overflow-hidden rounded-xl border border-border bg-background">
       <summary className="touch-target flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 active:bg-surface">
         <span className="inline-flex min-w-0 items-center gap-2">
           <ChevronDown

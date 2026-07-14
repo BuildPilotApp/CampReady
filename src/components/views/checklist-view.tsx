@@ -15,6 +15,7 @@ import { useAppToast } from "@/components/ui/app-toast-provider";
 import { modalInputClassName } from "@/components/ui/modal-field-styles";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { usePro } from "@/components/providers/pro-provider";
+import { useUnits } from "@/components/providers/units-provider";
 import {
   NO_ACTIVE_TRIP_MESSAGE,
   NO_TRIP_CATEGORIES_MESSAGE,
@@ -26,6 +27,7 @@ import {
   isOnboardingHintDismissed,
 } from "@/lib/onboarding-hints";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
+import { displayWeightToLbs, weightUnitLabel } from "@/lib/units";
 import type { Category } from "@/types";
 import { Plus } from "lucide-react";
 import { useEffect, useId, useState } from "react";
@@ -45,6 +47,8 @@ interface AddGearDialogProps {
 }
 
 function AddGearDialog({ categories, onAdd, onClose }: AddGearDialogProps) {
+  const { units } = useUnits();
+  const weightLabel = weightUnitLabel(units);
   const [categoryId, setCategoryId] = useState(
     () => categories[0]?.id ?? NEW_CATEGORY_VALUE,
   );
@@ -60,12 +64,11 @@ function AddGearDialog({ categories, onAdd, onClose }: AddGearDialogProps) {
     const itemName = name.trim();
     if (!itemName) return;
 
-    const weightValue = Number.parseFloat(weight);
     const result = onAdd({
       categoryId: isCreatingCategory ? undefined : categoryId,
       categoryName: isCreatingCategory ? newCategoryName : undefined,
       name: itemName,
-      weight_lbs: Number.isFinite(weightValue) ? weightValue : undefined,
+      weight_lbs: displayWeightToLbs(weight, units),
       storageLocation: storage.trim() || undefined,
     });
 
@@ -144,14 +147,14 @@ function AddGearDialog({ categories, onAdd, onClose }: AddGearDialogProps) {
         <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-end gap-2">
           <label className="flex min-w-0 flex-col gap-1">
             <span className="text-xs font-bold uppercase tracking-wide text-muted">
-              Weight
+              Weight ({weightLabel})
             </span>
             <input
               inputMode="decimal"
               value={weight}
               onChange={(event) => setWeight(event.target.value)}
               className={`${modalInputClassName} min-w-0`}
-              placeholder="lbs"
+              placeholder={weightLabel}
             />
           </label>
           <label className="flex min-w-0 flex-col gap-1">

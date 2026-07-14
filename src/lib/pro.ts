@@ -4,6 +4,7 @@ import { isNativePlatform } from "@/lib/system-url-launcher";
 export { IS_PRIME_TEST_LAB_BUILD };
 
 export const PRO_STORAGE_KEY = "campready_pro";
+export const PRO_WELCOME_SEEN_KEY = "campready:pro-welcome-seen";
 
 export const FREE_TRIP_LIMIT = 1;
 export const FREE_TEMPLATE_LIMIT = 1;
@@ -20,6 +21,24 @@ export function setProStatus(enabled: boolean): void {
 
 export function unlockProLocally(): void {
   setProStatus(true);
+}
+
+export function hasSeenProWelcome(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(PRO_WELCOME_SEEN_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function markProWelcomeSeen(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(PRO_WELCOME_SEEN_KEY, "true");
+  } catch {
+    // Welcome gating stays in-memory for this session if storage is unavailable.
+  }
 }
 
 export function applyPrimeTestLabProBypassOnLaunch(): void {

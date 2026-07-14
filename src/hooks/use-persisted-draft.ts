@@ -1,6 +1,12 @@
 "use client";
 
+import { useUnits } from "@/components/providers/units-provider";
 import { getPowerPolicy } from "@/lib/runtime/app-power-mode";
+import {
+  displayWeightToLbs,
+  lbsToDisplayWeight,
+  type AppUnits,
+} from "@/lib/units";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const DEFAULT_DEBOUNCE_MS = 400;
@@ -127,10 +133,13 @@ interface UsePersistedGearItemDraftOptions {
   debounceMs?: number;
 }
 
-function gearItemToDraft(item: UsePersistedGearItemDraftOptions["item"]): GearItemFieldDraft {
+function gearItemToDraft(
+  item: UsePersistedGearItemDraftOptions["item"],
+  units: AppUnits,
+): GearItemFieldDraft {
   return {
     name: item.name,
-    weight: typeof item.weight_lbs === "number" ? String(item.weight_lbs) : "",
+    weight: lbsToDisplayWeight(item.weight_lbs, units),
     storageLocation: item.storageLocation ?? "",
   };
 }
@@ -149,16 +158,19 @@ export function usePersistedGearItemDraft({
   onSave,
   debounceMs = DEFAULT_DEBOUNCE_MS,
 }: UsePersistedGearItemDraftOptions) {
-  const [draft, setDraft] = useState(() => gearItemToDraft(item));
+  const { units } = useUnits();
+  const [draft, setDraft] = useState(() => gearItemToDraft(item, units));
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
-  const savedRef = useRef(gearItemToDraft(item));
+  const savedRef = useRef(gearItemToDraft(item, units));
+  const unitsRef = useRef(units);
+  unitsRef.current = units;
 
   useEffect(() => {
-    const saved = gearItemToDraft(item);
+    const saved = gearItemToDraft(item, units);
     savedRef.current = saved;
     setDraft(saved);
-  }, [item.id, item.name, item.weight_lbs, item.storageLocation]);
+  }, [item.id, item.name, item.weight_lbs, item.storageLocation, units]);
 
   const commitDraft = useCallback((raw: GearItemFieldDraft) => {
     const saved = savedRef.current;
@@ -166,10 +178,9 @@ export function usePersistedGearItemDraft({
       return;
     }
 
-    const weightValue = Number.parseFloat(raw.weight);
     onSaveRef.current({
       name: raw.name.trim() || saved.name,
-      weight_lbs: Number.isFinite(weightValue) ? weightValue : undefined,
+      weight_lbs: displayWeightToLbs(raw.weight, unitsRef.current),
       storageLocation: raw.storageLocation.trim() || undefined,
     });
   }, []);

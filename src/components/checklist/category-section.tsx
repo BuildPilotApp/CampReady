@@ -4,6 +4,7 @@ import { GearItemRow } from "@/components/checklist/gear-item-row";
 import { AddItemDialog } from "@/components/ui/add-item-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { useUnits } from "@/components/providers/units-provider";
 import { usePersistedDraft } from "@/hooks/use-persisted-draft";
 import {
   getCategoryPackCounts,
@@ -13,6 +14,7 @@ import {
   isGearItemRemaining,
 } from "@/lib/gear-items";
 import { resolveCategoryCollapsed } from "@/lib/storage/ui-session-state";
+import { formatWeight } from "@/lib/units";
 import type { Category, ChecklistFilter } from "@/types";
 import { ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -25,6 +27,7 @@ interface CategorySectionProps {
 export function CategorySection({ category, filter }: CategorySectionProps) {
   const { collapsedCategories, toggleCategory, updateCategory, deleteCategory, addItem } =
     useCampReady();
+  const { units } = useUnits();
   const collapsed = resolveCategoryCollapsed(collapsedCategories, category.id);
   const [isEditing, setIsEditing] = useState(false);
   const [addItemOpen, setAddItemOpen] = useState(false);
@@ -73,7 +76,7 @@ export function CategorySection({ category, filter }: CategorySectionProps) {
 
   const weightLabel =
     totalWeightLbs > 0
-      ? `${itemCount} item${itemCount === 1 ? "" : "s"} · ${totalWeightLbs % 1 === 0 ? totalWeightLbs : totalWeightLbs.toFixed(1)} lbs`
+      ? `${itemCount} item${itemCount === 1 ? "" : "s"} · ${formatWeight(totalWeightLbs, units)}`
       : `${itemCount} item${itemCount === 1 ? "" : "s"}`;
 
   return (

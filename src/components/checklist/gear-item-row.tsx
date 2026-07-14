@@ -6,11 +6,13 @@ import {
 } from "@/components/checklist/pack-status-indicator";
 import { useAppToast } from "@/components/ui/app-toast-provider";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { useUnits } from "@/components/providers/units-provider";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { usePersistedGearItemDraft } from "@/hooks/use-persisted-draft";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { buildAmazonAffiliateSearchUrl } from "@/lib/affiliate-links";
 import { openAffiliateUrl } from "@/lib/open-external-url";
+import { formatWeight, weightUnitLabel } from "@/lib/units";
 import type { GearItem } from "@/types";
 import { ShoppingCart, Trash2 } from "lucide-react";
 import type { MouseEvent } from "react";
@@ -21,9 +23,10 @@ interface GearItemRowProps {
 }
 
 function ItemMetaLine({ item }: { item: GearItem }) {
+  const { units } = useUnits();
   const parts: string[] = [];
   if (typeof item.weight_lbs === "number" && item.weight_lbs > 0) {
-    parts.push(`${item.weight_lbs} lbs`);
+    parts.push(formatWeight(item.weight_lbs, units));
   }
   if (item.storageLocation) {
     parts.push(item.storageLocation);
@@ -82,6 +85,8 @@ function AffiliateGearLinkButton({
 
 export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
   const { cycleItemStatus, updateItem, deleteItem } = useCampReady();
+  const { units } = useUnits();
+  const weightLabel = weightUnitLabel(units);
   const packed = item.status === "packed";
   const staged = item.status === "staged";
   const { draft, setField, handleBlur } = usePersistedGearItemDraft({
@@ -107,8 +112,8 @@ export function GearItemRow({ item, isEditing = false }: GearItemRowProps) {
             onChange={(e) => setField("weight", e.target.value)}
             onBlur={handleBlur}
             className="touch-target w-16 shrink-0 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-foreground"
-            placeholder="lbs"
-            aria-label="Weight (lbs)"
+            placeholder={weightLabel}
+            aria-label={`Weight (${weightLabel})`}
           />
           <input
             value={draft.storageLocation}

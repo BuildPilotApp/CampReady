@@ -7,6 +7,7 @@ import { FirstLaunchOnboarding } from "@/components/onboarding/first-launch-onbo
 import { AppRuntimeProvider } from "@/components/providers/app-runtime-provider";
 import { CampReadyProvider, useCampReady } from "@/components/providers/camp-ready-provider";
 import { ProProvider, usePro } from "@/components/providers/pro-provider";
+import { useUnits } from "@/components/providers/units-provider";
 import { ChecklistView } from "@/components/views/checklist-view";
 import { DashboardView } from "@/components/views/dashboard-view";
 import { AppToastProvider, useAppToast } from "@/components/ui/app-toast-provider";
@@ -18,6 +19,7 @@ import { Fab } from "@/components/ui/fab";
 import { PlanStatusChip } from "@/components/premium/plan-status-chip";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
+import { formatWeight } from "@/lib/units";
 import { Tent, RotateCcw, Info, Settings } from "lucide-react";
 import Link from "next/link";
 import { useCallback } from "react";
@@ -30,7 +32,11 @@ function AppHeader() {
     openInfoMenu,
   } = useCampReady();
   const { isPro } = usePro();
+  const { units } = useUnits();
   const showPlanChip = !isPro && !isPrimeTestLabBypassActive();
+  const totalWeightLabel = activeTripStats
+    ? formatWeight(activeTripStats.totalWeightLbs, units)
+    : null;
 
   return (
     <>
@@ -48,14 +54,11 @@ function AppHeader() {
                 ? `${activeTrip.name} · Gear checklist`
                 : "Gear checklist"}
           </p>
-          {activeTab === "checklist" && activeTripStats ? (
+          {activeTab === "checklist" && activeTripStats && totalWeightLabel ? (
             <p className="mt-1 text-xs font-bold text-foreground">
               {activeTripStats.percentPacked}% Packed{" "}
               <span className="font-semibold text-muted">|</span> Total Weight:{" "}
-              <span className="tabular-nums">
-                {activeTripStats.totalWeightLbs.toFixed(1)}
-              </span>{" "}
-              lbs
+              <span className="tabular-nums">{totalWeightLabel}</span>
             </p>
           ) : null}
         </div>
@@ -88,14 +91,11 @@ function AppHeader() {
               ? `${activeTrip.name} · Dashboard & checklist`
               : "Dashboard & checklist"}
           </p>
-          {activeTripStats ? (
+          {activeTripStats && totalWeightLabel ? (
             <p className="mt-1 text-xs font-bold text-foreground">
               {activeTripStats.percentPacked}% Packed{" "}
               <span className="font-semibold text-muted">|</span> Total Weight:{" "}
-              <span className="tabular-nums">
-                {activeTripStats.totalWeightLbs.toFixed(1)}
-              </span>{" "}
-              lbs
+              <span className="tabular-nums">{totalWeightLabel}</span>
             </p>
           ) : null}
         </div>

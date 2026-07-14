@@ -4,11 +4,17 @@ import { enumerateDateRange } from "@/lib/date-utils";
 import { onReturnToForeground } from "@/lib/runtime/app-power-mode";
 import { shouldAttemptNetworkFetch } from "@/lib/runtime/network-guard";
 import {
+  formatTempRange,
+  formatWind,
+  windUnitLabel,
+} from "@/lib/units";
+import {
   geocodeLocation,
   getWeatherSummariesForDates,
   loadCachedWeatherOnly,
 } from "@/lib/weather";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { useUnits } from "@/components/providers/units-provider";
 import { useAppPowerMode } from "@/hooks/use-app-power-mode";
 import { MapPin, Wind } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -64,7 +70,9 @@ interface WeatherBannerProps {
 
 export function WeatherBanner({ onAddLocation }: WeatherBannerProps) {
   const { activeTrip, updateTrip } = useCampReady();
+  const { units } = useUnits();
   const { deferNetwork } = useAppPowerMode();
+  const windLabel = windUnitLabel(units);
   const [refreshKey, setRefreshKey] = useState(0);
   const [status, setStatus] = useState<
     "idle" | "loading" | "ready" | "offline" | "error" | "needs-location"
@@ -262,12 +270,15 @@ export function WeatherBanner({ onAddLocation }: WeatherBannerProps) {
                   {s ? (
                     <>
                       <p className="mt-1 text-sm font-extrabold tabular-nums text-foreground">
-                        {s.highF}°/{s.lowF}°
+                        {formatTempRange(s.highF, s.lowF, units)}
                       </p>
                       <div className="mt-1 flex items-center gap-1">
                         <Wind className="size-3 text-accent" aria-hidden />
-                        <p className="text-xs font-bold tabular-nums text-foreground">
-                          {s.windMph}
+                        <p
+                          className="text-xs font-bold tabular-nums text-foreground"
+                          aria-label={`Wind ${formatWind(s.windMph, units)} ${windLabel}`}
+                        >
+                          {formatWind(s.windMph, units)}
                         </p>
                       </div>
                       <p className="mt-1 text-center text-xs font-bold leading-tight text-accent">

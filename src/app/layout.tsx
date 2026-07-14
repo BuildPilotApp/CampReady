@@ -1,4 +1,5 @@
 import { SystemThemeProvider } from "@/components/providers/system-theme-provider";
+import { UnitsProvider } from "@/components/providers/units-provider";
 import { THEME_INIT_SCRIPT } from "@/lib/theme/system-theme";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
@@ -43,9 +44,11 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-background text-foreground antialiased">
         <SystemThemeProvider>
-          <div className="app-viewport-canvas">
-            <div className="app-viewport-frame">{children}</div>
-          </div>
+          <UnitsProvider>
+            <div className="app-viewport-canvas">
+              <div className="app-viewport-frame">{children}</div>
+            </div>
+          </UnitsProvider>
         </SystemThemeProvider>
       </body>
     </html>

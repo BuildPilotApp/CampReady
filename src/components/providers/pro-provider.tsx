@@ -9,7 +9,9 @@ import {
 import {
   applyPrimeTestLabProBypassOnLaunch,
   hasProEntitlement,
+  hasSeenProWelcome,
   isPrimeTestLabBypassActive,
+  markProWelcomeSeen,
   readProStatus,
   unlockProLocally,
 } from "@/lib/pro";
@@ -19,6 +21,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -52,13 +55,24 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
   const [isPro, setIsPro] = useState(readInitialProStatus);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
+  const isProRef = useRef(isPro);
+  isProRef.current = isPro;
+
+  const celebrateProUnlock = useCallback((wasPro: boolean) => {
+    if (wasPro || hasSeenProWelcome()) {
+      return;
+    }
+    markProWelcomeSeen();
+    setSuccessVisible(true);
+  }, []);
 
   const completeProPurchase = useCallback(() => {
+    const wasPro = isProRef.current;
     unlockProLocally();
     setIsPro(true);
-    setSuccessVisible(true);
+    celebrateProUnlock(wasPro);
     setPaywallOpen(false);
-  }, []);
+  }, [celebrateProUnlock]);
 
   const refreshProState = useCallback(() => {
     const nextIsPro = syncProFromDevice();
@@ -80,16 +94,24 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
       return restored;
     };
 
-    void restorePlayPurchase();
+    // Capture entitlement before restore so a reinstall can celebrate once,
+    // while already-Pro devices skip the toast on every successful owned check.
+    const wasProOnMount = isProRef.current;
+    void restorePlayPurchase().then((restored) => {
+      if (restored) {
+        celebrateProUnlock(wasProOnMount);
+      }
+    });
 
     const handleReturnToApp = () => {
       if (document.visibilityState !== "visible") {
         return;
       }
+      const wasPro = isProRef.current;
       void restorePlayPurchase().then((restored) => {
         if (restored) {
           setIsPro(true);
-          setSuccessVisible(true);
+          celebrateProUnlock(wasPro);
           setPaywallOpen(false);
         } else {
           refreshProState();
@@ -106,7 +128,7 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("pageshow", handleReturnToApp);
       document.removeEventListener("visibilitychange", handleReturnToApp);
     };
-  }, [refreshProState]);
+  }, [celebrateProUnlock, refreshProState]);
 
   useEffect(() => {
     if (!successVisible) return;
