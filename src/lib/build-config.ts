@@ -1,5 +1,5 @@
 /**
- * Release build switches — read before every Play Store upload.
+ * Release build switches to read before every Play Store upload.
  *
  * PrimeTestLab / closed testing:
  *   IS_PRIME_TEST_LAB_BUILD = true

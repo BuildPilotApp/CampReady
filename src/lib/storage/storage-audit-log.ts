@@ -27,7 +27,7 @@ export function logStorageRepair(entry: Omit<StorageAuditEntry, "timestamp">): v
 
   if (typeof console !== "undefined" && typeof console.warn === "function") {
     console.warn(
-      `[CampReady storage:${entry.phase}] ${entry.action} ${entry.path} — ${entry.message}`,
+      `[CampSync storage:${entry.phase}] ${entry.action} ${entry.path}: ${entry.message}`,
     );
   }
 }

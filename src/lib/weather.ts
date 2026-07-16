@@ -275,7 +275,7 @@ function collectCachedSummaries(
   return results;
 }
 
-/** Load weather strictly from on-device caches — never hits the network. */
+/** Load weather strictly from on-device caches without hitting the network. */
 export function loadCachedWeatherOnly(input: {
   latitude: number;
   longitude: number;

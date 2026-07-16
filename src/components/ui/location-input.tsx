@@ -231,7 +231,7 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
           <p className="text-xs font-semibold text-muted">Resolving location…</p>
         ) : offlineHint ? (
           <p className="text-xs font-semibold text-muted">
-            Offline — saved name only; connect to match coordinates.
+            Offline. Saved name only; connect to match coordinates.
           </p>
         ) : value?.latitude != null ? (
           <p className="text-xs font-semibold text-accent">Location matched</p>

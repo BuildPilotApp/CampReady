@@ -6,14 +6,14 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CampReady",
+  title: "CampSync",
   description:
     "Offline-first camping checklist built for one-handed use in the field.",
-  applicationName: "CampReady",
+  applicationName: "CampSync",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "CampReady",
+    title: "CampSync",
   },
   formatDetection: {
     telephone: false,

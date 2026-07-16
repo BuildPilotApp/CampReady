@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">CampReady</string>
-    <string name="title_activity_main">CampReady</string>
+    <string name="app_name">CampSync</string>
+    <string name="title_activity_main">CampSync</string>
     <string name="package_name">com.buildpilotapps.campready</string>
     <string name="custom_url_scheme">com.buildpilotapps.campready</string>
 </resources>

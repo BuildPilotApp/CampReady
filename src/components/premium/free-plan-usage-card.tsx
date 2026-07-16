@@ -11,7 +11,7 @@ import {
   FREE_TRIP_LIMIT,
   isPrimeTestLabBypassActive,
 } from "@/lib/pro";
-import { Tent } from "lucide-react";
+import { CampSyncMark } from "@/components/ui/camp-sync-mark";
 
 export function FreePlanUsageCard() {
   const { database } = useCampReady();
@@ -49,7 +49,7 @@ export function FreePlanUsageCard() {
           onClick={openPaywall}
           className="touch-target inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500/90 to-teal-500/90 px-3 py-2 text-xs font-bold text-zinc-950 active:opacity-90"
         >
-          <Tent className="size-3.5" strokeWidth={2.25} aria-hidden />
+          <CampSyncMark className="size-3.5" aria-hidden />
           Pro
         </button>
       </div>

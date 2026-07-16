@@ -60,12 +60,12 @@ export const FIRST_LAUNCH_ONBOARDING_STEPS = [
   {
     eyebrow: "Welcome",
     title: "Plan each trip before you pack",
-    body: "CampReady keeps trips, dates, locations, reusable gear inventories, and pack status organized on this device.",
+    body: "CampSync keeps trips, dates, locations, reusable gear inventories, and pack status organized on this device.",
   },
   {
     eyebrow: "Dashboard",
     title: "Start on the Dashboard",
-    body: "Create a trip, load the weekend example, add dates and a location, and watch progress and weather from one place.",
+    body: "Create a trip, load the quick getaway trip, add dates and a location, and watch progress and weather from one place.",
   },
   {
     eyebrow: "Gear Checklist",
@@ -80,6 +80,6 @@ export const FIRST_LAUNCH_ONBOARDING_STEPS = [
   {
     eyebrow: "Backups & Settings",
     title: "Keep your setup portable",
-    body: "Export text, CSV, or app backups, import files with Lifetime Pro, and use Settings to switch the app theme.",
+    body: "Export text or CSV pack lists, back up all CampSync data from Settings, and switch the app theme whenever you need.",
   },
 ] as const;

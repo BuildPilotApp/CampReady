@@ -1,13 +1,8 @@
-import {
-  CHECKLIST_EXPORT_FORMAT,
-  CHECKLIST_EXPORT_VERSION,
-  tripToExportDocument,
-} from "@/lib/checklist-export-format";
 import { downloadTextFile } from "@/lib/download-text-file";
 import { STATUS_LABELS } from "@/lib/gear-status";
 import type { TripRecord } from "@/types";
 
-const TEMPLATE_FILENAME_BASE = "campready-gear-inventory-template";
+const TEMPLATE_FILENAME_BASE = "campsync-gear-inventory-template";
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-") || "trip";
@@ -29,7 +24,7 @@ function formatTripDates(trip: TripRecord): string {
 
 export function formatChecklistAsText(trip: TripRecord): string {
   const lines: string[] = [
-    `CampReady Pack List: ${trip.name}`,
+    `CampSync Pack List: ${trip.name}`,
     `Dates: ${formatTripDates(trip)}`,
     "",
   ];
@@ -85,29 +80,6 @@ export function formatGearInventoryCsvTemplate(): string {
     .join("\n");
 }
 
-export function formatGearInventoryJsonTemplate(): string {
-  return JSON.stringify(
-    {
-      version: CHECKLIST_EXPORT_VERSION,
-      format: CHECKLIST_EXPORT_FORMAT,
-      tripName: "Gear Inventory Template",
-      exportedAt: new Date().toISOString(),
-      instructions: [
-        "Add categories before importing this file into CampReady.",
-        "Each item status must be one of: missing, staged, packed.",
-        "Weight is optional and should be a number in pounds.",
-      ],
-      categories: [],
-    },
-    null,
-    2,
-  );
-}
-
-export function formatChecklistAsJson(trip: TripRecord): string {
-  return JSON.stringify(tripToExportDocument(trip), null, 2);
-}
-
 function tripHasExportableItems(trip: TripRecord): boolean {
   return trip.categories.some((category) => category.items.length > 0);
 }
@@ -132,28 +104,6 @@ export async function downloadGearInventoryCsvTemplate(): Promise<boolean> {
     `${TEMPLATE_FILENAME_BASE}.csv`,
     "text/csv",
   );
-}
-
-export async function downloadGearInventoryJsonTemplate(): Promise<boolean> {
-  return downloadTextFile(
-    formatGearInventoryJsonTemplate(),
-    `${TEMPLATE_FILENAME_BASE}.json`,
-    "application/json",
-  );
-}
-
-export async function downloadChecklistAppBackup(trip: TripRecord): Promise<boolean> {
-  const json = formatChecklistAsJson(trip);
-  return downloadTextFile(
-    json,
-    `${sanitizeFilename(trip.name)}-app-backup.json`,
-    "application/json",
-  );
-}
-
-/** @deprecated Use downloadChecklistAppBackup */
-export async function downloadChecklistJson(trip: TripRecord): Promise<boolean> {
-  return downloadChecklistAppBackup(trip);
 }
 
 export async function copyChecklistText(trip: TripRecord): Promise<void> {

@@ -20,7 +20,8 @@ import { PlanStatusChip } from "@/components/premium/plan-status-chip";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
 import { formatWeight } from "@/lib/units";
-import { Tent, RotateCcw, Info, Settings } from "lucide-react";
+import { CampSyncMark } from "@/components/ui/camp-sync-mark";
+import { RotateCcw, Info, Settings } from "lucide-react";
 import Link from "next/link";
 import { useCallback } from "react";
 
@@ -41,10 +42,10 @@ function AppHeader() {
   return (
     <>
       <div className="flex items-center gap-3 py-3 lg:hidden">
-        <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
+        <CampSyncMark className="size-8 shrink-0 text-accent" aria-hidden />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
+            <p className="text-lg font-bold leading-tight text-foreground">CampSync</p>
             {showPlanChip ? <PlanStatusChip /> : null}
           </div>
           <p className="truncate text-sm font-medium text-muted">
@@ -80,10 +81,10 @@ function AppHeader() {
       </div>
 
       <div className="hidden items-center gap-3 py-3 lg:flex">
-        <Tent className="size-8 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
+        <CampSyncMark className="size-8 shrink-0 text-accent" aria-hidden />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-bold leading-tight text-foreground">CampReady</p>
+            <p className="text-lg font-bold leading-tight text-foreground">CampSync</p>
             {showPlanChip ? <PlanStatusChip /> : null}
           </div>
           <p className="truncate text-sm font-medium text-muted">

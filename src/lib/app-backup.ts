@@ -2,14 +2,22 @@ import { downloadTextFile } from "@/lib/download-text-file";
 import { ensureSeededDatabase, normalizeDatabaseDocument } from "@/lib/storage";
 import type { CampReadyDatabase } from "@/types";
 
+/** Current backup format written by CampSync. */
+export const CAMPSYNC_BACKUP_FORMAT = "campsync-full-backup" as const;
+/** Legacy CampReady backups still accepted on restore. */
 export const CAMPREADY_BACKUP_FORMAT = "campready-full-backup" as const;
 export const CAMPREADY_BACKUP_VERSION = 1 as const;
 
+const ACCEPTED_BACKUP_FORMATS = new Set<string>([
+  CAMPSYNC_BACKUP_FORMAT,
+  CAMPREADY_BACKUP_FORMAT,
+]);
+
 export interface CampReadyBackupDocument {
   version: typeof CAMPREADY_BACKUP_VERSION;
-  format: typeof CAMPREADY_BACKUP_FORMAT;
+  format: typeof CAMPSYNC_BACKUP_FORMAT | typeof CAMPREADY_BACKUP_FORMAT;
   exportedAt: string;
-  app: "CampReady";
+  app: "CampSync" | "CampReady";
   database: CampReadyDatabase;
 }
 
@@ -19,7 +27,8 @@ export type CampReadyBackupValidationResult =
 
 function backupFilename(): string {
   const date = new Date().toISOString().slice(0, 10);
-  return `campready-backup-${date}.json`;
+  // .json so Android file pickers can find and open backups reliably.
+  return `campsync-backup-${date}.json`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -31,9 +40,9 @@ export function formatCampReadyBackup(
 ): string {
   const document: CampReadyBackupDocument = {
     version: CAMPREADY_BACKUP_VERSION,
-    format: CAMPREADY_BACKUP_FORMAT,
+    format: CAMPSYNC_BACKUP_FORMAT,
     exportedAt: new Date().toISOString(),
-    app: "CampReady",
+    app: "CampSync",
     database: ensureSeededDatabase(database),
   };
 
@@ -62,11 +71,18 @@ export function validateCampReadyBackup(
   }
 
   if (!isRecord(parsed)) {
-    return { ok: false, message: "Backup file is not a CampReady backup." };
+    return { ok: false, message: "Backup file is not a CampSync backup." };
   }
 
-  if (parsed.format !== CAMPREADY_BACKUP_FORMAT) {
-    return { ok: false, message: "Select a CampReady backup file." };
+  if (
+    typeof parsed.format !== "string" ||
+    !ACCEPTED_BACKUP_FORMATS.has(parsed.format)
+  ) {
+    return {
+      ok: false,
+      message:
+        "Select a CampSync backup JSON file (legacy CampReady backups are also supported).",
+    };
   }
 
   if (parsed.version !== CAMPREADY_BACKUP_VERSION) {

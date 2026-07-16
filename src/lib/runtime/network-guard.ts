@@ -8,7 +8,7 @@ export function isNetworkAvailable(): boolean {
   return navigator.onLine;
 }
 
-/** Gate optional network fetches — false when offline or app is backgrounded. */
+/** Gate optional network fetches; false when offline or app is backgrounded. */
 export function shouldAttemptNetworkFetch(): boolean {
   if (!isNetworkAvailable()) {
     return false;

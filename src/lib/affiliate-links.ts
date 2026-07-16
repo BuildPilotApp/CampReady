@@ -4,7 +4,7 @@ export type AffiliateItemCategory = "gear" | "vehicle" | "galley" | "replenishab
 export type AffiliateSearchPrefix = "camping" | "outdoor" | "overland";
 
 // ---------------------------------------------------------------------------
-// Source keyword sets — grouped by shopping domain for maintainability.
+// Source keyword sets, grouped by shopping domain for maintainability.
 // Each keyword is assigned to exactly one structural category below.
 // ---------------------------------------------------------------------------
 
@@ -455,7 +455,7 @@ export const TOOLS_KEYWORDS = [
 ] as const;
 
 // ---------------------------------------------------------------------------
-// Structural keyword arrays — composed from domain sets above.
+// Structural keyword arrays, composed from domain sets above.
 // ---------------------------------------------------------------------------
 
 /** High-ticket camping and adventure gear. */

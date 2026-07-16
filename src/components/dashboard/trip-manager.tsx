@@ -19,7 +19,8 @@ import { getTripStats } from "@/lib/storage";
 import { CUSTOM_TEMPLATE_ID } from "@/lib/templates";
 import { getTemplateOptionLabel } from "@/lib/templates";
 import type { TripLocation, TripRecord } from "@/types";
-import { CalendarDays, ChevronDown, MapPin, Plus, Sparkles, Trash2 } from "lucide-react";
+import { CampSyncMark } from "@/components/ui/camp-sync-mark";
+import { CalendarDays, ChevronDown, MapPin, Plus, Trash2 } from "lucide-react";
 import { useKeyboardAwareScroll } from "@/hooks/use-keyboard-aware-scroll";
 import { scrollElementIntoKeyboardView } from "@/lib/scroll-into-keyboard-view";
 import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from "react";
@@ -89,9 +90,14 @@ function TripNameInput({ tripId, name }: { tripId: string; name: string }) {
   );
 }
 
-function TripChecklistTemplateEditor({ tripId }: { tripId: string }) {
+function TripChecklistTemplateEditor({ trip }: { trip: TripRecord }) {
   const { database, applyChecklistTemplateToTrip } = useCampReady();
   const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
+  const appliedTemplateId =
+    trip.checklistTemplateId &&
+    (database.templates ?? []).some((template) => template.id === trip.checklistTemplateId)
+      ? trip.checklistTemplateId
+      : CUSTOM_TEMPLATE_ID;
 
   const applyMessage =
     pendingTemplateId === CUSTOM_TEMPLATE_ID
@@ -103,7 +109,7 @@ function TripChecklistTemplateEditor({ tripId }: { tripId: string }) {
   return (
     <>
       <InventoryTemplatePicker
-        templateId={pendingTemplateId ?? CUSTOM_TEMPLATE_ID}
+        templateId={pendingTemplateId ?? appliedTemplateId}
         onTemplateIdChange={setPendingTemplateId}
         savedTemplates={database.templates ?? []}
         hint="Tap a saved checklist to load it onto this trip, or choose New to start fresh."
@@ -115,7 +121,7 @@ function TripChecklistTemplateEditor({ tripId }: { tripId: string }) {
         confirmLabel="Apply checklist"
         onConfirm={() => {
           if (pendingTemplateId) {
-            applyChecklistTemplateToTrip(tripId, pendingTemplateId);
+            applyChecklistTemplateToTrip(trip.id, pendingTemplateId);
           }
           setPendingTemplateId(null);
         }}
@@ -159,16 +165,6 @@ export function TripManager() {
     }, 150);
   };
 
-  const openCreateTripForm = () => {
-    if (!createTripDetailsRef.current) return;
-    createTripDetailsRef.current.open = true;
-    window.setTimeout(() => {
-      if (newTripNameRef.current) {
-        scrollElementIntoKeyboardView(newTripNameRef.current);
-      }
-    }, 150);
-  };
-
   const trips = useMemo(
     () => sortTripsChronologically(database.trips ?? []),
     [database.trips],
@@ -184,6 +180,16 @@ export function TripManager() {
     openPaywall();
   };
 
+  const handleCreateTripSummaryClick = (event: MouseEvent<HTMLElement>) => {
+    handleNewTripAttempt(event);
+    if (tripLimitReached) return;
+
+    window.setTimeout(() => {
+      if (!createTripDetailsRef.current?.open || !newTripNameRef.current) return;
+      scrollElementIntoKeyboardView(newTripNameRef.current);
+    }, 150);
+  };
+
   const handleStarterTrip = () => {
     if (tripLimitReached) {
       openPaywall();
@@ -191,6 +197,113 @@ export function TripManager() {
     }
     createStarterTrip();
   };
+
+  const createTripFormFields = (
+    <>
+      <label htmlFor={newTripNameId} className="flex flex-col gap-1">
+        <span className="text-xs font-bold uppercase tracking-wide text-muted">
+          Trip name
+        </span>
+        <input
+          ref={newTripNameRef}
+          id={newTripNameId}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onFocus={keyboardScroll.onFocus}
+          onBlur={keyboardScroll.onBlur}
+          className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
+          placeholder="Moab Spring Break"
+        />
+      </label>
+
+      <TripDateRangeInput
+        startDate={startDate}
+        endDate={endDate}
+        onChange={({ startDate: nextStart, endDate: nextEnd }) => {
+          setStartDate(nextStart);
+          setEndDate(nextEnd);
+        }}
+      />
+
+      <LocationInput
+        ref={newLocationRef}
+        value={newLocation}
+        onChange={setNewLocation}
+      />
+
+      <InventoryTemplatePicker
+        templateId={templateId}
+        onTemplateIdChange={setTemplateId}
+        savedTemplates={database.templates ?? []}
+        hint="Tap a saved checklist to load it when creating this trip, or choose New to start fresh."
+      />
+
+      <button
+        type="button"
+        disabled={!name.trim()}
+        onClick={async () => {
+          if (tripLimitReached) {
+            openPaywall();
+            return;
+          }
+          const location =
+            (await newLocationRef.current?.commitQuery()) ?? newLocation;
+          createNewTrip({
+            name,
+            startDate,
+            endDate,
+            location,
+            templateId,
+          });
+          setName("");
+          setStartDate(todayIso());
+          setEndDate(todayIso());
+          setNewLocation(undefined);
+          setTemplateId(CUSTOM_TEMPLATE_ID);
+        }}
+        className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Create trip
+      </button>
+    </>
+  );
+
+  const createTripDetails = (
+    <details
+      ref={createTripDetailsRef}
+      className={
+        trips.length === 0
+          ? "text-left"
+          : "rounded-xl border-2 border-border bg-surface p-4"
+      }
+    >
+      <summary
+        onClick={handleCreateTripSummaryClick}
+        className={
+          trips.length === 0
+            ? "touch-target flex cursor-pointer list-none items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground active:opacity-90"
+            : "touch-target flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-foreground"
+        }
+      >
+        <span className="inline-flex items-center gap-2">
+          <Plus
+            className={trips.length === 0 ? "size-4" : "size-5 text-accent"}
+            aria-hidden
+          />
+          Create new trip
+        </span>
+      </summary>
+      <div
+        className={
+          trips.length === 0
+            ? "mt-3 flex flex-col gap-3 rounded-xl border-2 border-border bg-background p-3"
+            : "mt-3 flex flex-col gap-3"
+        }
+      >
+        {createTripFormFields}
+      </div>
+    </details>
+  );
 
   return (
     <section className="flex flex-col gap-3">
@@ -205,106 +318,20 @@ export function TripManager() {
 
       {!isPrimeTestLabBypassActive() ? <FreePlanUsageCard /> : null}
 
-      <details
-        ref={createTripDetailsRef}
-        className="rounded-xl border-2 border-border bg-surface p-4"
-      >
-        <summary
-          onClick={handleNewTripAttempt}
-          className="touch-target flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-foreground"
-        >
-          <span className="inline-flex items-center gap-2">
-            <Plus className="size-5 text-accent" aria-hidden />
-            Create new trip
-          </span>
-        </summary>
-        <div className="mt-3 flex flex-col gap-3">
-          <label htmlFor={newTripNameId} className="flex flex-col gap-1">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted">
-              Trip name
-            </span>
-            <input
-              ref={newTripNameRef}
-              id={newTripNameId}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onFocus={keyboardScroll.onFocus}
-              onBlur={keyboardScroll.onBlur}
-              className="touch-target rounded-xl border-2 border-border bg-background px-3 text-base font-semibold text-foreground"
-              placeholder="Moab Spring Break"
-            />
-          </label>
-
-          <TripDateRangeInput
-            startDate={startDate}
-            endDate={endDate}
-            onChange={({ startDate: nextStart, endDate: nextEnd }) => {
-              setStartDate(nextStart);
-              setEndDate(nextEnd);
-            }}
-          />
-
-          <LocationInput
-            ref={newLocationRef}
-            value={newLocation}
-            onChange={setNewLocation}
-          />
-
-          <InventoryTemplatePicker
-            templateId={templateId}
-            onTemplateIdChange={setTemplateId}
-            savedTemplates={database.templates ?? []}
-            hint="Tap a saved checklist to load it when creating this trip, or choose New to start fresh."
-          />
-
-          <button
-            type="button"
-            disabled={!name.trim()}
-            onClick={async () => {
-              if (tripLimitReached) {
-                openPaywall();
-                return;
-              }
-              const location =
-                (await newLocationRef.current?.commitQuery()) ?? newLocation;
-              createNewTrip({
-                name,
-                startDate,
-                endDate,
-                location,
-                templateId,
-              });
-              setName("");
-              setStartDate(todayIso());
-              setEndDate(todayIso());
-              setNewLocation(undefined);
-              setTemplateId(CUSTOM_TEMPLATE_ID);
-            }}
-            className="touch-target rounded-xl bg-accent px-4 text-base font-bold text-accent-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Create trip
-          </button>
-        </div>
-      </details>
+      {trips.length > 0 ? createTripDetails : null}
 
       {trips.length === 0 ? (
         <section className="rounded-xl border-2 border-border bg-surface px-4 py-6 text-center">
           <p className="text-base font-semibold text-foreground">No trips yet</p>
           <p className="mt-2 text-sm leading-snug text-muted">{EMPTY_TRIPS_MESSAGE}</p>
           <div className="mt-4 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={openCreateTripForm}
-              className="touch-target rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground active:opacity-90"
-            >
-              Create new trip
-            </button>
+            {createTripDetails}
             <button
               type="button"
               onClick={handleStarterTrip}
               className="touch-target inline-flex items-center justify-center gap-2 rounded-xl border-2 border-border bg-background px-4 py-3 text-sm font-bold text-foreground active:opacity-90"
             >
-              <Sparkles className="size-4 text-accent" aria-hidden />
+              <CampSyncMark className="size-4 text-accent" aria-hidden />
               {STARTER_TRIP_BUTTON_LABEL}
             </button>
           </div>
@@ -415,7 +442,7 @@ export function TripManager() {
                         onChange={(range) => updateTrip(trip.id, range)}
                       />
 
-                      <TripChecklistTemplateEditor tripId={trip.id} />
+                      <TripChecklistTemplateEditor trip={trip} />
                     </div>
                   </details>
 

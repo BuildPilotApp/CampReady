@@ -3,13 +3,11 @@
 import { CHECKLIST_ACTION_BUTTON_CLASS } from "@/components/checklist/checklist-action-button-styles";
 import {
   copyChecklistText,
-  downloadChecklistAppBackup,
   downloadChecklistCsv,
   downloadGearInventoryCsvTemplate,
-  downloadGearInventoryJsonTemplate,
 } from "@/lib/export-checklist";
 import type { TripRecord } from "@/types";
-import { Archive, Check, ChevronDown, Download, FileText } from "lucide-react";
+import { Check, ChevronDown, Download, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface ExportListButtonProps {
@@ -110,21 +108,6 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
     setOpen(false);
   };
 
-  const handleDownloadAppBackup = async () => {
-    if (!trip) return;
-
-    const saved = await downloadChecklistAppBackup(trip);
-    setFeedback(
-      saved
-        ? null
-        : {
-            type: "error",
-            message: "Could not download app backup.",
-          },
-    );
-    setOpen(false);
-  };
-
   const handleDownloadCsvTemplate = async () => {
     const saved = await downloadGearInventoryCsvTemplate();
     setFeedback(
@@ -133,19 +116,6 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
         : {
             type: "error",
             message: "Could not download CSV template.",
-          },
-    );
-    setOpen(false);
-  };
-
-  const handleDownloadJsonTemplate = async () => {
-    const saved = await downloadGearInventoryJsonTemplate();
-    setFeedback(
-      saved
-        ? null
-        : {
-            type: "error",
-            message: "Could not download JSON template.",
           },
     );
     setOpen(false);
@@ -218,15 +188,6 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
                 <Download className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
                 Download CSV
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => void handleDownloadAppBackup()}
-                className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
-              >
-                <Archive className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
-                Download App Backup
-              </button>
             </>
           ) : (
             <>
@@ -244,15 +205,6 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
               >
                 <Download className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
                 Blank CSV Template
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => void handleDownloadJsonTemplate()}
-                className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
-              >
-                <Archive className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
-                Blank JSON Template
               </button>
             </>
           )}

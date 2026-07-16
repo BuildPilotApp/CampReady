@@ -70,7 +70,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
 
     if (!nativeBilling) {
       setRestoreMessage(
-        "Lifetime Pro is available in the CampReady Android app through Google Play.",
+        "Lifetime Pro is available in the CampSync Android app through Google Play.",
       );
       return;
     }
@@ -187,7 +187,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
           ) : (
             <>
               <p className="mt-7 text-center text-sm leading-relaxed text-zinc-400">
-                Lifetime Pro is available in the CampReady Android app through
+                Lifetime Pro is available in the CampSync Android app through
                 Google Play.
               </p>
               <button

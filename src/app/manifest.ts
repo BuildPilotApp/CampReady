@@ -6,8 +6,8 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "CampReady",
-    short_name: "CampReady",
+    name: "CampSync",
+    short_name: "CampSync",
     description:
       "Offline-first camping checklist optimized for one-handed outdoor use.",
     start_url: `${basePath}/`,
@@ -18,15 +18,15 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#0f1a12",
     icons: [
       {
-        src: `${basePath}/icons/icon-192.svg`,
+        src: `${basePath}/icons/icon-192.png`,
         sizes: "192x192",
-        type: "image/svg+xml",
+        type: "image/png",
         purpose: "any",
       },
       {
-        src: `${basePath}/icons/icon-512.svg`,
+        src: `${basePath}/icons/icon-512.png`,
         sizes: "512x512",
-        type: "image/svg+xml",
+        type: "image/png",
         purpose: "maskable",
       },
     ],

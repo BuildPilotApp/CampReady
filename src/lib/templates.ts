@@ -2,7 +2,7 @@ import type { ChecklistTemplate } from "@/types";
 
 export const CUSTOM_TEMPLATE_ID = "custom";
 
-/** Legacy built-in id — removed from picker and stripped on database load. */
+/** Legacy built-in id, removed from picker and stripped on database load. */
 export const SAMPLE_TEMPLATE_ID = "weekend-car-camping";
 
 export const CUSTOM_CHECKLIST_OPTION = {

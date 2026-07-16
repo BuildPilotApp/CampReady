@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CAMPREADY_BACKUP_FORMAT,
   CAMPREADY_BACKUP_VERSION,
+  CAMPSYNC_BACKUP_FORMAT,
   formatCampReadyBackup,
   validateCampReadyBackup,
 } from "@/lib/app-backup";
@@ -44,8 +45,8 @@ const database: CampReadyDatabase = {
   ],
 };
 
-describe("CampReady app backups", () => {
-  it("formats full app data as a CampReady backup document", () => {
+describe("CampSync app backups", () => {
+  it("formats full app data as a CampSync backup document", () => {
     const parsed = JSON.parse(formatCampReadyBackup(database)) as {
       version: number;
       format: string;
@@ -54,8 +55,8 @@ describe("CampReady app backups", () => {
     };
 
     expect(parsed.version).toBe(CAMPREADY_BACKUP_VERSION);
-    expect(parsed.format).toBe(CAMPREADY_BACKUP_FORMAT);
-    expect(parsed.app).toBe("CampReady");
+    expect(parsed.format).toBe(CAMPSYNC_BACKUP_FORMAT);
+    expect(parsed.app).toBe("CampSync");
     expect(parsed.database.trips).toHaveLength(1);
     expect(parsed.database.templates).toHaveLength(1);
     expect(parsed.database.activeTripId).toBe("trip-1");
@@ -68,6 +69,23 @@ describe("CampReady app backups", () => {
     if (result.ok) {
       expect(result.database.trips[0]?.name).toBe("Desert Weekend");
       expect(result.database.templates[0]?.name).toBe("Car Camp");
+    }
+  });
+
+  it("accepts legacy CampReady backup format", () => {
+    const legacy = {
+      version: CAMPREADY_BACKUP_VERSION,
+      format: CAMPREADY_BACKUP_FORMAT,
+      exportedAt: "2026-01-01T00:00:00.000Z",
+      app: "CampReady",
+      database,
+    };
+
+    const result = validateCampReadyBackup(JSON.stringify(legacy));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.database.trips[0]?.name).toBe("Desert Weekend");
     }
   });
 

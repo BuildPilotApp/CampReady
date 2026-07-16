@@ -109,7 +109,7 @@ function clearUiSessionWriteTimer(): void {
   }
 }
 
-/** Debounced UI session write — skipped while the app is backgrounded. */
+/** Debounced UI session write, skipped while the app is backgrounded. */
 export function scheduleWriteUiSessionState(state: UiSessionState): void {
   if (!isBrowser()) {
     return;

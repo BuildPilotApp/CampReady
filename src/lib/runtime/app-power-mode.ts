@@ -110,7 +110,7 @@ export function initAppPowerMode(): () => void {
       }),
     )
     .catch(() => {
-      // Web/PWA builds without native shell — visibility listeners are enough.
+      // Web/PWA builds without native shell can rely on visibility listeners.
     });
 
   if (typeof navigator !== "undefined" && "getBattery" in navigator) {
@@ -134,7 +134,7 @@ export function initAppPowerMode(): () => void {
         syncBattery();
       })
       .catch(() => {
-        // Battery API unavailable — keep default multiplier.
+        // Battery API unavailable, so keep default multiplier.
       });
   }
 

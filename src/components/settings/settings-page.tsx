@@ -76,7 +76,7 @@ function SettingsHeader() {
     <div className="flex items-center gap-3 py-3">
       <Link
         href="/"
-        aria-label="Back to CampReady"
+        aria-label="Back to CampSync"
         className="touch-target inline-flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-surface text-muted active:opacity-90"
       >
         <ArrowLeft className="size-6" strokeWidth={2.25} aria-hidden />
@@ -84,8 +84,7 @@ function SettingsHeader() {
       <div className="min-w-0 flex-1">
         <p className="text-lg font-bold leading-tight text-foreground">Settings</p>
         <p className="truncate text-sm font-medium text-muted">
-          Theme, units, backups, and app details
-        </p>
+          Theme, units, backups, and app details        </p>
       </div>
       <div className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
         <Settings className="size-6" strokeWidth={2.25} aria-hidden />
@@ -264,7 +263,7 @@ export function SettingsPage() {
           <h2 className="text-base font-bold text-foreground">Backup & Restore</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Save all trips, dates, locations, pack status, and reusable gear inventories
-            to a CampReady backup JSON file for moving phones or keeping a copy.
+            to a CampSync backup JSON file for moving phones or keeping a copy.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
@@ -287,8 +286,7 @@ export function SettingsPage() {
           <input
             ref={restoreInputRef}
             type="file"
-            accept="application/json,text/plain,.json,.campready,*/*"
-            className="sr-only"
+            accept="application/json,text/plain,.json,.campsync,.campready,*/*"            className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
@@ -315,8 +313,7 @@ export function SettingsPage() {
         </section>
 
         <section className="rounded-xl border-2 border-border bg-surface p-4">
-          <h2 className="text-base font-bold text-foreground">About CampReady</h2>
-          <dl className="mt-4 grid gap-3">
+          <h2 className="text-base font-bold text-foreground">About CampSync</h2>          <dl className="mt-4 grid gap-3">
             <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background px-3 py-2.5">
               <dt className="text-sm font-semibold text-muted">Version</dt>
               <dd className="text-sm font-bold text-foreground">{APP_VERSION}</dd>

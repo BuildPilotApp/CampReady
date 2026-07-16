@@ -1,8 +1,8 @@
 import { createCategory, createGearItem } from "@/lib/storage/defaults";
 import type { Category } from "@/types";
 
-export const STARTER_TRIP_NAME = "Weekend camping trip";
-export const STARTER_CHECKLIST_NAME = "Weekend camping starter";
+export const STARTER_TRIP_NAME = "Quick Getaway Trip";
+export const STARTER_CHECKLIST_NAME = "Quick getaway starter";
 
 const STARTER_SECTIONS: ReadonlyArray<{ name: string; items: readonly string[] }> = [
   {

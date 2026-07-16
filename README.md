@@ -1,17 +1,17 @@
-# CampReady
+# CampSync
 
-Offline-first camping and road-trip packing utility. Plan trips, build reusable gear lists, and pack item-by-item with one-tap staging and checkoff — built for one-handed use in the field.
+Offline-first camping and road-trip packing utility. Plan trips, build reusable gear lists, and pack item-by-item with one-tap staging and checkoff, built for one-handed use in the field.
 
 **Live app:** [buildpilotapp.github.io/CampReady](https://buildpilotapp.github.io/CampReady/)
 
 ## Features
 
-- **Trip dashboard** — dates, location, packing progress, and weather
-- **Gear checklist** — Needed → Staged → Packed workflow with category status colors
-- **Saved gear lists** — reusable inventories you can load onto any trip
-- **Export** — copy as text, download CSV, or save an app backup (free)
-- **Import & merge** — restore backups without duplicates (Lifetime Pro)
-- **Privacy-first** — no accounts, no analytics; data stays on your device
+- **Trip dashboard:** dates, location, packing progress, and weather
+- **Gear checklist:** Needed → Staged → Packed workflow with category status colors
+- **Saved gear lists:** reusable inventories you can load onto any trip
+- **Export:** copy as text, download CSV, or save an app backup (free)
+- **Import & merge:** restore backups without duplicates (Lifetime Pro)
+- **Privacy-first:** no accounts, no analytics; data stays on your device
 
 ## Free vs Pro
 
@@ -21,7 +21,7 @@ Offline-first camping and road-trip packing utility. Plan trips, build reusable 
 | Saved checklists | 1 | Unlimited |
 | Pack workflow | Full | Full |
 | Export | Yes | Yes |
-| Import / merge | — | Yes |
+| Import / merge | No | Yes |
 
 **Android:** Lifetime Pro is a one-time purchase through Google Play (`campready_pro_lifetime`). Pro unlocks on the device after purchase and can be restored via Google Play.
 
@@ -66,4 +66,4 @@ See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md). The in-app Information menu also i
 
 ## License
 
-Private — all rights reserved unless otherwise noted.
+Private. All rights reserved unless otherwise noted.

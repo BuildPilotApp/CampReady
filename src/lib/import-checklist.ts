@@ -1,7 +1,7 @@
 import { STATUS_LABELS } from "@/lib/gear-status";
 import {
-  CHECKLIST_EXPORT_FORMAT,
   CHECKLIST_EXPORT_VERSION,
+  isAcceptedChecklistExportFormat,
   type ChecklistExportCategory,
   type ChecklistExportDocument,
 } from "@/lib/checklist-export-format";
@@ -13,7 +13,7 @@ import {
 import type { Category, GearItemStatus } from "@/types";
 
 const GEAR_STATUSES: GearItemStatus[] = ["missing", "staged", "packed"];
-/** ~2 MB — prevents main-thread stalls on large imports in the field. */
+/** ~2 MB limit prevents main-thread stalls on large imports in the field. */
 export const MAX_IMPORT_FILE_BYTES = 2 * 1024 * 1024;
 
 const STATUS_BY_LABEL: Record<string, GearItemStatus> = {
@@ -86,12 +86,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function parseStatus(value: unknown, path: string, errors: ImportValidationError[]): GearItemStatus | null {
-  if (typeof value !== "string" || !value.trim()) {
-    errors.push({ path, message: "Status must be a non-empty string." });
+  if (value == null || value === "") {
+    return "missing";
+  }
+
+  if (typeof value !== "string") {
+    errors.push({ path, message: "Status must be text when provided." });
     return null;
   }
 
-  const status = STATUS_BY_LABEL[value.trim()] ?? STATUS_BY_LABEL[value.trim().toLowerCase()];
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "missing";
+  }
+
+  const status = STATUS_BY_LABEL[trimmed] ?? STATUS_BY_LABEL[trimmed.toLowerCase()];
   if (!status) {
     errors.push({
       path,
@@ -231,10 +240,10 @@ function validateChecklistExportDocument(
     });
   }
 
-  if (value.format !== CHECKLIST_EXPORT_FORMAT) {
+  if (!isAcceptedChecklistExportFormat(value.format)) {
     errors.push({
       path: "format",
-      message: `Expected format "${CHECKLIST_EXPORT_FORMAT}".`,
+      message: 'Expected format "campsync-checklist" (or legacy "campready-checklist").',
     });
   }
 
@@ -259,7 +268,7 @@ function extractCategoriesFromJson(
     return null;
   }
 
-  if (parsed.format === CHECKLIST_EXPORT_FORMAT || parsed.version === CHECKLIST_EXPORT_VERSION) {
+  if (isAcceptedChecklistExportFormat(parsed.format) || parsed.version === CHECKLIST_EXPORT_VERSION) {
     const categories = validateChecklistExportDocument(parsed, errors);
     return errors.length === 0 ? categories : null;
   }
@@ -334,7 +343,7 @@ function parseCsvRows(raw: string): CsvParseResult {
   if (inQuotes) {
     anomalies.push({
       path: "csv.parse",
-      message: "CSV appears malformed — a quoted field was not closed.",
+      message: "CSV appears malformed. A quoted field was not closed.",
     });
   }
 
@@ -413,10 +422,10 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
   }
 
   const categories = [...categoryMap.values()];
-  if (categories.length === 0) {
+  if (categories.length === 0 || categories.every((category) => category.items.length === 0)) {
     errors.push({
       path: "categories",
-      message: "Import file contains no categories or items.",
+      message: "This list is empty. Add at least one gear item before importing.",
     });
     return { ok: false, errors };
   }
@@ -470,16 +479,21 @@ export function validateChecklistJson(raw: string): ImportValidationResult {
       errors.push({
         path: "root",
         message:
-          'JSON must be a CampReady checklist export, a categories array, or an object with a "categories" array.',
+          'JSON must be a CampSync checklist export, a categories array, or an object with a "categories" array.',
       });
     }
     return { ok: false, errors };
   }
 
-  if (categories.length === 0) {
+  if (categories.length === 0 || categories.every((category) => category.items.length === 0)) {
     return {
       ok: false,
-      errors: [{ path: "categories", message: "Import file contains no categories or items." }],
+      errors: [
+        {
+          path: "categories",
+          message: "This list is empty. Add at least one gear item before importing.",
+        },
+      ],
     };
   }
 
@@ -661,7 +675,7 @@ export function isChecklistExportDocument(value: unknown): value is ChecklistExp
   return (
     isRecord(value) &&
     value.version === CHECKLIST_EXPORT_VERSION &&
-    value.format === CHECKLIST_EXPORT_FORMAT &&
+    isAcceptedChecklistExportFormat(value.format) &&
     Array.isArray(value.categories)
   );
 }

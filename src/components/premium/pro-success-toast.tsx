@@ -18,7 +18,7 @@ export function ProSuccessToast({ onDismiss }: ProSuccessToastProps) {
           <Check className="size-4" strokeWidth={2.5} aria-hidden />
         </span>
         <p className="min-w-0 flex-1 text-sm font-semibold leading-snug text-zinc-100">
-          Welcome to CampReady Pro! Your lifetime access has been successfully
+          Welcome to CampSync Pro! Your lifetime access has been successfully
           unlocked.
         </p>
         <button

@@ -20,7 +20,7 @@ export function StorageLimitBanner() {
           <HardDrive className="size-3.5" strokeWidth={2.25} aria-hidden />
         </span>
         <p className="min-w-0 flex-1 text-xs font-semibold leading-snug text-foreground sm:text-sm">
-          Storage limit reached — changes may not save offline.
+          Storage limit reached. Changes may not save offline.
         </p>
       </div>
     </div>

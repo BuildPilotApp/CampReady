@@ -1,10 +1,10 @@
-# CampReady Terms of Service & Disclaimers
+# CampSync Terms of Service & Disclaimers
 
 **Last Updated:** June 2026
 
 ## 1. App Purpose & User Responsibility
 
-CampReady is provided strictly as a digital organization and packing checklist utility. Outdoor activities, camping, overlanding, and backcountry travel are inherently dangerous activities that carry risk of property damage, personal injury, or death.
+CampSync is provided strictly as a digital organization and packing checklist utility. Outdoor activities, camping, overlanding, and backcountry travel are inherently dangerous activities that carry risk of property damage, personal injury, or death.
 
 You explicitly agree that you are 100% solely responsible for your own safety, preparation, trip planning, and final validation of all necessary gear, food, water, medical supplies, and emergency equipment.
 
@@ -14,7 +14,7 @@ This application is provided on an "As-Is" and "As-Available" basis without warr
 
 ## 3. Limitation of Liability
 
-To the maximum extent permitted by applicable law, in no event shall the developer or creator of CampReady be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, equipment failure, personal injury, illness, exposure, or financial loss) however caused and on any theory of liability, arising in any way out of the use of this software.
+To the maximum extent permitted by applicable law, in no event shall the developer or creator of CampSync be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, equipment failure, personal injury, illness, exposure, or financial loss) however caused and on any theory of liability, arising in any way out of the use of this software.
 
 ## 4. Affiliate Disclosure
 
@@ -22,4 +22,4 @@ As an Amazon Associate I earn from qualifying purchases. Tapping the shopping ca
 
 ## Contact
 
-For questions about these terms, use the **Feedback** option in the CampReady information menu.
+For questions about these terms, use the **Feedback** option in the CampSync information menu.

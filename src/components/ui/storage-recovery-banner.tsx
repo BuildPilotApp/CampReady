@@ -64,8 +64,8 @@ export function StorageRecoveryBanner() {
           </p>
           <p className="mt-1 text-xs leading-snug text-muted">
             {storageRecovery === "corrupt"
-              ? "Your on-device storage looked damaged. You're on a fresh start — restore a backup or keep going."
-              : "Something went wrong reading storage. You're on a fresh start — restore a backup or keep going."}
+              ? "Your on-device storage looked damaged. You're on a fresh start. Restore a backup or keep going."
+              : "Something went wrong reading storage. You're on a fresh start. Restore a backup or keep going."}
           </p>
           {restoreError ? (
             <p className="mt-2 text-xs font-medium text-red-400">{restoreError}</p>

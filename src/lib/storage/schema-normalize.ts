@@ -45,7 +45,7 @@ function coerceIsoDate(value: unknown, path: string, phase: StorageAuditPhase): 
     return value.trim();
   }
 
-  audit(phase, "default", path, "Invalid or missing date — using default.");
+  audit(phase, "default", path, "Invalid or missing date. Using default.");
   return defaultTripDate();
 }
 
@@ -59,7 +59,7 @@ function coerceGearItemStatus(
   }
 
   if (value != null && value !== "") {
-    audit(phase, "repair", path, "Invalid gear status — defaulting to missing.");
+    audit(phase, "repair", path, "Invalid gear status. Defaulting to missing.");
   }
 
   return "missing";
@@ -82,7 +82,7 @@ function coerceWeightLbs(
         : Number.NaN;
 
   if (!Number.isFinite(numeric) || numeric < 0) {
-    audit(phase, "repair", path, "Invalid weight — removing value.");
+    audit(phase, "repair", path, "Invalid weight. Removing value.");
     return undefined;
   }
 
@@ -99,14 +99,14 @@ function normalizeLocation(
   }
 
   if (typeof value !== "object") {
-    audit(phase, "strip", path, "Malformed trip location — removed.");
+    audit(phase, "strip", path, "Malformed trip location removed.");
     return undefined;
   }
 
   const record = value as Record<string, unknown>;
   const query = typeof record.query === "string" ? record.query.trim() : "";
   if (!query) {
-    audit(phase, "strip", path, "Empty trip location query — removed.");
+    audit(phase, "strip", path, "Empty trip location query removed.");
     return undefined;
   }
 
@@ -134,14 +134,14 @@ function normalizeGearItem(
   phase: StorageAuditPhase,
 ): GearItem | null {
   if (typeof raw !== "object" || raw === null) {
-    audit(phase, "strip", path, "Gear item is not an object — dropped.");
+    audit(phase, "strip", path, "Gear item is not an object. Dropped.");
     return null;
   }
 
   const record = raw as Record<string, unknown>;
   const name = typeof record.name === "string" ? record.name.trim() : "";
   if (!name) {
-    audit(phase, "strip", path, "Gear item missing name — dropped.");
+    audit(phase, "strip", path, "Gear item missing name. Dropped.");
     return null;
   }
 
@@ -151,7 +151,7 @@ function normalizeGearItem(
       : fallbackCategoryId;
 
   if (categoryId !== fallbackCategoryId && typeof record.category !== "string") {
-    audit(phase, "repair", `${path}.category`, "Missing category reference — assigned parent.");
+    audit(phase, "repair", `${path}.category`, "Missing category reference. Assigned parent.");
   }
 
   const id =
@@ -160,7 +160,7 @@ function normalizeGearItem(
       : crypto.randomUUID();
 
   if (typeof record.id !== "string" || !record.id.trim()) {
-    audit(phase, "repair", `${path}.id`, "Missing gear id — generated replacement.");
+    audit(phase, "repair", `${path}.id`, "Missing gear id. Generated replacement.");
   }
 
   const storageLocation =
@@ -187,14 +187,14 @@ function normalizeCategory(
   phase: StorageAuditPhase,
 ): Category | null {
   if (typeof raw !== "object" || raw === null) {
-    audit(phase, "strip", path, "Category is not an object — dropped.");
+    audit(phase, "strip", path, "Category is not an object. Dropped.");
     return null;
   }
 
   const record = raw as Record<string, unknown>;
   const name = typeof record.name === "string" ? record.name.trim() : "";
   if (!name) {
-    audit(phase, "strip", path, "Category missing name — dropped.");
+    audit(phase, "strip", path, "Category missing name. Dropped.");
     return null;
   }
 
@@ -204,12 +204,12 @@ function normalizeCategory(
       : crypto.randomUUID();
 
   if (typeof record.id !== "string" || !record.id.trim()) {
-    audit(phase, "repair", `${path}.id`, "Missing category id — generated replacement.");
+    audit(phase, "repair", `${path}.id`, "Missing category id. Generated replacement.");
   }
 
   const rawItems = Array.isArray(record.items) ? record.items : [];
   if (!Array.isArray(record.items)) {
-    audit(phase, "repair", `${path}.items`, "Missing items array — treating as empty.");
+    audit(phase, "repair", `${path}.items`, "Missing items array. Treating as empty.");
   }
 
   const items = rawItems
@@ -228,7 +228,7 @@ function normalizeCategories(
   phase: StorageAuditPhase,
 ): Category[] {
   if (!Array.isArray(raw)) {
-    audit(phase, "repair", path, "Categories field is not an array — using empty list.");
+    audit(phase, "repair", path, "Categories field is not an array. Using empty list.");
     return [];
   }
 
@@ -246,14 +246,14 @@ function normalizeTripRecord(
   const path = `trips[${index}]`;
 
   if (typeof raw !== "object" || raw === null) {
-    audit(phase, "strip", path, "Trip is not an object — dropped.");
+    audit(phase, "strip", path, "Trip is not an object. Dropped.");
     return null;
   }
 
   const record = raw as Record<string, unknown>;
   const name = typeof record.name === "string" ? record.name.trim() : "";
   if (!name) {
-    audit(phase, "strip", path, "Trip missing name — dropped.");
+    audit(phase, "strip", path, "Trip missing name. Dropped.");
     return null;
   }
 
@@ -266,7 +266,7 @@ function normalizeTripRecord(
   let endDate = coerceIsoDate(record.endDate ?? legacyDate ?? startDate, `${path}.endDate`, phase);
 
   if (endDate.localeCompare(startDate) < 0) {
-    audit(phase, "repair", `${path}.endDate`, "End date before start date — aligned to start.");
+    audit(phase, "repair", `${path}.endDate`, "End date before start date. Aligned to start.");
     endDate = startDate;
   }
 
@@ -280,7 +280,7 @@ function normalizeTripRecord(
   if (!hasCategories && index === 0 && options.legacyCategories) {
     audit(phase, "repair", path, "Migrated legacy root categories onto first trip.");
   } else if (!hasCategories) {
-    audit(phase, "repair", `${path}.categories`, "Missing categories — using empty list.");
+    audit(phase, "repair", `${path}.categories`, "Missing categories. Using empty list.");
   }
 
   const now = new Date().toISOString();
@@ -290,13 +290,18 @@ function normalizeTripRecord(
       : crypto.randomUUID();
 
   if (typeof record.id !== "string" || !record.id.trim()) {
-    audit(phase, "repair", `${path}.id`, "Missing trip id — generated replacement.");
+    audit(phase, "repair", `${path}.id`, "Missing trip id. Generated replacement.");
   }
 
   return {
     ...createTrip({ id: tripId, name, startDate, endDate }),
     location: normalizeLocation(record.location, `${path}.location`, phase),
     categories,
+    checklistTemplateId:
+      typeof record.checklistTemplateId === "string" &&
+      record.checklistTemplateId.trim()
+        ? record.checklistTemplateId.trim()
+        : undefined,
     createdAt:
       typeof record.createdAt === "string" && record.createdAt.trim()
         ? record.createdAt
@@ -316,7 +321,7 @@ function normalizeTemplate(
   const path = `templates[${index}]`;
 
   if (typeof raw !== "object" || raw === null) {
-    audit(phase, "strip", path, "Template is not an object — dropped.");
+    audit(phase, "strip", path, "Template is not an object. Dropped.");
     return null;
   }
 
@@ -325,7 +330,7 @@ function normalizeTemplate(
   const id = typeof record.id === "string" ? record.id.trim() : "";
 
   if (!id || !name) {
-    audit(phase, "strip", path, "Template missing id or name — dropped.");
+    audit(phase, "strip", path, "Template missing id or name. Dropped.");
     return null;
   }
 
@@ -340,7 +345,7 @@ function normalizeTemplate(
 
 function normalizeTemplates(raw: unknown, phase: StorageAuditPhase): ChecklistTemplate[] {
   if (!Array.isArray(raw)) {
-    audit(phase, "repair", "templates", "Templates field is not an array — using empty list.");
+    audit(phase, "repair", "templates", "Templates field is not an array. Using empty list.");
     return [];
   }
 
@@ -351,7 +356,7 @@ function normalizeTemplates(raw: unknown, phase: StorageAuditPhase): ChecklistTe
 
 /**
  * Deeply validates and repairs a parsed database document.
- * Never throws — corrupt records are stripped or coerced with audit logging.
+ * Never throws. Corrupt records are stripped or coerced with audit logging.
  */
 export function normalizeDatabaseDocument(
   raw: unknown,
@@ -363,7 +368,7 @@ export function normalizeDatabaseDocument(
   const countBefore = getStorageAuditLog().length;
 
   if (typeof raw !== "object" || raw === null) {
-    audit(phase, "strip", "root", "Database root is not an object — using empty database.");
+    audit(phase, "strip", "root", "Database root is not an object. Using empty database.");
     return { database: createEmptyDatabase(), repairCount: 1 };
   }
 
@@ -375,13 +380,13 @@ export function normalizeDatabaseDocument(
       phase,
       "repair",
       "version",
-      `Unexpected version (${String(version)}) — coercing to ${DATABASE_VERSION}.`,
+      `Unexpected version (${String(version)}). Coercing to ${DATABASE_VERSION}.`,
     );
   }
 
   const rawTrips = Array.isArray(record.trips) ? record.trips : [];
   if (!Array.isArray(record.trips)) {
-    audit(phase, "repair", "trips", "Trips field is not an array — using empty list.");
+    audit(phase, "repair", "trips", "Trips field is not an array. Using empty list.");
   }
 
   const legacyCategories = options.legacyCategories ?? null;
@@ -392,24 +397,41 @@ export function normalizeDatabaseDocument(
   const templates = filterUserSavedTemplates(
     normalizeTemplates(record.templates, phase),
   );
+  const templateIds = new Set(templates.map((template) => template.id));
+  const normalizedTrips = trips.map((trip, index) => {
+    if (
+      trip.checklistTemplateId &&
+      !templateIds.has(trip.checklistTemplateId)
+    ) {
+      audit(
+        phase,
+        "repair",
+        `trips[${index}].checklistTemplateId`,
+        "Saved checklist reference not found. Clearing selection.",
+      );
+      return { ...trip, checklistTemplateId: undefined };
+    }
+
+    return trip;
+  });
 
   let activeTripId: string | null = null;
   if (record.activeTripId === null) {
     activeTripId = null;
   } else if (typeof record.activeTripId === "string" && record.activeTripId.trim()) {
     activeTripId = record.activeTripId.trim();
-    if (!trips.some((trip) => trip.id === activeTripId)) {
+    if (!normalizedTrips.some((trip) => trip.id === activeTripId)) {
       audit(
         phase,
         "repair",
         "activeTripId",
-        "Active trip id not found — selecting first available trip.",
+        "Active trip id not found. Selecting first available trip.",
       );
-      activeTripId = trips[0]?.id ?? null;
+      activeTripId = normalizedTrips[0]?.id ?? null;
     }
-  } else if (trips.length > 0) {
-    audit(phase, "default", "activeTripId", "Missing active trip id — selecting first trip.");
-    activeTripId = trips[0]?.id ?? null;
+  } else if (normalizedTrips.length > 0) {
+    audit(phase, "default", "activeTripId", "Missing active trip id. Selecting first trip.");
+    activeTripId = normalizedTrips[0]?.id ?? null;
   }
 
   repairCount = getStorageAuditLog().length - countBefore;
@@ -417,7 +439,7 @@ export function normalizeDatabaseDocument(
   return {
     database: {
       version: DATABASE_VERSION,
-      trips,
+      trips: normalizedTrips,
       templates,
       activeTripId,
     },

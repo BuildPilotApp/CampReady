@@ -201,6 +201,28 @@ function updateTemplateById(
   return { ...database, templates };
 }
 
+function clearTripChecklistTemplateId(
+  trip: TripRecord,
+): TripRecord {
+  return trip.checklistTemplateId
+    ? { ...trip, checklistTemplateId: undefined }
+    : trip;
+}
+
+function clearTripsForTemplate(
+  database: CampReadyDatabase,
+  templateId: string,
+): CampReadyDatabase {
+  return {
+    ...database,
+    trips: database.trips.map((trip) =>
+      trip.checklistTemplateId === templateId
+        ? touchTrip({ ...trip, checklistTemplateId: undefined })
+        : trip,
+    ),
+  };
+}
+
 export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(
     () => typeof window !== "undefined",
@@ -404,6 +426,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
             : undefined,
         }),
         categories,
+        checklistTemplateId: template?.id,
       };
 
       const next = {
@@ -483,7 +506,16 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
         categories: cloneCategories(trip.categories),
       };
 
-      persist({ ...database, templates: [template, ...database.templates] });
+      persist(
+        updateTripById(
+          { ...database, templates: [template, ...database.templates] },
+          input.tripId,
+          (currentTrip) => ({
+            ...currentTrip,
+            checklistTemplateId: template.id,
+          }),
+        ),
+      );
     },
     [database, persist],
   );
@@ -501,6 +533,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
         ...updateTripById(database, tripId, (currentTrip) => ({
           ...currentTrip,
           categories,
+          checklistTemplateId: template?.id,
         })),
         activeTripId: tripId,
       });
@@ -544,7 +577,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     const template: ChecklistTemplate = {
       id: crypto.randomUUID(),
       name: STARTER_CHECKLIST_NAME,
-      description: "Example categories and gear for a weekend trip.",
+      description: "Example categories and gear for a quick getaway trip.",
       categories: cloneCategories(buildStarterCategories()),
     };
 
@@ -578,6 +611,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
         templates: database.templates.filter(
           (template) => template.id !== templateId,
         ),
+        trips: clearTripsForTemplate(database, templateId).trips,
       });
       setEditingTemplateId((current) =>
         current === templateId ? null : current,
@@ -591,10 +625,13 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       if (!database) return;
       const category = createCategory({ name: name.trim() || "New Category" });
       persist(
-        updateTemplateById(database, templateId, (template) => ({
-          ...template,
-          categories: [...template.categories, category],
-        })),
+        clearTripsForTemplate(
+          updateTemplateById(database, templateId, (template) => ({
+            ...template,
+            categories: [...template.categories, category],
+          })),
+          templateId,
+        ),
       );
     },
     [database, persist],
@@ -604,12 +641,15 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     (templateId: string, categoryId: string, name: string) => {
       if (!database) return;
       persist(
-        updateTemplateById(database, templateId, (template) => ({
-          ...template,
-          categories: template.categories.map((category) =>
-            category.id === categoryId ? { ...category, name } : category,
-          ),
-        })),
+        clearTripsForTemplate(
+          updateTemplateById(database, templateId, (template) => ({
+            ...template,
+            categories: template.categories.map((category) =>
+              category.id === categoryId ? { ...category, name } : category,
+            ),
+          })),
+          templateId,
+        ),
       );
     },
     [database, persist],
@@ -619,12 +659,15 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     (templateId: string, categoryId: string) => {
       if (!database) return;
       persist(
-        updateTemplateById(database, templateId, (template) => ({
-          ...template,
-          categories: template.categories.filter(
-            (category) => category.id !== categoryId,
-          ),
-        })),
+        clearTripsForTemplate(
+          updateTemplateById(database, templateId, (template) => ({
+            ...template,
+            categories: template.categories.filter(
+              (category) => category.id !== categoryId,
+            ),
+          })),
+          templateId,
+        ),
       );
     },
     [database, persist],
@@ -646,14 +689,17 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
         storageLocation: input.storageLocation,
       });
       persist(
-        updateTemplateById(database, input.templateId, (template) => ({
-          ...template,
-          categories: template.categories.map((category) =>
-            category.id === input.categoryId
-              ? { ...category, items: [item, ...category.items] }
-              : category,
-          ),
-        })),
+        clearTripsForTemplate(
+          updateTemplateById(database, input.templateId, (template) => ({
+            ...template,
+            categories: template.categories.map((category) =>
+              category.id === input.categoryId
+                ? { ...category, items: [item, ...category.items] }
+                : category,
+            ),
+          })),
+          input.templateId,
+        ),
       );
     },
     [database, persist],
@@ -667,15 +713,18 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     ) => {
       if (!database) return;
       persist(
-        updateTemplateById(database, templateId, (template) => ({
-          ...template,
-          categories: template.categories.map((category) => ({
-            ...category,
-            items: category.items.map((item) =>
-              item.id === itemId ? { ...item, ...patch } : item,
-            ),
+        clearTripsForTemplate(
+          updateTemplateById(database, templateId, (template) => ({
+            ...template,
+            categories: template.categories.map((category) => ({
+              ...category,
+              items: category.items.map((item) =>
+                item.id === itemId ? { ...item, ...patch } : item,
+              ),
+            })),
           })),
-        })),
+          templateId,
+        ),
       );
     },
     [database, persist],
@@ -685,13 +734,16 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     (templateId: string, itemId: string) => {
       if (!database) return;
       persist(
-        updateTemplateById(database, templateId, (template) => ({
-          ...template,
-          categories: template.categories.map((category) => ({
-            ...category,
-            items: category.items.filter((item) => item.id !== itemId),
+        clearTripsForTemplate(
+          updateTemplateById(database, templateId, (template) => ({
+            ...template,
+            categories: template.categories.map((category) => ({
+              ...category,
+              items: category.items.filter((item) => item.id !== itemId),
+            })),
           })),
-        })),
+          templateId,
+        ),
       );
     },
     [database, persist],
@@ -703,7 +755,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       const category = createCategory({ name: name.trim() || "New Category" });
       persist(
         updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
+          ...clearTripChecklistTemplateId(trip),
           categories: [...trip.categories, category],
         })),
       );
@@ -718,7 +770,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       if (!database?.activeTripId) return;
       persist(
         updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
+          ...clearTripChecklistTemplateId(trip),
           categories: trip.categories.map((c) =>
             c.id === categoryId ? { ...c, name } : c,
           ),
@@ -733,7 +785,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       if (!database?.activeTripId) return;
       persist(
         updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
+          ...clearTripChecklistTemplateId(trip),
           categories: trip.categories.filter((c) => c.id !== categoryId),
         })),
       );
@@ -757,7 +809,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       });
       persist(
         updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
+          ...clearTripChecklistTemplateId(trip),
           categories: trip.categories.map((c) =>
             c.id === input.categoryId ? { ...c, items: [item, ...c.items] } : c,
           ),
@@ -799,7 +851,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
           });
 
           return {
-            ...trip,
+            ...clearTripChecklistTemplateId(trip),
             categories: existingCategory
               ? trip.categories.map((currentCategory) =>
                   currentCategory.id === category.id
@@ -827,7 +879,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       if (!database?.activeTripId) return;
       persist(
         updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
+          ...clearTripChecklistTemplateId(trip),
           categories: trip.categories.map((c) => ({
             ...c,
             items: c.items.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
@@ -843,7 +895,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       if (!database?.activeTripId) return;
       persist(
         updateTripById(database, database.activeTripId, (trip) => ({
-          ...trip,
+          ...clearTripChecklistTemplateId(trip),
           categories: trip.categories.map((c) => ({
             ...c,
             items: c.items.filter((item) => item.id !== itemId),
@@ -901,6 +953,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
         updateTripById(database, tripId, (currentTrip) => ({
           ...currentTrip,
           categories: result.categories,
+          checklistTemplateId: undefined,
         })),
       );
       setChecklistFilter("all");
@@ -960,6 +1013,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
         updateTripById(workingDatabase, tripId, (currentTrip) => ({
           ...currentTrip,
           categories: result.categories,
+          checklistTemplateId: undefined,
         })),
       );
       setActiveTab("checklist");
@@ -1075,7 +1129,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   if (!value) {
     return (
       <div className="mobile-app-shell flex min-h-dvh items-center justify-center bg-background text-foreground">
-        <p className="text-base font-medium text-muted">Loading CampReady…</p>
+        <p className="text-base font-medium text-muted">Loading CampSync…</p>
       </div>
     );
   }

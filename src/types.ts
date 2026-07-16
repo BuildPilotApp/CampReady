@@ -52,6 +52,8 @@ export interface ChecklistTemplate {
 /** A full trip record containing its checklist. */
 export interface TripRecord extends Trip {
   categories: Category[];
+  /** Last saved checklist loaded onto this trip, if any. */
+  checklistTemplateId?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,7 +1,19 @@
 import type { GearItemStatus, TripRecord } from "@/types";
 
-export const CHECKLIST_EXPORT_FORMAT = "campready-checklist" as const;
+/** Current checklist export format written by CampSync. */
+export const CHECKLIST_EXPORT_FORMAT = "campsync-checklist" as const;
+/** Legacy CampReady checklist exports still accepted on import. */
+export const LEGACY_CHECKLIST_EXPORT_FORMAT = "campready-checklist" as const;
 export const CHECKLIST_EXPORT_VERSION = 1 as const;
+
+const ACCEPTED_CHECKLIST_FORMATS = new Set<string>([
+  CHECKLIST_EXPORT_FORMAT,
+  LEGACY_CHECKLIST_EXPORT_FORMAT,
+]);
+
+export function isAcceptedChecklistExportFormat(format: unknown): boolean {
+  return typeof format === "string" && ACCEPTED_CHECKLIST_FORMATS.has(format);
+}
 
 export interface ChecklistExportItem {
   name: string;
@@ -15,10 +27,10 @@ export interface ChecklistExportCategory {
   items: ChecklistExportItem[];
 }
 
-/** JSON document written by Export List and accepted by Import List. */
+/** Checklist JSON shape accepted by Import List. */
 export interface ChecklistExportDocument {
   version: typeof CHECKLIST_EXPORT_VERSION;
-  format: typeof CHECKLIST_EXPORT_FORMAT;
+  format: typeof CHECKLIST_EXPORT_FORMAT | typeof LEGACY_CHECKLIST_EXPORT_FORMAT;
   tripName: string;
   exportedAt: string;
   categories: ChecklistExportCategory[];

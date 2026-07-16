@@ -77,7 +77,7 @@ function parseDatabase(raw: string): CampReadyDatabase | null {
   }
 }
 
-/** Drop removed fields and coerce corrupt persisted records — never throws. */
+/** Drop removed fields and coerce corrupt persisted records without throwing. */
 export function sanitizeDatabase(data: CampReadyDatabase): CampReadyDatabase {
   const { database } = normalizeDatabaseDocument(data, { phase: "sanitize" });
   return database;
@@ -320,7 +320,7 @@ export async function hydrateDatabase(): Promise<HydrationResult> {
   }
 }
 
-/** Async persist — same durability guarantees as sync write. */
+/** Async persist with the same durability guarantees as sync write. */
 export async function writeDatabase(data: CampReadyDatabase): Promise<void> {
   writeDatabaseSync(data);
 }

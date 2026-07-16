@@ -5,7 +5,8 @@ import {
   FIRST_LAUNCH_ONBOARDING_STEPS,
   shouldShowFirstLaunchOnboarding,
 } from "@/lib/onboarding";
-import { CheckCircle2, ChevronLeft, ChevronRight, Tent } from "lucide-react";
+import { CampSyncMark } from "@/components/ui/camp-sync-mark";
+import { CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const WELCOME_OVERLAY_CLASS_NAME = "welcome-screen-overlay";
@@ -45,7 +46,7 @@ export function FirstLaunchOnboarding() {
       >
         <div className="flex items-center justify-between gap-3">
           <div className="inline-flex size-12 items-center justify-center rounded-full bg-accent/15 text-accent">
-            <Tent className="size-6" strokeWidth={2.25} aria-hidden />
+            <CampSyncMark className="size-6" aria-hidden />
           </div>
           <button
             type="button"

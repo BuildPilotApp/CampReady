@@ -4,7 +4,7 @@ import { STORAGE_KEY } from "./constants";
 let configured = false;
 
 /**
- * IndexedDB mirror for durable offline backup — separate from synchronous localStorage.
+ * IndexedDB mirror for durable offline backup, separate from synchronous localStorage.
  * Does not duplicate the localStorage driver to avoid redundant writes to the same store.
  */
 export function getLocalForage(): LocalForage {
@@ -12,7 +12,7 @@ export function getLocalForage(): LocalForage {
     localforage.config({
       name: "campready",
       storeName: "offline",
-      description: "CampReady IndexedDB offline mirror",
+      description: "CampSync IndexedDB offline mirror",
       driver: [localforage.INDEXEDDB],
     });
     configured = true;

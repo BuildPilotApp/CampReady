@@ -1,7 +1,7 @@
 import type { CampReadyDatabase, Category, TripRecord } from "@/types";
 import { DATABASE_VERSION } from "./constants";
 
-/** Legacy seed trip — removed from stored data on load. */
+/** Legacy seed trip, removed from stored data on load. */
 export const SAMPLE_TRIP_NAME = "Yosemite Weekend";
 
 export function isSampleTrip(trip: TripRecord): boolean {

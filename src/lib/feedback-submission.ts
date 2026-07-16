@@ -94,8 +94,8 @@ async function postFeedbackToFormspree(
         email: submission.email || undefined,
         _subject:
           submission.type === "feedback"
-            ? "CampReady Feedback"
-            : "CampReady Bug Report",
+            ? "CampSync Feedback"
+            : "CampSync Bug Report",
       }),
     });
 

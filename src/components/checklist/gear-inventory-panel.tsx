@@ -5,6 +5,7 @@ import { ApplyChecklistPrompt } from "@/components/checklist/apply-checklist-pro
 import { TemplateCategorySection } from "@/components/checklist/template-editor";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { usePro } from "@/components/providers/pro-provider";
+import { useAppToast } from "@/components/ui/app-toast-provider";
 import {
   CREATE_GEAR_CHECKLIST_HINT,
   SAVED_CHECKLISTS_EMPTY_MESSAGE,
@@ -20,6 +21,7 @@ import {
   dismissOnboardingHint,
   isOnboardingHintDismissed,
 } from "@/lib/onboarding-hints";
+import { CampSyncMark } from "@/components/ui/camp-sync-mark";
 import {
   ChevronDown,
   Download,
@@ -27,7 +29,6 @@ import {
   Pencil,
   Plus,
   Save,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
@@ -133,6 +134,7 @@ export function GearInventoryPanel() {
     addTemplateCategory,
   } = useCampReady();
   const { isPro, openPaywall } = usePro();
+  const { showToast } = useAppToast();
 
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [loadTemplateId, setLoadTemplateId] = useState<string | null>(null);
@@ -211,7 +213,10 @@ export function GearInventoryPanel() {
   };
 
   const handleLoadChecklist = (templateId: string) => {
-    if (trips.length === 0) return;
+    if (trips.length === 0) {
+      showToast("No trips yet. Create a trip before loading a saved checklist.");
+      return;
+    }
 
     if (trips.length === 1) {
       applyChecklistTemplateToTrip(trips[0]!.id, templateId);
@@ -372,7 +377,7 @@ export function GearInventoryPanel() {
                     }}
                     className="touch-target inline-flex items-center justify-center gap-2 rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm font-bold text-foreground active:opacity-90"
                   >
-                    <Sparkles className="size-4 text-accent" aria-hidden />
+                    <CampSyncMark className="size-4 text-accent" aria-hidden />
                     {STARTER_CHECKLIST_BUTTON_LABEL}
                   </button>
                 </>
