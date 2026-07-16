@@ -20,10 +20,25 @@ import { PlanStatusChip } from "@/components/premium/plan-status-chip";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
 import { formatWeight } from "@/lib/units";
-import { CampSyncMark } from "@/components/ui/camp-sync-mark";
 import { RotateCcw, Info, Settings } from "lucide-react";
 import Link from "next/link";
 import { useCallback } from "react";
+
+const APP_ICON_SRC = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/app-icon.png`;
+
+function AppHeaderBrandIcon() {
+  return (
+    <img
+      src={APP_ICON_SRC}
+      alt=""
+      width={40}
+      height={40}
+      className="size-10 shrink-0 rounded-[22%] shadow-sm"
+      aria-hidden
+      draggable={false}
+    />
+  );
+}
 
 function AppHeader() {
   const {
@@ -42,7 +57,7 @@ function AppHeader() {
   return (
     <>
       <div className="flex items-center gap-3 py-3 lg:hidden">
-        <CampSyncMark className="size-8 shrink-0 text-accent" aria-hidden />
+        <AppHeaderBrandIcon />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-lg font-bold leading-tight text-foreground">CampSync</p>
@@ -81,7 +96,7 @@ function AppHeader() {
       </div>
 
       <div className="hidden items-center gap-3 py-3 lg:flex">
-        <CampSyncMark className="size-8 shrink-0 text-accent" aria-hidden />
+        <AppHeaderBrandIcon />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-lg font-bold leading-tight text-foreground">CampSync</p>
