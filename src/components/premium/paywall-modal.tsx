@@ -7,7 +7,7 @@ import {
   restoreNativeCampReadyPro,
 } from "@/lib/native-billing";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
-import { Check, RefreshCw, Shield, Sparkles, X } from "lucide-react";
+import { Check, RefreshCw, Shield, Sparkles, UtensilsCrossed, X } from "lucide-react";
 import { useState } from "react";
 
 const FEATURES = [
@@ -27,6 +27,12 @@ const FEATURES = [
     title: "Import & merge pack lists",
     description:
       "Merge CSV gear lists into trips without duplicates.",
+  },
+  {
+    icon: UtensilsCrossed,
+    title: "Manual meal plans and recipe notes",
+    description:
+      "Plan food by trip day, track what's consumed, and keep recipes handy.",
   },
 ] as const;
 

@@ -34,10 +34,17 @@ import type {
   GearItem,
   GearItemStatus,
   InfoView,
+  MealPrepItem,
   TripRecord,
   TripLocation,
   VehiclePayloadSettings,
 } from "@/types";
+import {
+  addMealItemToDays,
+  deleteMealItemFromDays,
+  toggleMealItemStatusInDays,
+  updateMealItemInDays,
+} from "@/lib/meal-prep";
 import {
   createContext,
   useCallback,
@@ -160,6 +167,18 @@ interface CampReadyContextValue {
   updateVehiclePayloadSettings: (
     patch: Partial<VehiclePayloadSettings>,
   ) => void;
+  addMealPrepItem: (
+    dayNumber: number,
+    title: string,
+    recipeNotes?: string,
+  ) => void;
+  updateMealPrepItem: (
+    dayNumber: number,
+    itemId: string,
+    patch: Partial<Pick<MealPrepItem, "title" | "status" | "recipeNotes">>,
+  ) => void;
+  toggleMealPrepItemStatus: (dayNumber: number, itemId: string) => void;
+  deleteMealPrepItem: (dayNumber: number, itemId: string) => void;
 }
 
 const CampReadyContext = createContext<CampReadyContextValue | null>(null);
@@ -1059,6 +1078,84 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const addMealPrepItem = useCallback(
+    (dayNumber: number, title: string, recipeNotes?: string) => {
+      if (!database?.activeTripId) return;
+      const tripId = database.activeTripId;
+      persist(
+        updateTripById(database, tripId, (trip) => ({
+          ...trip,
+          mealPrepDays: addMealItemToDays(
+            trip.mealPrepDays,
+            dayNumber,
+            title,
+            recipeNotes,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const updateMealPrepItem = useCallback(
+    (
+      dayNumber: number,
+      itemId: string,
+      patch: Partial<Pick<MealPrepItem, "title" | "status" | "recipeNotes">>,
+    ) => {
+      if (!database?.activeTripId) return;
+      const tripId = database.activeTripId;
+      persist(
+        updateTripById(database, tripId, (trip) => ({
+          ...trip,
+          mealPrepDays: updateMealItemInDays(
+            trip.mealPrepDays,
+            dayNumber,
+            itemId,
+            patch,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const toggleMealPrepItemStatus = useCallback(
+    (dayNumber: number, itemId: string) => {
+      if (!database?.activeTripId) return;
+      const tripId = database.activeTripId;
+      persist(
+        updateTripById(database, tripId, (trip) => ({
+          ...trip,
+          mealPrepDays: toggleMealItemStatusInDays(
+            trip.mealPrepDays,
+            dayNumber,
+            itemId,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
+  const deleteMealPrepItem = useCallback(
+    (dayNumber: number, itemId: string) => {
+      if (!database?.activeTripId) return;
+      const tripId = database.activeTripId;
+      persist(
+        updateTripById(database, tripId, (trip) => ({
+          ...trip,
+          mealPrepDays: deleteMealItemFromDays(
+            trip.mealPrepDays,
+            dayNumber,
+            itemId,
+          ),
+        })),
+      );
+    },
+    [database, persist],
+  );
+
   const value = useMemo<CampReadyContextValue | null>(() => {
     if (!database) {
       return null;
@@ -1114,6 +1211,10 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       resetAllData,
       restoreBackupCategories,
       updateVehiclePayloadSettings,
+      addMealPrepItem,
+      updateMealPrepItem,
+      toggleMealPrepItemStatus,
+      deleteMealPrepItem,
     };
   }, [
     ready,
@@ -1162,6 +1263,10 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     resetAllData,
     restoreBackupCategories,
     updateVehiclePayloadSettings,
+    addMealPrepItem,
+    updateMealPrepItem,
+    toggleMealPrepItemStatus,
+    deleteMealPrepItem,
   ]);
 
   if (!value) {

@@ -4,6 +4,9 @@ import type {
   ChecklistTemplate,
   GearItem,
   GearItemStatus,
+  MealItemStatus,
+  MealPrepDay,
+  MealPrepItem,
   TripLocation,
   TripRecord,
   VehiclePayloadSettings,
@@ -14,11 +17,13 @@ import {
   createDefaultVehiclePayloadSettings,
   createEmptyDatabase,
   createGearItem,
+  createMealPrepItem,
   createTrip,
 } from "./defaults";
 import { logStorageRepair, getStorageAuditLog, type StorageAuditPhase } from "./storage-audit-log";
 
 const GEAR_STATUSES: GearItemStatus[] = ["missing", "staged", "packed"];
+const MEAL_STATUSES: MealItemStatus[] = ["available", "consumed"];
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface NormalizeDatabaseOptions {
@@ -228,6 +233,141 @@ function normalizeCategory(
   return { id: categoryId, name, items };
 }
 
+function coerceMealItemStatus(
+  value: unknown,
+  path: string,
+  phase: StorageAuditPhase,
+): MealItemStatus {
+  if (typeof value === "string" && MEAL_STATUSES.includes(value as MealItemStatus)) {
+    return value as MealItemStatus;
+  }
+
+  if (value != null && value !== "") {
+    audit(phase, "repair", path, "Invalid meal status. Defaulting to available.");
+  }
+
+  return "available";
+}
+
+function normalizeMealPrepItem(
+  raw: unknown,
+  path: string,
+  phase: StorageAuditPhase,
+): MealPrepItem | null {
+  if (typeof raw !== "object" || raw === null) {
+    audit(phase, "strip", path, "Meal item is not an object. Dropped.");
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const title = typeof record.title === "string" ? record.title.trim() : "";
+  if (!title) {
+    audit(phase, "strip", path, "Meal item missing title. Dropped.");
+    return null;
+  }
+
+  const id =
+    typeof record.id === "string" && record.id.trim()
+      ? record.id.trim()
+      : crypto.randomUUID();
+
+  if (typeof record.id !== "string" || !record.id.trim()) {
+    audit(phase, "repair", `${path}.id`, "Missing meal id. Generated replacement.");
+  }
+
+  const recipeNotes =
+    typeof record.recipeNotes === "string" && record.recipeNotes.trim()
+      ? record.recipeNotes.trim()
+      : undefined;
+
+  return createMealPrepItem({
+    id,
+    title,
+    status: coerceMealItemStatus(record.status, `${path}.status`, phase),
+    recipeNotes,
+  });
+}
+
+function normalizeMealPrepDay(
+  raw: unknown,
+  path: string,
+  phase: StorageAuditPhase,
+): MealPrepDay | null {
+  if (typeof raw !== "object" || raw === null) {
+    audit(phase, "strip", path, "Meal day is not an object. Dropped.");
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const dayNumber =
+    typeof record.dayNumber === "number" &&
+    Number.isInteger(record.dayNumber) &&
+    record.dayNumber > 0
+      ? record.dayNumber
+      : null;
+
+  if (dayNumber == null) {
+    audit(phase, "strip", path, "Meal day missing valid dayNumber. Dropped.");
+    return null;
+  }
+
+  const rawItems = Array.isArray(record.items) ? record.items : [];
+  if (!Array.isArray(record.items)) {
+    audit(phase, "repair", `${path}.items`, "Missing meal items array. Treating as empty.");
+  }
+
+  const items = rawItems
+    .map((item, index) =>
+      normalizeMealPrepItem(item, `${path}.items[${index}]`, phase),
+    )
+    .filter((item): item is MealPrepItem => item !== null);
+
+  return { dayNumber, items };
+}
+
+function normalizeMealPrepDays(
+  raw: unknown,
+  path: string,
+  phase: StorageAuditPhase,
+): MealPrepDay[] | undefined {
+  if (raw == null) {
+    return undefined;
+  }
+
+  if (!Array.isArray(raw)) {
+    audit(phase, "strip", path, "Malformed mealPrepDays removed.");
+    return undefined;
+  }
+
+  const daysByNumber = new Map<number, MealPrepDay>();
+  for (let index = 0; index < raw.length; index++) {
+    const day = normalizeMealPrepDay(raw[index], `${path}[${index}]`, phase);
+    if (!day) continue;
+
+    const existing = daysByNumber.get(day.dayNumber);
+    if (existing) {
+      audit(
+        phase,
+        "repair",
+        `${path}[${index}]`,
+        `Duplicate dayNumber ${day.dayNumber}. Merging items.`,
+      );
+      daysByNumber.set(day.dayNumber, {
+        dayNumber: day.dayNumber,
+        items: [...existing.items, ...day.items],
+      });
+    } else {
+      daysByNumber.set(day.dayNumber, day);
+    }
+  }
+
+  const days = [...daysByNumber.values()].sort(
+    (a, b) => a.dayNumber - b.dayNumber,
+  );
+
+  return days.length > 0 ? days : undefined;
+}
+
 function normalizeCategories(
   raw: unknown,
   path: string,
@@ -303,6 +443,11 @@ function normalizeTripRecord(
     ...createTrip({ id: tripId, name, startDate, endDate }),
     location: normalizeLocation(record.location, `${path}.location`, phase),
     categories,
+    mealPrepDays: normalizeMealPrepDays(
+      record.mealPrepDays,
+      `${path}.mealPrepDays`,
+      phase,
+    ),
     checklistTemplateId:
       typeof record.checklistTemplateId === "string" &&
       record.checklistTemplateId.trim()

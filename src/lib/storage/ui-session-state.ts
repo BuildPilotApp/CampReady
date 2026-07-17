@@ -25,7 +25,7 @@ function isBrowser(): boolean {
 }
 
 function isAppTab(value: unknown): value is AppTab {
-  return value === "dashboard" || value === "checklist";
+  return value === "dashboard" || value === "checklist" || value === "meal-prep";
 }
 
 function isChecklistFilter(value: unknown): value is ChecklistFilter {

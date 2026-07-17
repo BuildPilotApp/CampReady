@@ -2,6 +2,9 @@ import type {
   CampReadyDatabase,
   Category,
   GearItem,
+  MealItemStatus,
+  MealPrepDay,
+  MealPrepItem,
   Trip,
   TripRecord,
 } from "@/types";
@@ -37,8 +40,26 @@ export function createTrip(
     endDate: partial.endDate,
     location: partial.location,
     categories: [],
+    mealPrepDays: [],
     createdAt: now,
     updatedAt: now,
+  };
+}
+
+export function createMealPrepItem(
+  partial: Pick<MealPrepItem, "title"> &
+    Partial<Pick<MealPrepItem, "id" | "status" | "recipeNotes">>,
+): MealPrepItem {
+  const notes =
+    typeof partial.recipeNotes === "string" && partial.recipeNotes.trim()
+      ? partial.recipeNotes.trim()
+      : undefined;
+
+  return {
+    id: partial.id ?? crypto.randomUUID(),
+    title: partial.title,
+    status: partial.status ?? "available",
+    ...(notes ? { recipeNotes: notes } : {}),
   };
 }
 
@@ -87,3 +108,5 @@ export function getTripStats(trip: TripRecord): {
 export function touchTrip(trip: TripRecord): TripRecord {
   return { ...trip, updatedAt: new Date().toISOString() };
 }
+
+export type { MealItemStatus, MealPrepDay, MealPrepItem };

@@ -10,6 +10,7 @@ import { ProProvider, usePro } from "@/components/providers/pro-provider";
 import { useUnits } from "@/components/providers/units-provider";
 import { ChecklistView } from "@/components/views/checklist-view";
 import { DashboardView } from "@/components/views/dashboard-view";
+import { MealPrepView } from "@/components/views/meal-prep-view";
 import { AppToastProvider, useAppToast } from "@/components/ui/app-toast-provider";
 import { GlobalNotificationProvider } from "@/components/providers/global-notification-provider";
 import { ImportValidationBanner } from "@/components/ui/import-validation-banner";
@@ -20,7 +21,8 @@ import { PlanStatusChip } from "@/components/premium/plan-status-chip";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
 import { formatWeight } from "@/lib/units";
-import { RotateCcw, Info, Settings } from "lucide-react";
+import type { AppTab } from "@/types";
+import { ClipboardList, Info, RotateCcw, Settings, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { useCallback } from "react";
 
@@ -66,9 +68,13 @@ function AppHeader() {
           <p className="truncate text-sm font-medium text-muted">
             {activeTab === "dashboard"
               ? "Trip dashboard"
-              : activeTrip
-                ? `${activeTrip.name} · Gear checklist`
-                : "Gear checklist"}
+              : activeTab === "meal-prep"
+                ? activeTrip
+                  ? `${activeTrip.name} · Meal prep`
+                  : "Meal prep"
+                : activeTrip
+                  ? `${activeTrip.name} · Gear checklist`
+                  : "Gear checklist"}
           </p>
           {activeTab === "checklist" && activeTripStats && totalWeightLabel ? (
             <p className="mt-1 text-xs font-bold text-foreground">
@@ -104,8 +110,8 @@ function AppHeader() {
           </div>
           <p className="truncate text-sm font-medium text-muted">
             {activeTrip
-              ? `${activeTrip.name} · Dashboard & checklist`
-              : "Dashboard & checklist"}
+              ? `${activeTrip.name} · Dashboard & trip tools`
+              : "Dashboard & trip tools"}
           </p>
           {activeTripStats && totalWeightLabel ? (
             <p className="mt-1 text-xs font-bold text-foreground">
@@ -155,16 +161,65 @@ function CampReadyFooter() {
 
   return (
     <div className="relative">
-      {activeTrip ? (
+      {activeTrip && activeTab === "checklist" ? (
         <Fab
           {...fabProps}
-          className={`${activeTab === "checklist" ? "" : "hidden"} lg:flex fab-tablet-split`}
+          className="lg:flex fab-tablet-split"
         />
       ) : null}
       <div className="lg:hidden">
         <BottomNav />
       </div>
     </div>
+  );
+}
+
+function DesktopSecondaryPane() {
+  const { activeTab, setActiveTab } = useCampReady();
+  const secondaryTab: AppTab =
+    activeTab === "meal-prep" ? "meal-prep" : "checklist";
+
+  return (
+    <section
+      aria-label={secondaryTab === "meal-prep" ? "Meal prep" : "Gear checklist"}
+      className="app-split-pane app-split-divider"
+    >
+      <div
+        className="mb-3 flex rounded-xl border border-border bg-surface p-1"
+        role="tablist"
+        aria-label="Trip tools"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={secondaryTab === "checklist"}
+          onClick={() => setActiveTab("checklist")}
+          className={`touch-target inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold active:opacity-90 ${
+            secondaryTab === "checklist"
+              ? "bg-accent text-accent-foreground"
+              : "text-muted"
+          }`}
+        >
+          <ClipboardList className="size-4 shrink-0" aria-hidden />
+          Gear Checklist
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={secondaryTab === "meal-prep"}
+          onClick={() => setActiveTab("meal-prep")}
+          className={`touch-target inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold active:opacity-90 ${
+            secondaryTab === "meal-prep"
+              ? "bg-accent text-accent-foreground"
+              : "text-muted"
+          }`}
+        >
+          <UtensilsCrossed className="size-4 shrink-0" aria-hidden />
+          Meal Prep
+        </button>
+      </div>
+      {secondaryTab === "meal-prep" ? <MealPrepView /> : <ChecklistView />}
+    </section>
   );
 }
 
@@ -178,19 +233,20 @@ function CampReadyShell() {
       <StorageRecoveryBanner />
 
       <div className="lg:hidden">
-        {activeTab === "dashboard" ? <DashboardView /> : <ChecklistView />}
+        {activeTab === "dashboard" ? (
+          <DashboardView />
+        ) : activeTab === "meal-prep" ? (
+          <MealPrepView />
+        ) : (
+          <ChecklistView />
+        )}
       </div>
 
       <div className="hidden lg:grid lg:grid-cols-2 lg:items-start lg:gap-0 lg:py-2">
         <section aria-label="Trip dashboard" className="app-split-pane pr-2">
           <DashboardView />
         </section>
-        <section
-          aria-label="Gear checklist"
-          className="app-split-pane app-split-divider"
-        >
-          <ChecklistView />
-        </section>
+        <DesktopSecondaryPane />
       </div>
 
       {infoView ? <InfoPanel /> : null}

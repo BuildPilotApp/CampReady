@@ -54,12 +54,35 @@ export interface TripRecord extends Trip {
   categories: Category[];
   /** Last saved checklist loaded onto this trip, if any. */
   checklistTemplateId?: string;
+  /**
+   * Optional meal-prep days keyed by relative day number.
+   * Days outside the current date range are preserved but hidden.
+   */
+  mealPrepDays?: MealPrepDay[];
   createdAt: string;
   updatedAt: string;
 }
 
+/** Meal item lifecycle for trip meal prep. */
+export type MealItemStatus = "available" | "consumed";
+
+/** One food / recipe line item within a meal-prep day. */
+export interface MealPrepItem {
+  id: string;
+  title: string;
+  status: MealItemStatus;
+  /** Freeform multi-line recipe notes; may include pasted links. */
+  recipeNotes?: string;
+}
+
+/** Relative day bucket for meal prep (Day 1…N of the trip). */
+export interface MealPrepDay {
+  dayNumber: number;
+  items: MealPrepItem[];
+}
+
 /** Primary app tab routes. */
-export type AppTab = "dashboard" | "checklist";
+export type AppTab = "dashboard" | "checklist" | "meal-prep";
 
 /** Info screen sub-views (opened from the app header). */
 export type InfoView =

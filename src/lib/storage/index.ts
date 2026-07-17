@@ -3,6 +3,7 @@ export {
   createEmptyDatabase,
   createDefaultVehiclePayloadSettings,
   createTrip,
+  createMealPrepItem,
   createCategory,
   createGearItem,
   getTripStats,

@@ -98,6 +98,70 @@ describe("CampSync app backups", () => {
     }
   });
 
+  it("preserves meal prep titles, notes, and consumed status through backup restore", () => {
+    const withMeals: CampReadyDatabase = {
+      ...database,
+      trips: [
+        {
+          ...database.trips[0]!,
+          mealPrepDays: [
+            {
+              dayNumber: 1,
+              items: [
+                {
+                  id: "meal-1",
+                  title: "Dutch oven chili",
+                  status: "consumed",
+                  recipeNotes: "Simmer 45 min. https://example.com/chili",
+                },
+                {
+                  id: "meal-2",
+                  title: "Trail mix",
+                  status: "available",
+                },
+              ],
+            },
+            {
+              dayNumber: 3,
+              items: [
+                {
+                  id: "meal-3",
+                  title: "Hidden day omelette",
+                  status: "available",
+                  recipeNotes: "Eggs and cheese",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = validateCampReadyBackup(formatCampReadyBackup(withMeals));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const days = result.database.trips[0]?.mealPrepDays ?? [];
+      expect(days).toHaveLength(2);
+      expect(days[0]?.items[0]?.title).toBe("Dutch oven chili");
+      expect(days[0]?.items[0]?.status).toBe("consumed");
+      expect(days[0]?.items[0]?.recipeNotes).toContain("https://example.com/chili");
+      expect(days[0]?.items[1]?.status).toBe("available");
+      expect(days[1]?.dayNumber).toBe(3);
+      expect(days[1]?.items[0]?.title).toBe("Hidden day omelette");
+    }
+  });
+
+  it("normalizes legacy trips without meal prep data safely", () => {
+    const result = validateCampReadyBackup(formatCampReadyBackup(database));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const days = result.database.trips[0]?.mealPrepDays;
+      expect(days === undefined || days.length === 0).toBe(true);
+    }
+  });
+
   it("validates and restores normalized full app data", () => {
     const result = validateCampReadyBackup(formatCampReadyBackup(database));
 
