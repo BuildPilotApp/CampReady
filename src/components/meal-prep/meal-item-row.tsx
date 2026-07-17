@@ -1,5 +1,10 @@
 "use client";
 
+import { MealStatusBadge } from "@/components/meal-prep/meal-status-badge";
+import {
+  MealStatusIndicator,
+  mealStatusLabel,
+} from "@/components/meal-prep/meal-status-indicator";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { useAppToast } from "@/components/ui/app-toast-provider";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
@@ -7,7 +12,7 @@ import { usePersistedDraft } from "@/hooks/use-persisted-draft";
 import { splitRecipeNoteSegments, truncateRecipePreview } from "@/lib/meal-prep";
 import { openExternalUrl } from "@/lib/open-external-url";
 import type { MealPrepItem } from "@/types";
-import { Check, ChevronDown, Circle, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { useState, type MouseEvent } from "react";
 
 interface MealItemRowProps {
@@ -96,6 +101,76 @@ export function MealItemRow({ dayNumber, item }: MealItemRowProps) {
   );
 
   const hasNotes = Boolean((item.recipeNotes ?? "").trim());
+  const statusLabel = mealStatusLabel(item.status);
+
+  if (isEditing) {
+    return (
+      <div className="border-b border-border/60 bg-background/40 px-4 py-2.5 last:border-b-0">
+        <div className="flex items-start gap-2">
+          <input
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={handleTitleBlur}
+            className="touch-target min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
+            aria-label="Food title"
+            placeholder="Food title"
+          />
+          <button
+            type="button"
+            onClick={() => setIsEditing(false)}
+            aria-pressed
+            aria-label="Done editing"
+            className="touch-target-icon inline-flex shrink-0 items-center justify-center rounded-lg border border-accent bg-accent/15 text-accent active:opacity-90"
+          >
+            <Pencil className="size-4" aria-hidden />
+          </button>
+          <button
+            ref={ref}
+            type="button"
+            onClick={handleClick}
+            className={`touch-target-icon shrink-0 rounded-lg border active:opacity-90 ${
+              armed
+                ? "min-w-16 border-red-500 bg-red-50 px-3 text-xs font-bold text-red-600"
+                : "border-border text-muted active:text-foreground"
+            }`}
+            aria-label={
+              armed ? `Confirm delete ${item.title}` : `Delete ${item.title}`
+            }
+          >
+            {armed ? "Confirm?" : <Trash2 className="size-4" aria-hidden />}
+          </button>
+        </div>
+
+        <div className="mt-2 border-t border-border/40 pt-2">
+          <button
+            type="button"
+            onClick={() => setRecipeOpen((open) => !open)}
+            aria-expanded={recipeOpen}
+            className="touch-target flex w-full items-center gap-2 py-1 text-left text-sm font-semibold text-muted active:opacity-90"
+          >
+            <ChevronDown
+              className={`size-4 shrink-0 transition-transform ${
+                recipeOpen ? "" : "-rotate-90"
+              }`}
+              aria-hidden
+            />
+            Recipe notes
+          </button>
+          {recipeOpen || !hasNotes ? (
+            <textarea
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              onBlur={handleNotesBlur}
+              rows={4}
+              className="mt-1 min-h-24 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted"
+              placeholder="Ingredients, steps, or paste a recipe link…"
+              aria-label={`Recipe notes for ${item.title}`}
+            />
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -103,86 +178,42 @@ export function MealItemRow({ dayNumber, item }: MealItemRowProps) {
         consumed ? "bg-background/40" : "bg-surface"
       }`}
     >
-      <div className="flex min-h-16 flex-row items-stretch gap-1 px-2 py-2 sm:px-3">
+      <div className="flex min-h-16 flex-row items-center">
         <button
           type="button"
           onClick={() => toggleMealPrepItemStatus(dayNumber, item.id)}
-          aria-pressed={consumed}
-          aria-label={`${item.title}, ${consumed ? "Consumed" : "Available"}. Tap to mark ${consumed ? "available" : "consumed"}.`}
-          className={`touch-target inline-flex min-h-12 min-w-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-2 py-1.5 text-[0.65rem] font-bold uppercase tracking-wide active:opacity-90 sm:min-w-14 ${
-            consumed
-              ? "border-accent/50 bg-accent/15 text-accent"
-              : "border-border bg-background text-muted"
-          }`}
+          aria-label={`${item.title}, ${statusLabel}. Tap to update.`}
+          className="flex min-h-16 min-w-0 flex-1 items-center gap-2.5 px-3 text-left active:opacity-90 sm:gap-3"
         >
-          {consumed ? (
-            <Check className="size-5" strokeWidth={2.75} aria-hidden />
-          ) : (
-            <Circle className="size-5" strokeWidth={2.25} aria-hidden />
-          )}
-          <span>{consumed ? "Eaten" : "Ready"}</span>
-        </button>
-
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
-          {isEditing ? (
-            <input
-              value={titleDraft}
-              onChange={(e) => setTitleDraft(e.target.value)}
-              onBlur={handleTitleBlur}
-              className="touch-target w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-bold text-foreground"
-              aria-label="Food title"
-            />
-          ) : (
+          <span className="inline-flex size-10 shrink-0 items-center justify-center sm:size-11">
+            <MealStatusIndicator status={item.status} />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col justify-center">
             <span
               className={`block truncate text-base font-bold leading-snug ${
                 consumed
-                  ? "text-muted line-through decoration-border dark:text-zinc-500"
-                  : "text-foreground"
+                  ? "text-muted line-through decoration-border dark:text-zinc-500 dark:decoration-zinc-600"
+                  : "text-foreground dark:text-white"
               }`}
             >
               {item.title}
             </span>
-          )}
-          <span
-            className={`text-xs font-semibold ${
-              consumed ? "text-accent" : "text-muted"
-            }`}
-          >
-            {consumed ? "Consumed" : "Available"}
           </span>
-        </div>
-
-        <div className="flex shrink-0 flex-col items-center justify-center gap-1">
+        </button>
+        <div className="flex shrink-0 flex-row items-center gap-1.5 pr-2 sm:gap-2 sm:pr-3">
+          <MealStatusBadge
+            status={item.status}
+            compact
+            className="hidden shrink-0 sm:inline-flex"
+          />
           <button
             type="button"
-            onClick={() => setIsEditing((open) => !open)}
-            aria-pressed={isEditing}
-            aria-label={isEditing ? "Done editing" : `Edit ${item.title}`}
-            className={`touch-target-icon inline-flex items-center justify-center rounded-lg border active:opacity-90 ${
-              isEditing
-                ? "border-accent bg-accent/15 text-accent"
-                : "border-border text-muted"
-            }`}
+            onClick={() => setIsEditing(true)}
+            aria-label={`Edit ${item.title}`}
+            className="touch-target-icon inline-flex items-center justify-center rounded-lg border border-border text-muted active:opacity-90"
           >
             <Pencil className="size-4" aria-hidden />
           </button>
-          {isEditing ? (
-            <button
-              ref={ref}
-              type="button"
-              onClick={handleClick}
-              className={`touch-target-icon inline-flex items-center justify-center rounded-lg border active:opacity-90 ${
-                armed
-                  ? "min-w-16 border-red-500 bg-red-50 px-2 text-xs font-bold text-red-600"
-                  : "border-border text-muted"
-              }`}
-              aria-label={
-                armed ? `Confirm delete ${item.title}` : `Delete ${item.title}`
-              }
-            >
-              {armed ? "Confirm?" : <Trash2 className="size-4" aria-hidden />}
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -208,7 +239,7 @@ export function MealItemRow({ dayNumber, item }: MealItemRowProps) {
         </button>
 
         {recipeOpen ? (
-          isEditing || !hasNotes ? (
+          !hasNotes ? (
             <textarea
               value={notesDraft}
               onChange={(e) => setNotesDraft(e.target.value)}
