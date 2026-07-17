@@ -23,3 +23,7 @@ for (const size of pngSizes) {
   await sharp(src).resize(size, size).png().toFile(out);
   console.log(`Wrote ${out}`);
 }
+
+const appIconOut = path.join(publicIcons, "app-icon.png");
+await sharp(src).png().toFile(appIconOut);
+console.log(`Wrote ${appIconOut}`);
