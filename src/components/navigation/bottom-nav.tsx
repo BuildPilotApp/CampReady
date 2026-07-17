@@ -9,12 +9,12 @@ import { ClipboardList, LayoutDashboard, UtensilsCrossed } from "lucide-react";
 const BASE_TABS: { id: AppTab; label: string; icon: typeof LayoutDashboard }[] =
   [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "checklist", label: "Gear", icon: ClipboardList },
+    { id: "checklist", label: "Gear Checklist", icon: ClipboardList },
   ];
 
 const MEAL_TAB: { id: AppTab; label: string; icon: typeof LayoutDashboard } = {
   id: "meal-prep",
-  label: "Meals",
+  label: "Meal Prep",
   icon: UtensilsCrossed,
 };
 

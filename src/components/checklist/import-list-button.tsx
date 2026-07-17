@@ -88,7 +88,11 @@ export function ImportListButton({
         return;
       }
 
-      const result = importChecklistIntoTrip(targetTripId, validation.data.categories);
+      const result = importChecklistIntoTrip(
+        targetTripId,
+        validation.data.categories,
+        validation.data.mealItems,
+      );
       if (!result) {
         reportStatus({
           type: "error",

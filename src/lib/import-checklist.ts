@@ -1,16 +1,24 @@
 import { STATUS_LABELS } from "@/lib/gear-status";
+import { MEAL_STATUS_LABELS } from "@/lib/export-checklist";
 import {
   CHECKLIST_EXPORT_VERSION,
   isAcceptedChecklistExportFormat,
   type ChecklistExportCategory,
   type ChecklistExportDocument,
 } from "@/lib/checklist-export-format";
-import { createCategory, createGearItem } from "@/lib/storage";
+import { createCategory, createGearItem, createMealPrepItem } from "@/lib/storage";
 import {
   clearImportValidationFailure,
   notifyImportValidationFailure,
 } from "@/lib/storage/storage-notifications";
-import type { Category, GearItemStatus } from "@/types";
+import { upsertMealPrepDayItems } from "@/lib/meal-prep";
+import type {
+  Category,
+  GearItemStatus,
+  MealItemStatus,
+  MealPrepDay,
+  MealPrepItem,
+} from "@/types";
 
 const GEAR_STATUSES: GearItemStatus[] = ["missing", "staged", "packed"];
 /** ~2 MB limit prevents main-thread stalls on large imports in the field. */
@@ -25,13 +33,28 @@ const STATUS_BY_LABEL: Record<string, GearItemStatus> = {
   packed: "packed",
 };
 
+const MEAL_STATUS_BY_LABEL: Record<string, MealItemStatus> = {
+  [MEAL_STATUS_LABELS.available]: "available",
+  [MEAL_STATUS_LABELS.consumed]: "consumed",
+  available: "available",
+  consumed: "consumed",
+};
+
 export interface ImportValidationError {
   path: string;
   message: string;
 }
 
+export interface MealImportItem {
+  dayNumber: number;
+  title: string;
+  status: MealItemStatus;
+  recipeNotes?: string;
+}
+
 export interface ValidatedChecklistImport {
   categories: ChecklistExportCategory[];
+  mealItems?: MealImportItem[];
   sourceFormat: "json" | "csv";
 }
 
@@ -41,6 +64,9 @@ export interface ImportMergeResult {
   categoriesMerged: number;
   itemsAdded: number;
   itemsUpdated: number;
+  mealPrepDays?: MealPrepDay[];
+  mealsAdded: number;
+  mealsUpdated: number;
 }
 
 export type ImportValidationResult =
@@ -83,6 +109,61 @@ function normalizeName(value: string): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseMealStatus(
+  value: unknown,
+  path: string,
+  errors: ImportValidationError[],
+): MealItemStatus | null {
+  if (value == null || value === "") {
+    return "available";
+  }
+
+  if (typeof value !== "string") {
+    errors.push({ path, message: "Meal status must be text when provided." });
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "available";
+  }
+
+  const status =
+    MEAL_STATUS_BY_LABEL[trimmed] ?? MEAL_STATUS_BY_LABEL[trimmed.toLowerCase()];
+  if (!status) {
+    errors.push({
+      path,
+      message: `Meal status must be one of: Available, Consumed.`,
+    });
+    return null;
+  }
+
+  return status;
+}
+
+function parseMealDay(
+  value: unknown,
+  path: string,
+  errors: ImportValidationError[],
+): number | null {
+  if (value == null || value === "") {
+    errors.push({ path, message: "Day number is required for Meal rows." });
+    return null;
+  }
+
+  const numeric =
+    typeof value === "number" ? value : Number(String(value).trim());
+  if (!Number.isInteger(numeric) || numeric < 1) {
+    errors.push({
+      path,
+      message: "Day must be a positive whole number (1, 2, 3…).",
+    });
+    return null;
+  }
+
+  return numeric;
 }
 
 function parseStatus(value: unknown, path: string, errors: ImportValidationError[]): GearItemStatus | null {
@@ -353,7 +434,33 @@ function parseCsvRows(raw: string): CsvParseResult {
   };
 }
 
-const CSV_HEADERS = ["category", "item", "status", "weight (lbs)", "storage"];
+const LEGACY_CSV_HEADERS = ["category", "item", "status", "weight (lbs)", "storage"];
+const COMBINED_CSV_HEADERS = [
+  "type",
+  "category",
+  "item",
+  "status",
+  "weight (lbs)",
+  "storage",
+  "day",
+  "recipe notes",
+];
+
+function isLegacyCsvHeader(header: string[]): boolean {
+  return (
+    header.length >= 3 &&
+    header[0] === LEGACY_CSV_HEADERS[0] &&
+    header[1] === LEGACY_CSV_HEADERS[1] &&
+    header[2] === LEGACY_CSV_HEADERS[2]
+  );
+}
+
+function isCombinedCsvHeader(header: string[]): boolean {
+  return (
+    header.length >= COMBINED_CSV_HEADERS.length &&
+    COMBINED_CSV_HEADERS.every((expected, index) => header[index] === expected)
+  );
+}
 
 function validateChecklistCsv(raw: string): ImportValidationResult {
   const errors: ImportValidationError[] = [];
@@ -366,27 +473,99 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
   }
 
   const header = rows[0]!.map((cell) => cell.trim().toLowerCase());
-  const headerMatches =
-    header.length >= 3 &&
-    header[0] === CSV_HEADERS[0] &&
-    header[1] === CSV_HEADERS[1] &&
-    header[2] === CSV_HEADERS[2];
+  const combined = isCombinedCsvHeader(header);
+  const legacy = !combined && isLegacyCsvHeader(header);
 
-  if (!headerMatches) {
+  if (!combined && !legacy) {
     errors.push({
       path: "csv.header",
       message:
-        'CSV must start with headers: Category, Item, Status, Weight (lbs), Storage.',
+        'CSV must start with headers: Type, Category, Item, Status, Weight (lbs), Storage, Day, Recipe Notes (or legacy Category, Item, Status, Weight (lbs), Storage).',
     });
     return { ok: false, errors };
   }
 
   const categoryMap = new Map<string, ChecklistExportCategory>();
+  const mealItems: MealImportItem[] = [];
 
   rows.slice(1).forEach((row, rowIndex) => {
     const path = `csv.rows[${rowIndex + 1}]`;
-    const categoryName = row[0]?.trim() ?? "";
-    const itemName = row[1]?.trim() ?? "";
+
+    if (legacy) {
+      const categoryName = row[0]?.trim() ?? "";
+      const itemName = row[1]?.trim() ?? "";
+
+      if (!categoryName) {
+        errors.push({ path: `${path}.category`, message: "Category name is required." });
+        return;
+      }
+
+      if (!itemName) {
+        errors.push({ path: `${path}.item`, message: "Item name is required." });
+        return;
+      }
+
+      const status = parseStatus(row[2], `${path}.status`, errors);
+      if (!status) {
+        return;
+      }
+
+      const weight_lbs = parseOptionalWeight(row[3], `${path}.weight`, errors);
+      const storageLocation = parseOptionalStorage(row[4]);
+
+      const key = normalizeName(categoryName);
+      const category = categoryMap.get(key) ?? { name: categoryName, items: [] };
+      category.items.push({
+        name: itemName,
+        status,
+        ...(weight_lbs != null ? { weight_lbs } : {}),
+        ...(storageLocation ? { storageLocation } : {}),
+      });
+      categoryMap.set(key, category);
+      return;
+    }
+
+    const typeRaw = (row[0]?.trim() ?? "").toLowerCase();
+    const isMeal = typeRaw === "meal";
+    const isGear = typeRaw === "gear" || typeRaw === "";
+
+    if (!isMeal && !isGear) {
+      errors.push({
+        path: `${path}.type`,
+        message: 'Type must be "Gear" or "Meal".',
+      });
+      return;
+    }
+
+    if (isMeal) {
+      const title = row[2]?.trim() ?? "";
+      if (!title) {
+        errors.push({ path: `${path}.item`, message: "Meal item title is required." });
+        return;
+      }
+
+      const dayNumber = parseMealDay(row[6], `${path}.day`, errors);
+      if (dayNumber == null) {
+        return;
+      }
+
+      const status = parseMealStatus(row[3], `${path}.status`, errors);
+      if (!status) {
+        return;
+      }
+
+      const recipeNotes = row[7]?.trim() || undefined;
+      mealItems.push({
+        dayNumber,
+        title,
+        status,
+        ...(recipeNotes ? { recipeNotes } : {}),
+      });
+      return;
+    }
+
+    const categoryName = row[1]?.trim() ?? "";
+    const itemName = row[2]?.trim() ?? "";
 
     if (!categoryName) {
       errors.push({ path: `${path}.category`, message: "Category name is required." });
@@ -398,13 +577,13 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
       return;
     }
 
-    const status = parseStatus(row[2], `${path}.status`, errors);
+    const status = parseStatus(row[3], `${path}.status`, errors);
     if (!status) {
       return;
     }
 
-    const weight_lbs = parseOptionalWeight(row[3], `${path}.weight`, errors);
-    const storageLocation = parseOptionalStorage(row[4]);
+    const weight_lbs = parseOptionalWeight(row[4], `${path}.weight`, errors);
+    const storageLocation = parseOptionalStorage(row[5]);
 
     const key = normalizeName(categoryName);
     const category = categoryMap.get(key) ?? { name: categoryName, items: [] };
@@ -422,10 +601,14 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
   }
 
   const categories = [...categoryMap.values()];
-  if (categories.length === 0 || categories.every((category) => category.items.length === 0)) {
+  const hasGear = categories.some((category) => category.items.length > 0);
+  const hasMeals = mealItems.length > 0;
+
+  if (!hasGear && !hasMeals) {
     errors.push({
       path: "categories",
-      message: "This list is empty. Add at least one gear item before importing.",
+      message:
+        "This list is empty. Add at least one gear or meal item before importing.",
     });
     return { ok: false, errors };
   }
@@ -435,6 +618,7 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
     data: {
       sourceFormat: "csv",
       categories,
+      ...(hasMeals ? { mealItems } : {}),
     },
   };
 }
@@ -647,7 +831,66 @@ export function mergeImportedCategories(
     categoriesMerged,
     itemsAdded,
     itemsUpdated,
+    mealsAdded: 0,
+    mealsUpdated: 0,
   };
+}
+
+export function mergeImportedMealItems(
+  existing: MealPrepDay[] | undefined,
+  imported: MealImportItem[],
+): {
+  mealPrepDays: MealPrepDay[];
+  mealsAdded: number;
+  mealsUpdated: number;
+} {
+  let mealPrepDays = [...(existing ?? [])];
+  let mealsAdded = 0;
+  let mealsUpdated = 0;
+
+  for (const importedItem of imported) {
+    const day = mealPrepDays.find((entry) => entry.dayNumber === importedItem.dayNumber);
+    const items = day ? [...day.items] : [];
+    const match = items.find(
+      (item) => normalizeName(item.title) === normalizeName(importedItem.title),
+    );
+
+    if (!match) {
+      const next: MealPrepItem = createMealPrepItem({
+        title: importedItem.title,
+        status: importedItem.status,
+        recipeNotes: importedItem.recipeNotes,
+      });
+      items.push(next);
+      mealPrepDays = upsertMealPrepDayItems(mealPrepDays, importedItem.dayNumber, items);
+      mealsAdded += 1;
+      continue;
+    }
+
+    let changed = false;
+    if (match.status !== importedItem.status) {
+      match.status = importedItem.status;
+      changed = true;
+    }
+
+    const nextNotes = importedItem.recipeNotes?.trim() || undefined;
+    const currentNotes = match.recipeNotes?.trim() || undefined;
+    if (nextNotes !== currentNotes) {
+      if (nextNotes) {
+        match.recipeNotes = nextNotes;
+      } else {
+        delete match.recipeNotes;
+      }
+      changed = true;
+    }
+
+    if (changed) {
+      mealsUpdated += 1;
+      mealPrepDays = upsertMealPrepDayItems(mealPrepDays, importedItem.dayNumber, items);
+    }
+  }
+
+  return { mealPrepDays, mealsAdded, mealsUpdated };
 }
 
 export function formatImportMergeSummary(result: ImportMergeResult): string {
@@ -664,7 +907,21 @@ export function formatImportMergeSummary(result: ImportMergeResult): string {
   if (result.itemsUpdated > 0) {
     parts.push(`${result.itemsUpdated} item${result.itemsUpdated === 1 ? "" : "s"} updated`);
   }
-  if (result.categoriesMerged > 0 && result.itemsAdded === 0 && result.itemsUpdated === 0) {
+  if (result.mealsAdded > 0) {
+    parts.push(`${result.mealsAdded} meal${result.mealsAdded === 1 ? "" : "s"} added`);
+  }
+  if (result.mealsUpdated > 0) {
+    parts.push(
+      `${result.mealsUpdated} meal${result.mealsUpdated === 1 ? "" : "s"} updated`,
+    );
+  }
+  if (
+    result.categoriesMerged > 0 &&
+    result.itemsAdded === 0 &&
+    result.itemsUpdated === 0 &&
+    result.mealsAdded === 0 &&
+    result.mealsUpdated === 0
+  ) {
     parts.push("existing checklist already up to date");
   }
 

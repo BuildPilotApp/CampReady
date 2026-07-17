@@ -184,7 +184,7 @@ const USER_GUIDE: UserGuideSection[] = [
       },
       {
         icon: ClipboardList,
-        text: "CSV rows: Category and Item are required; Status, Weight, and Storage are optional.",
+        text: "CSV rows: Type is Gear or Meal. Gear needs Category and Item; Meal needs Day and Item. Status, Weight, Storage, and Recipe Notes are optional.",
       },
     ],
   },

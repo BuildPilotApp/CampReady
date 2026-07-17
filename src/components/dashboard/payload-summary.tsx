@@ -158,8 +158,8 @@ function ActivePayloadSummary({ trip }: { trip: TripRecord }) {
           ringPercent={usage.ringPercent}
           status={usage.status}
           centerLabel={percentLabel}
-          centerSubLabel="used"
-          ariaLabel={`Payload ${percentLabel} used. ${STATUS_LABEL[usage.status]}. Packed ${formatWeight(usage.packedWeightLbs, units)} of ${formatWeight(usage.capacityLbs, units)}.`}
+          centerSubLabel="capacity"
+          ariaLabel={`Payload ${percentLabel} capacity. ${STATUS_LABEL[usage.status]}. Packed ${formatWeight(usage.packedWeightLbs, units)} of ${formatWeight(usage.capacityLbs, units)}.`}
         />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-foreground">Payload Summary</p>

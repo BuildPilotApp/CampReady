@@ -4,7 +4,9 @@ import { nextGearStatus } from "@/lib/gear-status";
 import type { ChecklistExportCategory } from "@/lib/checklist-export-format";
 import {
   mergeImportedCategories,
+  mergeImportedMealItems,
   type ImportMergeResult,
+  type MealImportItem,
 } from "@/lib/import-checklist";
 import { cloneCategories, clearDatabase, createCategory, createGearItem, createTrip, createEmptyDatabase, ensureSeededDatabase, getTripStats, hasValidLocalStorageSnapshot, hydrateDatabase, readDatabaseSync, touchTrip, writeDatabaseSync, type HydrationRecoveryReason } from "@/lib/storage";
 import { dismissWelcome } from "@/lib/onboarding";
@@ -158,6 +160,7 @@ interface CampReadyContextValue {
   importChecklistIntoTrip: (
     tripId: string,
     categories: ChecklistExportCategory[],
+    mealItems?: MealImportItem[],
   ) => ImportMergeResult | null;
   storageRecovery: HydrationRecoveryReason | null;
   dismissStorageRecovery: () => void;
@@ -967,22 +970,41 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
   }, [database, persist]);
 
   const importChecklistIntoTrip = useCallback(
-    (tripId: string, categories: ChecklistExportCategory[]) => {
+    (
+      tripId: string,
+      categories: ChecklistExportCategory[],
+      mealItems?: MealImportItem[],
+    ) => {
       if (!database) return null;
 
       const trip = database.trips.find((entry) => entry.id === tripId);
       if (!trip) return null;
 
       const result = mergeImportedCategories(trip.categories, categories);
+      const mealResult =
+        mealItems && mealItems.length > 0
+          ? mergeImportedMealItems(trip.mealPrepDays, mealItems)
+          : {
+              mealPrepDays: trip.mealPrepDays ?? [],
+              mealsAdded: 0,
+              mealsUpdated: 0,
+            };
+
       persist(
         updateTripById(database, tripId, (currentTrip) => ({
           ...currentTrip,
           categories: result.categories,
+          mealPrepDays: mealResult.mealPrepDays,
           checklistTemplateId: undefined,
         })),
       );
       setChecklistFilter("all");
-      return result;
+      return {
+        ...result,
+        mealPrepDays: mealResult.mealPrepDays,
+        mealsAdded: mealResult.mealsAdded,
+        mealsUpdated: mealResult.mealsUpdated,
+      };
     },
     [database, persist],
   );
