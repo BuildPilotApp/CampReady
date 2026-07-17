@@ -13,7 +13,16 @@ export function createEmptyDatabase(): CampReadyDatabase {
     trips: [],
     templates: [],
     activeTripId: null,
+    vehiclePayload: {
+      alarmEnabled: false,
+    },
   };
+}
+
+export function createDefaultVehiclePayloadSettings(): NonNullable<
+  CampReadyDatabase["vehiclePayload"]
+> {
+  return { alarmEnabled: false };
 }
 
 export function createTrip(

@@ -1,6 +1,8 @@
 "use client";
 
 import { MobileShell } from "@/components/layout/mobile-shell";
+import { useCampReady } from "@/components/providers/camp-ready-provider";
+import { usePro } from "@/components/providers/pro-provider";
 import { useSystemTheme } from "@/components/providers/system-theme-provider";
 import { useUnits } from "@/components/providers/units-provider";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -21,6 +23,7 @@ import type { CampReadyDatabase } from "@/types";
 import {
   ArrowLeft,
   Download,
+  Lock,
   Moon,
   Ruler,
   Scale,
@@ -29,7 +32,7 @@ import {
   Upload,
 } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 const THEME_OPTIONS: {
   id: AppTheme;
@@ -84,12 +87,172 @@ function SettingsHeader() {
       <div className="min-w-0 flex-1">
         <p className="text-lg font-bold leading-tight text-foreground">Settings</p>
         <p className="truncate text-sm font-medium text-muted">
-          Theme, units, backups, and app details        </p>
+          Theme, units, payload, backups, and app details
+        </p>
       </div>
       <div className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
         <Settings className="size-6" strokeWidth={2.25} aria-hidden />
       </div>
     </div>
+  );
+}
+
+function VehiclePayloadSettingsSection() {
+  const { database, updateVehiclePayloadSettings } = useCampReady();
+  const { isPro, openPaywall } = usePro();
+  const capacityInputId = useId();
+  const alarmEnabled = database.vehiclePayload?.alarmEnabled === true;
+  const storedCapacity = database.vehiclePayload?.maxPayloadCapacityLbs;
+  const [capacityDraft, setCapacityDraft] = useState(
+    typeof storedCapacity === "number" && storedCapacity > 0
+      ? String(storedCapacity)
+      : "",
+  );
+  const [capacityError, setCapacityError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCapacityDraft(
+      typeof storedCapacity === "number" && storedCapacity > 0
+        ? String(storedCapacity)
+        : "",
+    );
+  }, [storedCapacity]);
+
+  const commitCapacity = (raw: string) => {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      setCapacityError("Enter a max payload capacity greater than 0.");
+      return;
+    }
+
+    const numeric = Number(trimmed);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      setCapacityError("Enter a valid capacity greater than 0 lbs.");
+      return;
+    }
+
+    setCapacityError(null);
+    updateVehiclePayloadSettings({ maxPayloadCapacityLbs: numeric });
+  };
+
+  return (
+    <section className="rounded-xl border-2 border-border bg-surface p-4">
+      <h2 className="text-base font-bold text-foreground">
+        Vehicle Payload Management
+      </h2>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        Track packed gear weight against your vehicle&apos;s max payload capacity.
+      </p>
+
+      {!isPro ? (
+        <div className="mt-4 rounded-xl border border-border bg-background px-4 py-3">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
+              <Lock className="size-4" strokeWidth={2.25} aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">
+                CampSync Pro feature
+              </p>
+              <p className="mt-1 text-xs leading-snug text-muted">
+                Unlock payload alarms and dashboard capacity monitoring.
+              </p>
+              <button
+                type="button"
+                onClick={openPaywall}
+                className="touch-target mt-3 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-500 to-teal-500 px-3 py-2 text-xs font-bold text-zinc-950 active:opacity-90"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-col gap-4">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={alarmEnabled}
+            onClick={() =>
+              updateVehiclePayloadSettings({ alarmEnabled: !alarmEnabled })
+            }
+            className={`touch-target flex items-center gap-3 rounded-xl border-2 p-3 text-left active:opacity-90 ${
+              alarmEnabled
+                ? "border-accent bg-accent/15"
+                : "border-border bg-background"
+            }`}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-bold text-foreground">
+                Enable Vehicle Payload Alarm
+              </span>
+              <span className="mt-0.5 block text-sm leading-snug text-muted">
+                Show a payload summary on the dashboard for the selected trip.
+              </span>
+            </span>
+            <span
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border-2 transition-colors ${
+                alarmEnabled
+                  ? "border-accent bg-accent"
+                  : "border-border bg-surface"
+              }`}
+              aria-hidden
+            >
+              <span
+                className={`inline-block size-5 rounded-full bg-foreground transition-transform ${
+                  alarmEnabled ? "translate-x-5" : "translate-x-1"
+                }`}
+              />
+            </span>
+          </button>
+
+          {alarmEnabled ? (
+            <div className="rounded-xl border border-border bg-background px-3 py-3">
+              <label
+                htmlFor={capacityInputId}
+                className="flex flex-col gap-1.5"
+              >
+                <span className="text-xs font-bold uppercase tracking-wide text-muted">
+                  Max Payload Capacity (lbs)
+                </span>
+                <input
+                  id={capacityInputId}
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="any"
+                  value={capacityDraft}
+                  onChange={(event) => {
+                    setCapacityDraft(event.target.value);
+                    if (capacityError) setCapacityError(null);
+                  }}
+                  onBlur={() => commitCapacity(capacityDraft)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.currentTarget.blur();
+                    }
+                  }}
+                  placeholder="e.g. 1200"
+                  className="touch-target rounded-xl border-2 border-border bg-surface px-3 text-base font-semibold text-foreground"
+                />
+              </label>
+              <p className="mt-2 text-xs leading-snug text-muted">
+                Max vehicle payload weight + weights of all passengers, vehicle
+                armor, winch, etc.
+              </p>
+              {capacityError ? (
+                <p
+                  role="alert"
+                  className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400"
+                >
+                  {capacityError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -259,6 +422,8 @@ export function SettingsPage() {
           </div>
         </section>
 
+        <VehiclePayloadSettingsSection />
+
         <section className="rounded-xl border-2 border-border bg-surface p-4">
           <h2 className="text-base font-bold text-foreground">Backup & Restore</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
@@ -286,7 +451,8 @@ export function SettingsPage() {
           <input
             ref={restoreInputRef}
             type="file"
-            accept="application/json,text/plain,.json,.campsync,.campready,*/*"            className="sr-only"
+            accept="application/json,text/plain,.json,.campsync,.campready,*/*"
+            className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
@@ -313,7 +479,8 @@ export function SettingsPage() {
         </section>
 
         <section className="rounded-xl border-2 border-border bg-surface p-4">
-          <h2 className="text-base font-bold text-foreground">About CampSync</h2>          <dl className="mt-4 grid gap-3">
+          <h2 className="text-base font-bold text-foreground">About CampSync</h2>
+          <dl className="mt-4 grid gap-3">
             <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background px-3 py-2.5">
               <dt className="text-sm font-semibold text-muted">Version</dt>
               <dd className="text-sm font-bold text-foreground">{APP_VERSION}</dd>

@@ -62,6 +62,42 @@ describe("CampSync app backups", () => {
     expect(parsed.database.activeTripId).toBe("trip-1");
   });
 
+  it("preserves vehicle payload settings through format and restore", () => {
+    const withPayload: CampReadyDatabase = {
+      ...database,
+      vehiclePayload: {
+        alarmEnabled: true,
+        maxPayloadCapacityLbs: 1200,
+      },
+    };
+
+    const result = validateCampReadyBackup(formatCampReadyBackup(withPayload));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.database.vehiclePayload?.alarmEnabled).toBe(true);
+      expect(result.database.vehiclePayload?.maxPayloadCapacityLbs).toBe(1200);
+    }
+  });
+
+  it("defaults missing vehicle payload settings on legacy backups", () => {
+    const legacy = {
+      version: CAMPREADY_BACKUP_VERSION,
+      format: CAMPREADY_BACKUP_FORMAT,
+      exportedAt: "2026-01-01T00:00:00.000Z",
+      app: "CampReady",
+      database,
+    };
+
+    const result = validateCampReadyBackup(JSON.stringify(legacy));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.database.vehiclePayload?.alarmEnabled).toBe(false);
+      expect(result.database.vehiclePayload?.maxPayloadCapacityLbs).toBeUndefined();
+    }
+  });
+
   it("validates and restores normalized full app data", () => {
     const result = validateCampReadyBackup(formatCampReadyBackup(database));
 

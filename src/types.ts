@@ -74,10 +74,19 @@ export type InfoView =
 /** Checklist filter mode for the master list. */
 export type ChecklistFilter = "all" | "remaining";
 
+/** Device-level vehicle payload alarm preferences (Pro feature). */
+export interface VehiclePayloadSettings {
+  alarmEnabled: boolean;
+  /** Canonical capacity in pounds; unset until the user enters a value. */
+  maxPayloadCapacityLbs?: number;
+}
+
 /** Root document persisted to local storage. */
 export interface CampReadyDatabase {
   version: 1;
   trips: TripRecord[];
   templates: ChecklistTemplate[];
   activeTripId: string | null;
+  /** Optional; missing on older installs means the alarm is off. */
+  vehiclePayload?: VehiclePayloadSettings;
 }

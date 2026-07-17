@@ -6,10 +6,16 @@ import type {
   GearItemStatus,
   TripLocation,
   TripRecord,
+  VehiclePayloadSettings,
 } from "@/types";
 import { filterUserSavedTemplates } from "@/lib/templates";
 import { DATABASE_VERSION } from "./constants";
-import { createEmptyDatabase, createGearItem, createTrip } from "./defaults";
+import {
+  createDefaultVehiclePayloadSettings,
+  createEmptyDatabase,
+  createGearItem,
+  createTrip,
+} from "./defaults";
 import { logStorageRepair, getStorageAuditLog, type StorageAuditPhase } from "./storage-audit-log";
 
 const GEAR_STATUSES: GearItemStatus[] = ["missing", "staged", "packed"];
@@ -354,6 +360,52 @@ function normalizeTemplates(raw: unknown, phase: StorageAuditPhase): ChecklistTe
     .filter((template): template is ChecklistTemplate => template !== null);
 }
 
+function normalizeVehiclePayload(
+  raw: unknown,
+  phase: StorageAuditPhase,
+): VehiclePayloadSettings {
+  if (raw == null) {
+    return createDefaultVehiclePayloadSettings();
+  }
+
+  if (typeof raw !== "object") {
+    audit(phase, "strip", "vehiclePayload", "Malformed vehicle payload settings removed.");
+    return createDefaultVehiclePayloadSettings();
+  }
+
+  const record = raw as Record<string, unknown>;
+  const alarmEnabled = record.alarmEnabled === true;
+
+  if (record.alarmEnabled != null && typeof record.alarmEnabled !== "boolean") {
+    audit(
+      phase,
+      "repair",
+      "vehiclePayload.alarmEnabled",
+      "Invalid alarm flag. Defaulting to disabled.",
+    );
+  }
+
+  const capacity = coerceWeightLbs(
+    record.maxPayloadCapacityLbs,
+    "vehiclePayload.maxPayloadCapacityLbs",
+    phase,
+  );
+
+  const settings: VehiclePayloadSettings = { alarmEnabled };
+  if (typeof capacity === "number" && capacity > 0) {
+    settings.maxPayloadCapacityLbs = capacity;
+  } else if (capacity === 0) {
+    audit(
+      phase,
+      "strip",
+      "vehiclePayload.maxPayloadCapacityLbs",
+      "Non-positive capacity removed.",
+    );
+  }
+
+  return settings;
+}
+
 /**
  * Deeply validates and repairs a parsed database document.
  * Never throws. Corrupt records are stripped or coerced with audit logging.
@@ -436,12 +488,15 @@ export function normalizeDatabaseDocument(
 
   repairCount = getStorageAuditLog().length - countBefore;
 
+  const vehiclePayload = normalizeVehiclePayload(record.vehiclePayload, phase);
+
   return {
     database: {
       version: DATABASE_VERSION,
       trips: normalizedTrips,
       templates,
       activeTripId,
+      vehiclePayload,
     },
     repairCount,
   };

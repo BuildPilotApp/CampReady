@@ -2,6 +2,7 @@
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InventoryTemplatePicker } from "@/components/dashboard/inventory-template-picker";
+import { PayloadSummary } from "@/components/dashboard/payload-summary";
 import { FreePlanUsageCard } from "@/components/premium/free-plan-usage-card";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { LocationInput, type LocationInputHandle } from "@/components/ui/location-input";
@@ -413,6 +414,7 @@ export function TripManager() {
                         </p>
                       </div>
                     </div>
+                    <PayloadSummary trip={trip} />
                   </div>
                 ) : null}
 

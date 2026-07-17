@@ -36,6 +36,7 @@ import type {
   InfoView,
   TripRecord,
   TripLocation,
+  VehiclePayloadSettings,
 } from "@/types";
 import {
   createContext,
@@ -156,6 +157,9 @@ interface CampReadyContextValue {
   restoreBackupCategories: (
     categories: ChecklistExportCategory[],
   ) => ImportMergeResult | null;
+  updateVehiclePayloadSettings: (
+    patch: Partial<VehiclePayloadSettings>,
+  ) => void;
 }
 
 const CampReadyContext = createContext<CampReadyContextValue | null>(null);
@@ -1023,6 +1027,38 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const updateVehiclePayloadSettings = useCallback(
+    (patch: Partial<VehiclePayloadSettings>) => {
+      if (!database) return;
+
+      const current = database.vehiclePayload ?? { alarmEnabled: false };
+      const next: VehiclePayloadSettings = {
+        alarmEnabled:
+          typeof patch.alarmEnabled === "boolean"
+            ? patch.alarmEnabled
+            : current.alarmEnabled,
+      };
+
+      if ("maxPayloadCapacityLbs" in patch) {
+        const capacity = patch.maxPayloadCapacityLbs;
+        if (typeof capacity === "number" && Number.isFinite(capacity) && capacity > 0) {
+          next.maxPayloadCapacityLbs = capacity;
+        }
+      } else if (
+        typeof current.maxPayloadCapacityLbs === "number" &&
+        current.maxPayloadCapacityLbs > 0
+      ) {
+        next.maxPayloadCapacityLbs = current.maxPayloadCapacityLbs;
+      }
+
+      persist({
+        ...database,
+        vehiclePayload: next,
+      });
+    },
+    [database, persist],
+  );
+
   const value = useMemo<CampReadyContextValue | null>(() => {
     if (!database) {
       return null;
@@ -1077,6 +1113,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       dismissStorageRecovery,
       resetAllData,
       restoreBackupCategories,
+      updateVehiclePayloadSettings,
     };
   }, [
     ready,
@@ -1124,6 +1161,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     dismissStorageRecovery,
     resetAllData,
     restoreBackupCategories,
+    updateVehiclePayloadSettings,
   ]);
 
   if (!value) {

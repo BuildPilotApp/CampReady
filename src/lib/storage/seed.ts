@@ -39,6 +39,7 @@ export function ensureSeededDatabase(
       data.activeTripId && trips.some((trip) => trip.id === data.activeTripId)
         ? data.activeTripId
         : trips[0]?.id ?? null,
+    vehiclePayload: data.vehiclePayload ?? { alarmEnabled: false },
   };
 }
 

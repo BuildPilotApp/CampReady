@@ -1,6 +1,7 @@
 export { STORAGE_KEY, DATABASE_VERSION } from "./constants";
 export {
   createEmptyDatabase,
+  createDefaultVehiclePayloadSettings,
   createTrip,
   createCategory,
   createGearItem,
