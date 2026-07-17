@@ -639,6 +639,8 @@ export function InfoPanel() {
                 <li>Unlimited trips instead of {FREE_TRIP_LIMIT}.</li>
                 <li>Unlimited saved checklists instead of {FREE_TEMPLATE_LIMIT}.</li>
                 <li>Import List for merging spreadsheet (.xlsx) or legacy CSV/JSON into a selected trip.</li>
+                <li>Vehicle payload monitoring on the Dashboard.</li>
+                <li>Meal Prep with day-by-day planning and recipe notes.</li>
                 <li>A one-time Google Play purchase with no subscription.</li>
               </ul>
             </div>

@@ -7,7 +7,7 @@ import {
   restoreNativeCampReadyPro,
 } from "@/lib/native-billing";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
-import { Check, RefreshCw, Shield, Sparkles, UtensilsCrossed, X } from "lucide-react";
+import { Check, Gauge, RefreshCw, Shield, Sparkles, UtensilsCrossed, X } from "lucide-react";
 import { useState } from "react";
 
 const FEATURES = [
@@ -27,6 +27,12 @@ const FEATURES = [
     title: "Import & merge pack lists",
     description:
       "Merge spreadsheet gear lists into trips without duplicates.",
+  },
+  {
+    icon: Gauge,
+    title: "Vehicle payload monitoring",
+    description:
+      "Track packed gear weight against your vehicle's max payload capacity on the Dashboard.",
   },
   {
     icon: UtensilsCrossed,
