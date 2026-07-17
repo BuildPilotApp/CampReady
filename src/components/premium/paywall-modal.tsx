@@ -26,7 +26,7 @@ const FEATURES = [
     icon: Shield,
     title: "Import & merge pack lists",
     description:
-      "Merge CSV gear lists into trips without duplicates.",
+      "Merge spreadsheet gear lists into trips without duplicates.",
   },
   {
     icon: UtensilsCrossed,

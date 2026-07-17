@@ -6,7 +6,7 @@ export const SAVED_CHECKLISTS_HEADER_SUBTITLE =
   "Reusable gear inventory for your trips";
 
 export const PACK_TRIP_HINT =
-  "Tap an item to stage it, then tap again when it is packed in your vehicle.";
+  "Tap an item to stage it, tap again when it's packed.";
 
 export const BUILD_GEAR_CHECKLIST_HINT =
   "Add categories and items, or load the quick getaway starter.";

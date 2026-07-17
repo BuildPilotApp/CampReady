@@ -132,6 +132,7 @@ export function GearInventoryPanel() {
     applyChecklistTemplateToTrip,
     updateTemplate,
     addTemplateCategory,
+    activeTab,
   } = useCampReady();
   const { isPro, openPaywall } = usePro();
   const { showToast } = useAppToast();
@@ -184,6 +185,15 @@ export function GearInventoryPanel() {
       detailsRef.current.open = true;
     }
   }, [editingTemplateId]);
+
+  useEffect(() => {
+    if (activeTab === "checklist") {
+      return;
+    }
+    if (detailsRef.current) {
+      detailsRef.current.open = false;
+    }
+  }, [activeTab]);
 
   const openPanel = () => {
     if (detailsRef.current) {

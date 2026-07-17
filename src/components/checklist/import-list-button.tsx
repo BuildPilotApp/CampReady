@@ -4,7 +4,7 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { usePro } from "@/components/providers/pro-provider";
 import {
   formatImportMergeSummary,
-  validateChecklistImport,
+  validateChecklistImportFile,
 } from "@/lib/import-checklist";
 import { CHECKLIST_ACTION_BUTTON_CLASS } from "@/components/checklist/checklist-action-button-styles";
 import { Check, ChevronDown, Lock, Upload } from "lucide-react";
@@ -76,8 +76,7 @@ export function ImportListButton({
     }
 
     try {
-      const content = await file.text();
-      const validation = validateChecklistImport(content, file.name);
+      const validation = await validateChecklistImportFile(file);
 
       if (!validation.ok) {
         const firstError = validation.errors[0];
@@ -124,7 +123,7 @@ export function ImportListButton({
         ref={inputRef}
         id={inputId}
         type="file"
-        accept=".json,.csv,application/json,text/csv"
+        accept=".json,.csv,.xlsx,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         className="sr-only"
         onChange={(event) => void handleFileChange(event)}
       />

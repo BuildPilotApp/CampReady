@@ -80,6 +80,6 @@ export const FIRST_LAUNCH_ONBOARDING_STEPS = [
   {
     eyebrow: "Backups & Settings",
     title: "Keep your setup portable",
-    body: "Export text or CSV pack lists, back up all CampSync data from Settings, and switch the app theme whenever you need.",
+    body: "Export text or spreadsheet (.xlsx) pack lists, back up all CampSync data from Settings, and switch the app theme whenever you need.",
   },
 ] as const;

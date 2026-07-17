@@ -7,10 +7,9 @@ const UI_SESSION_DEBOUNCE_MS = 500;
 export interface UiSessionState {
   activeTab?: AppTab;
   checklistFilter?: ChecklistFilter;
-  collapsedCategories?: Record<string, boolean>;
 }
 
-/** Categories start collapsed on a fresh app open; session storage restores user toggles. */
+/** Categories start collapsed on each checklist visit / cold start. */
 export const DEFAULT_CATEGORY_COLLAPSED = true;
 
 export function resolveCategoryCollapsed(
@@ -30,23 +29,6 @@ function isAppTab(value: unknown): value is AppTab {
 
 function isChecklistFilter(value: unknown): value is ChecklistFilter {
   return value === "all" || value === "remaining";
-}
-
-function normalizeCollapsedCategories(
-  value: unknown,
-): Record<string, boolean> | undefined {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return undefined;
-  }
-
-  const record: Record<string, boolean> = {};
-  for (const [key, collapsed] of Object.entries(value)) {
-    if (typeof key === "string" && typeof collapsed === "boolean") {
-      record[key] = collapsed;
-    }
-  }
-
-  return Object.keys(record).length > 0 ? record : undefined;
 }
 
 export function readUiSessionState(): UiSessionState {
@@ -74,11 +56,6 @@ export function readUiSessionState(): UiSessionState {
 
     if (isChecklistFilter(record.checklistFilter)) {
       state.checklistFilter = record.checklistFilter;
-    }
-
-    const collapsed = normalizeCollapsedCategories(record.collapsedCategories);
-    if (collapsed) {
-      state.collapsedCategories = collapsed;
     }
 
     return state;

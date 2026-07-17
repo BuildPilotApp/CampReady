@@ -135,6 +135,7 @@ function TripChecklistTemplateEditor({ trip }: { trip: TripRecord }) {
 export function TripManager() {
   const {
     database,
+    activeTab,
     activeTrip,
     selectTrip,
     createNewTrip,
@@ -156,6 +157,18 @@ export function TripManager() {
   const createTripDetailsRef = useRef<HTMLDetailsElement>(null);
   const editTripDetailsRef = useRef<HTMLDetailsElement>(null);
   const editLocationRef = useRef<LocationInputHandle>(null);
+
+  useEffect(() => {
+    if (activeTab === "dashboard") {
+      return;
+    }
+    if (createTripDetailsRef.current) {
+      createTripDetailsRef.current.open = false;
+    }
+    if (editTripDetailsRef.current) {
+      editTripDetailsRef.current.open = false;
+    }
+  }, [activeTab]);
 
   const openTripLocationEditor = () => {
     if (editTripDetailsRef.current) {
@@ -283,7 +296,7 @@ export function TripManager() {
         className={
           trips.length === 0
             ? "touch-target flex cursor-pointer list-none items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground active:opacity-90"
-            : "touch-target flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-foreground"
+            : "flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 py-2 font-bold text-foreground"
         }
       >
         <span className="inline-flex items-center gap-2">

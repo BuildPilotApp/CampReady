@@ -24,7 +24,7 @@ export function MealDaySection({
 }: MealDaySectionProps) {
   const { addMealPrepItem } = useCampReady();
   const isFocused = focusDayNumber === day.dayNumber;
-  const [collapsed, setCollapsed] = useState(!isFocused);
+  const [collapsed, setCollapsed] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const dayLabel = `Day ${day.dayNumber}`;
   const progress = getMealDayProgress(day);

@@ -3,8 +3,8 @@
 import { CHECKLIST_ACTION_BUTTON_CLASS } from "@/components/checklist/checklist-action-button-styles";
 import {
   copyChecklistText,
-  downloadChecklistCsv,
-  downloadGearInventoryCsvTemplate,
+  downloadChecklistXlsx,
+  downloadGearInventoryXlsxTemplate,
 } from "@/lib/export-checklist";
 import type { TripRecord } from "@/types";
 import { Check, ChevronDown, Download, FileText } from "lucide-react";
@@ -31,9 +31,9 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
   const [feedback, setFeedback] = useState<ExportFeedback | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const hasListItems = trip?.categories.some(
-    (category) => category.items.length > 0,
-  ) ?? false;
+  const hasListItems =
+    trip?.categories.some((category) => category.items.length > 0) ||
+    (trip?.mealPrepDays ?? []).some((day) => day.items.length > 0);
   const label = copied
     ? "Copied"
     : hasListItems
@@ -93,29 +93,29 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
     }
   };
 
-  const handleDownloadCsv = async () => {
+  const handleDownloadXlsx = async () => {
     if (!trip) return;
 
-    const saved = await downloadChecklistCsv(trip);
+    const saved = await downloadChecklistXlsx(trip);
     setFeedback(
       saved || !hasListItems
         ? null
         : {
             type: "error",
-            message: "Could not download CSV file.",
+            message: "Could not download spreadsheet file.",
           },
     );
     setOpen(false);
   };
 
-  const handleDownloadCsvTemplate = async () => {
-    const saved = await downloadGearInventoryCsvTemplate();
+  const handleDownloadXlsxTemplate = async () => {
+    const saved = await downloadGearInventoryXlsxTemplate();
     setFeedback(
       saved
         ? null
         : {
             type: "error",
-            message: "Could not download CSV template.",
+            message: "Could not download spreadsheet template.",
           },
     );
     setOpen(false);
@@ -182,11 +182,11 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => void handleDownloadCsv()}
+                onClick={() => void handleDownloadXlsx()}
                 className={`${EXPORT_MENU_ITEM_CLASS} border-t border-border`}
               >
                 <Download className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
-                Download CSV
+                Download spreadsheet
               </button>
             </>
           ) : (
@@ -200,11 +200,11 @@ export function ExportListButton({ trip, className = "" }: ExportListButtonProps
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => void handleDownloadCsvTemplate()}
+                onClick={() => void handleDownloadXlsxTemplate()}
                 className={EXPORT_MENU_ITEM_CLASS}
               >
                 <Download className={EXPORT_MENU_ICON_CLASS} strokeWidth={2.25} aria-hidden />
-                Blank CSV Template
+                Blank spreadsheet template
               </button>
             </>
           )}

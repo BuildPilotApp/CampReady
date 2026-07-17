@@ -1,8 +1,17 @@
-import { downloadTextFile } from "@/lib/download-text-file";
+import ExcelJS from "exceljs";
+import {
+  downloadBinaryFile,
+  downloadTextFile,
+} from "@/lib/download-text-file";
 import { STATUS_LABELS } from "@/lib/gear-status";
 import type { MealItemStatus, TripRecord } from "@/types";
 
 const TEMPLATE_FILENAME_BASE = "campsync-gear-inventory-template";
+const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const TYPE_VALIDATION_BUFFER_ROWS = 50;
+const MIN_COLUMN_WIDTH = 10;
+const MAX_COLUMN_WIDTH = 40;
 
 export const MEAL_STATUS_LABELS: Record<MealItemStatus, string> = {
   available: "Available",
@@ -92,7 +101,8 @@ export function formatChecklistAsText(trip: TripRecord): string {
   return lines.join("\n").trimEnd();
 }
 
-export function formatChecklistAsCsv(trip: TripRecord): string {
+/** Combined pack-list rows including the header row. */
+export function buildChecklistRows(trip: TripRecord): string[][] {
   const rows: string[][] = [[...COMBINED_CSV_HEADERS]];
 
   for (const category of trip.categories) {
@@ -129,7 +139,13 @@ export function formatChecklistAsCsv(trip: TripRecord): string {
     }
   }
 
-  return rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+  return rows;
+}
+
+export function formatChecklistAsCsv(trip: TripRecord): string {
+  return buildChecklistRows(trip)
+    .map((row) => row.map(escapeCsv).join(","))
+    .join("\n");
 }
 
 export function formatGearInventoryCsvTemplate(): string {
@@ -138,12 +154,100 @@ export function formatGearInventoryCsvTemplate(): string {
     .join("\n");
 }
 
+function clampColumnWidth(maxContentLength: number): number {
+  return Math.min(
+    MAX_COLUMN_WIDTH,
+    Math.max(MIN_COLUMN_WIDTH, maxContentLength + 2),
+  );
+}
+
+function applyColumnWidths(sheet: ExcelJS.Worksheet, rows: string[][]): void {
+  const columnCount = COMBINED_CSV_HEADERS.length;
+  for (let col = 0; col < columnCount; col += 1) {
+    let maxLen = COMBINED_CSV_HEADERS[col]?.length ?? MIN_COLUMN_WIDTH;
+    for (const row of rows) {
+      const cell = row[col] ?? "";
+      maxLen = Math.max(maxLen, cell.length);
+    }
+    const column = sheet.getColumn(col + 1);
+    column.width = clampColumnWidth(maxLen);
+  }
+}
+
+function applyTypeValidation(
+  sheet: ExcelJS.Worksheet,
+  dataRowCount: number,
+): void {
+  const lastRow = Math.max(dataRowCount, 1) + TYPE_VALIDATION_BUFFER_ROWS + 1;
+  const validation: ExcelJS.DataValidation = {
+    type: "list",
+    allowBlank: true,
+    formulae: ['"Gear,Meal"'],
+    showErrorMessage: true,
+    errorTitle: "Type",
+    error: "Choose Gear or Meal.",
+  };
+
+  for (let row = 2; row <= lastRow; row += 1) {
+    sheet.getCell(row, 1).dataValidation = validation;
+  }
+}
+
+export async function buildChecklistWorkbook(
+  rows: string[][],
+): Promise<ExcelJS.Workbook> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "CampSync";
+  const sheet = workbook.addWorksheet("Pack List");
+
+  sheet.addRows(rows);
+  applyColumnWidths(sheet, rows);
+  applyTypeValidation(sheet, Math.max(rows.length - 1, 0));
+
+  const headerRow = sheet.getRow(1);
+  headerRow.font = { bold: true };
+
+  return workbook;
+}
+
+async function workbookToArrayBuffer(
+  workbook: ExcelJS.Workbook,
+): Promise<ArrayBuffer> {
+  const buffer = await workbook.xlsx.writeBuffer();
+  if (buffer instanceof ArrayBuffer) {
+    return buffer;
+  }
+
+  const view = buffer as ArrayBufferView;
+  return view.buffer.slice(
+    view.byteOffset,
+    view.byteOffset + view.byteLength,
+  ) as ArrayBuffer;
+}
+
 function tripHasExportableItems(trip: TripRecord): boolean {
   const hasGear = trip.categories.some((category) => category.items.length > 0);
   const hasMeals = (trip.mealPrepDays ?? []).some((day) => day.items.length > 0);
   return hasGear || hasMeals;
 }
 
+export async function downloadChecklistXlsx(trip: TripRecord): Promise<boolean> {
+  if (!tripHasExportableItems(trip)) {
+    window.alert("Add items to your list before exporting!");
+    return false;
+  }
+
+  const rows = buildChecklistRows(trip);
+  const workbook = await buildChecklistWorkbook(rows);
+  const data = await workbookToArrayBuffer(workbook);
+  return downloadBinaryFile(
+    data,
+    `${sanitizeFilename(trip.name)}-pack-list.xlsx`,
+    XLSX_MIME,
+  );
+}
+
+/** @deprecated Prefer downloadChecklistXlsx; kept for tests/legacy callers. */
 export async function downloadChecklistCsv(trip: TripRecord): Promise<boolean> {
   if (!tripHasExportableItems(trip)) {
     window.alert("Add items to your list before exporting!");
@@ -158,6 +262,18 @@ export async function downloadChecklistCsv(trip: TripRecord): Promise<boolean> {
   );
 }
 
+export async function downloadGearInventoryXlsxTemplate(): Promise<boolean> {
+  const rows = [[...COMBINED_CSV_HEADERS]];
+  const workbook = await buildChecklistWorkbook(rows);
+  const data = await workbookToArrayBuffer(workbook);
+  return downloadBinaryFile(
+    data,
+    `${TEMPLATE_FILENAME_BASE}.xlsx`,
+    XLSX_MIME,
+  );
+}
+
+/** @deprecated Prefer downloadGearInventoryXlsxTemplate. */
 export async function downloadGearInventoryCsvTemplate(): Promise<boolean> {
   return downloadTextFile(
     formatGearInventoryCsvTemplate(),

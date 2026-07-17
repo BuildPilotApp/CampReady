@@ -86,9 +86,9 @@ function AppHeader() {
                   : "Gear checklist"}
           </p>
           {activeTab === "checklist" && activeTripStats && totalWeightLabel ? (
-            <p className="mt-1 text-xs font-bold text-foreground">
+            <p className="mt-1 min-w-0 truncate whitespace-nowrap text-xs font-bold text-foreground">
               {activeTripStats.percentPacked}% Packed{" "}
-              <span className="font-semibold text-muted">|</span> Total Weight:{" "}
+              <span className="font-semibold text-muted">|</span> Wt:{" "}
               <span className="tabular-nums">{totalWeightLabel}</span>
             </p>
           ) : null}
@@ -123,9 +123,9 @@ function AppHeader() {
               : "Dashboard & trip tools"}
           </p>
           {activeTripStats && totalWeightLabel ? (
-            <p className="mt-1 text-xs font-bold text-foreground">
+            <p className="mt-1 min-w-0 truncate whitespace-nowrap text-xs font-bold text-foreground">
               {activeTripStats.percentPacked}% Packed{" "}
-              <span className="font-semibold text-muted">|</span> Total Weight:{" "}
+              <span className="font-semibold text-muted">|</span> Wt:{" "}
               <span className="tabular-nums">{totalWeightLabel}</span>
             </p>
           ) : null}
@@ -230,7 +230,11 @@ function DesktopSecondaryPane() {
           </button>
         </div>
       ) : null}
-      {secondaryTab === "meal-prep" ? <MealPrepView /> : <ChecklistView />}
+      {secondaryTab === "meal-prep" ? (
+        <MealPrepView key="meal-prep-active" />
+      ) : (
+        <ChecklistView />
+      )}
     </section>
   );
 }
@@ -258,7 +262,7 @@ function CampReadyShell() {
         {mobileTab === "dashboard" ? (
           <DashboardView />
         ) : mobileTab === "meal-prep" ? (
-          <MealPrepView />
+          <MealPrepView key="meal-prep-active" />
         ) : (
           <ChecklistView />
         )}

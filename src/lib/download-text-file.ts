@@ -93,6 +93,41 @@ async function downloadTextFileNative(
   }
 }
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    const chunk = bytes.subarray(offset, offset + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
+async function downloadBinaryFileNative(
+  data: ArrayBuffer,
+  filename: string,
+): Promise<boolean> {
+  try {
+    const { uri } = await Filesystem.writeFile({
+      path: `exports/${filename}`,
+      data: arrayBufferToBase64(data),
+      directory: Directory.Cache,
+      recursive: true,
+    });
+
+    await Share.share({
+      title: filename,
+      files: [uri],
+      dialogTitle: `Save ${filename}`,
+    });
+
+    return true;
+  } catch (error) {
+    return isShareCanceled(error);
+  }
+}
+
 /**
  * Saves text content as a downloadable file. Uses Capacitor Filesystem + Share on
  * native apps, the system share sheet on mobile browsers, and anchor downloads
@@ -135,6 +170,44 @@ export async function downloadTextFile(
     dataUrlDownload(content, filename, mimeType);
     return true;
   } catch {
+    return false;
+  }
+}
+
+/**
+ * Saves binary content (e.g. .xlsx) as a downloadable file.
+ */
+export async function downloadBinaryFile(
+  data: ArrayBuffer,
+  filename: string,
+  mimeType: string,
+): Promise<boolean> {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return false;
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    return downloadBinaryFileNative(data, filename);
+  }
+
+  const blob = new Blob([data], { type: mimeType });
+
+  if (prefersMobileWebShare()) {
+    const shared = await shareDownloadFile(blob, filename, mimeType);
+    if (shared) {
+      return true;
+    }
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    anchorDownload(objectUrl, filename);
+    window.setTimeout(() => {
+      URL.revokeObjectURL(objectUrl);
+    }, 2000);
+    return true;
+  } catch {
+    URL.revokeObjectURL(objectUrl);
     return false;
   }
 }

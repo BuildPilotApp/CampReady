@@ -1,7 +1,7 @@
 "use client";
 
 import { useCampReady } from "@/components/providers/camp-ready-provider";
-import { validateChecklistImport } from "@/lib/import-checklist";
+import { validateChecklistImportFile } from "@/lib/import-checklist";
 import { AlertTriangle, Upload, X } from "lucide-react";
 import { useId, useRef, useState } from "react";
 
@@ -23,18 +23,17 @@ export function StorageRecoveryBanner() {
   const handleRestoreFile = async (file: File) => {
     setRestoreError(null);
 
-    let raw: string;
+    let validation;
     try {
-      raw = await file.text();
+      validation = await validateChecklistImportFile(file, {
+        suppressNotification: true,
+        fileSize: file.size,
+      });
     } catch {
       setRestoreError("Could not read the selected file.");
       return;
     }
 
-    const validation = validateChecklistImport(raw, file.name, {
-      suppressNotification: true,
-      fileSize: file.size,
-    });
     if (!validation.ok) {
       setRestoreError(validation.errors[0]?.message ?? "Invalid backup file.");
       return;
@@ -104,7 +103,7 @@ export function StorageRecoveryBanner() {
         ref={inputRef}
         id={inputId}
         type="file"
-        accept=".json,.csv,application/json,text/csv"
+        accept=".json,.csv,.xlsx,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         className="sr-only"
         onChange={(event) => {
           const file = event.target.files?.[0];

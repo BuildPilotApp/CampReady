@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildChecklistRows,
+  buildChecklistWorkbook,
   formatChecklistAsCsv,
   formatChecklistAsText,
   formatGearInventoryCsvTemplate,
@@ -68,5 +70,23 @@ describe("formatChecklistAsText", () => {
     expect(text).toContain("Meal Prep");
     expect(text).toContain("Day 1");
     expect(text).toContain("[Available] Chili");
+  });
+});
+
+describe("buildChecklistWorkbook", () => {
+  it("applies Type list validation and readable column widths", async () => {
+    const rows = buildChecklistRows(trip);
+    const workbook = await buildChecklistWorkbook(rows);
+    const sheet = workbook.getWorksheet("Pack List");
+    expect(sheet).toBeTruthy();
+
+    const typeValidation = sheet!.getCell(2, 1).dataValidation;
+    expect(typeValidation.type).toBe("list");
+    expect(typeValidation.formulae).toContain('"Gear,Meal"');
+    expect(sheet!.getCell(3, 1).dataValidation.type).toBe("list");
+
+    expect(sheet!.getColumn(1).width).toBeGreaterThanOrEqual(10);
+    expect(sheet!.getColumn(1).width).toBeLessThanOrEqual(40);
+    expect(sheet!.getColumn(3).width).toBeGreaterThanOrEqual(10);
   });
 });

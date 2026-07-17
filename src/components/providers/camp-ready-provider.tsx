@@ -330,9 +330,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     if (session.checklistFilter) {
       setChecklistFilter(session.checklistFilter);
     }
-    if (session.collapsedCategories) {
-      setCollapsedCategories(session.collapsedCategories);
-    }
+    setCollapsedCategories({});
     setUiSessionHydrated(true);
   }, [ready, uiSessionHydrated]);
 
@@ -344,9 +342,14 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     scheduleWriteUiSessionState({
       activeTab,
       checklistFilter,
-      collapsedCategories,
     });
-  }, [ready, uiSessionHydrated, activeTab, checklistFilter, collapsedCategories]);
+  }, [ready, uiSessionHydrated, activeTab, checklistFilter]);
+
+  useEffect(() => {
+    if (activeTab !== "checklist") {
+      setCollapsedCategories({});
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (!ready) {

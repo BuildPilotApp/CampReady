@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildChecklistRows,
+  buildChecklistWorkbook,
+} from "@/lib/export-checklist";
+import {
   formatImportMergeSummary,
   mergeImportedCategories,
   mergeImportedMealItems,
   validateChecklistImport,
+  validateChecklistXlsx,
 } from "@/lib/import-checklist";
+import type { TripRecord } from "@/types";
 import { createCategory, createGearItem, createMealPrepItem } from "@/lib/storage/defaults";
 
 describe("mergeImportedCategories", () => {
@@ -206,6 +212,71 @@ describe("validateChecklistImport", () => {
       expect(result.data.categories).toEqual([]);
       expect(result.data.mealItems?.[0]?.title).toBe("Oatmeal");
       expect(result.data.mealItems?.[0]?.dayNumber).toBe(2);
+    }
+  });
+
+  it("round-trips gear and meals through xlsx", async () => {
+    const trip: TripRecord = {
+      id: "trip-xlsx",
+      name: "Export",
+      startDate: "2026-07-10",
+      endDate: "2026-07-11",
+      categories: [
+        {
+          id: "cat-1",
+          name: "Kitchen",
+          items: [
+            {
+              id: "item-1",
+              category: "cat-1",
+              name: "Stove",
+              status: "packed",
+              weight_lbs: 2,
+              storageLocation: "Bin",
+            },
+          ],
+        },
+      ],
+      mealPrepDays: [
+        {
+          dayNumber: 1,
+          items: [
+            {
+              id: "meal-1",
+              title: "Chili",
+              status: "available",
+              recipeNotes: "Simmer",
+            },
+          ],
+        },
+      ],
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+
+    const workbook = await buildChecklistWorkbook(buildChecklistRows(trip));
+    const buffer = await workbook.xlsx.writeBuffer();
+    const data =
+      buffer instanceof ArrayBuffer
+        ? buffer
+        : buffer.buffer.slice(
+            buffer.byteOffset,
+            buffer.byteOffset + buffer.byteLength,
+          );
+
+    const result = await validateChecklistXlsx(data as ArrayBuffer);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.sourceFormat).toBe("xlsx");
+      expect(result.data.categories[0]?.items[0]?.name).toBe("Stove");
+      expect(result.data.mealItems).toEqual([
+        {
+          dayNumber: 1,
+          title: "Chili",
+          status: "available",
+          recipeNotes: "Simmer",
+        },
+      ]);
     }
   });
 });

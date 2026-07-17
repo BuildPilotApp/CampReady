@@ -107,7 +107,7 @@ const USER_GUIDE_QUICK_START: UserGuideItem[] = [
   },
   {
     icon: Download,
-    text: "Export List: copy text or download a CSV (gear and meals).",
+    text: "Export List: copy text or download a spreadsheet (.xlsx) with a Type dropdown (Gear or Meal).",
   },
 ];
 
@@ -167,7 +167,7 @@ const USER_GUIDE: UserGuideSection[] = [
       },
       {
         icon: FileText,
-        text: "Export List: copy as text or download a CSV for the selected trip.",
+        text: "Export List: copy as text or download a spreadsheet (.xlsx) for the selected trip.",
       },
     ],
   },
@@ -217,11 +217,11 @@ const USER_GUIDE: UserGuideSection[] = [
       },
       {
         icon: FileText,
-        text: "Download Template: when no trip is selected, download a blank CSV template.",
+        text: "Download Template: when no trip is selected, download a blank spreadsheet (.xlsx) template.",
       },
       {
         icon: ClipboardList,
-        text: "CSV rows: Type is Gear or Meal. Gear needs Category and Item; Meal needs Day and Item. Status, Weight, Storage, and Recipe Notes are optional.",
+        text: "Spreadsheet rows: Type dropdown is Gear or Meal. Gear needs Category and Item; Meal needs Day and Item. Status, Weight, Storage, and Recipe Notes are optional. Legacy CSV/JSON imports still work.",
       },
     ],
   },
@@ -257,7 +257,7 @@ const USER_GUIDE: UserGuideSection[] = [
       },
       {
         icon: Upload,
-        text: "Import List: merge a CSV into the selected trip (gear and Type=Meal rows) without duplicating matches.",
+        text: "Import List: merge a spreadsheet (.xlsx) or legacy CSV/JSON into the selected trip (gear and Type=Meal rows) without duplicating matches.",
         pro: true,
       },
       {
@@ -638,7 +638,7 @@ export function InfoPanel() {
               <ul className="mt-1 list-disc space-y-1 pl-5">
                 <li>Unlimited trips instead of {FREE_TRIP_LIMIT}.</li>
                 <li>Unlimited saved checklists instead of {FREE_TEMPLATE_LIMIT}.</li>
-                <li>Import List for merging CSV files into a selected trip.</li>
+                <li>Import List for merging spreadsheet (.xlsx) or legacy CSV/JSON into a selected trip.</li>
                 <li>A one-time Google Play purchase with no subscription.</li>
               </ul>
             </div>

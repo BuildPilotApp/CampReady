@@ -55,7 +55,7 @@ export interface MealImportItem {
 export interface ValidatedChecklistImport {
   categories: ChecklistExportCategory[];
   mealItems?: MealImportItem[];
-  sourceFormat: "json" | "csv";
+  sourceFormat: "json" | "csv" | "xlsx";
 }
 
 export interface ImportMergeResult {
@@ -462,13 +462,15 @@ function isCombinedCsvHeader(header: string[]): boolean {
   );
 }
 
-function validateChecklistCsv(raw: string): ImportValidationResult {
+function validateChecklistTableRows(
+  rows: string[][],
+  sourceFormat: "csv" | "xlsx",
+): ImportValidationResult {
   const errors: ImportValidationError[] = [];
-  const { rows, anomalies } = parseCsvRows(raw.trim());
-  errors.push(...anomalies);
+  const pathRoot = sourceFormat === "xlsx" ? "xlsx" : "csv";
 
   if (rows.length === 0) {
-    errors.push({ path: "csv", message: "CSV file is empty." });
+    errors.push({ path: pathRoot, message: `${pathRoot.toUpperCase()} file is empty.` });
     return { ok: false, errors };
   }
 
@@ -478,9 +480,9 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
 
   if (!combined && !legacy) {
     errors.push({
-      path: "csv.header",
+      path: `${pathRoot}.header`,
       message:
-        'CSV must start with headers: Type, Category, Item, Status, Weight (lbs), Storage, Day, Recipe Notes (or legacy Category, Item, Status, Weight (lbs), Storage).',
+        'Spreadsheet must start with headers: Type, Category, Item, Status, Weight (lbs), Storage, Day, Recipe Notes (or legacy Category, Item, Status, Weight (lbs), Storage).',
     });
     return { ok: false, errors };
   }
@@ -489,7 +491,7 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
   const mealItems: MealImportItem[] = [];
 
   rows.slice(1).forEach((row, rowIndex) => {
-    const path = `csv.rows[${rowIndex + 1}]`;
+    const path = `${pathRoot}.rows[${rowIndex + 1}]`;
 
     if (legacy) {
       const categoryName = row[0]?.trim() ?? "";
@@ -616,18 +618,108 @@ function validateChecklistCsv(raw: string): ImportValidationResult {
   return {
     ok: true,
     data: {
-      sourceFormat: "csv",
+      sourceFormat,
       categories,
       ...(hasMeals ? { mealItems } : {}),
     },
   };
 }
 
+function validateChecklistCsv(raw: string): ImportValidationResult {
+  const { rows, anomalies } = parseCsvRows(raw.trim());
+  if (anomalies.length > 0) {
+    return { ok: false, errors: anomalies };
+  }
+  return validateChecklistTableRows(rows, "csv");
+}
+
+function cellToImportString(value: unknown): string {
+  if (value == null) {
+    return "";
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (typeof value === "object" && "text" in value && typeof (value as { text: unknown }).text === "string") {
+    return (value as { text: string }).text;
+  }
+  if (typeof value === "object" && "result" in value) {
+    const result = (value as { result: unknown }).result;
+    if (result == null) {
+      return "";
+    }
+    if (typeof result === "string" || typeof result === "number" || typeof result === "boolean") {
+      return String(result);
+    }
+  }
+  return String(value);
+}
+
+export async function parseChecklistXlsxRows(
+  data: ArrayBuffer,
+): Promise<string[][]> {
+  const ExcelJS = (await import("exceljs")).default;
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(data);
+  const sheet = workbook.worksheets[0];
+  if (!sheet) {
+    return [];
+  }
+
+  const rows: string[][] = [];
+  sheet.eachRow({ includeEmpty: false }, (row) => {
+    const values: string[] = [];
+    for (let col = 1; col <= COMBINED_CSV_HEADERS.length; col += 1) {
+      values.push(cellToImportString(row.getCell(col).value));
+    }
+    if (values.some((cell) => cell.trim().length > 0)) {
+      rows.push(values);
+    }
+  });
+  return rows;
+}
+
+export async function validateChecklistXlsx(
+  data: ArrayBuffer,
+): Promise<ImportValidationResult> {
+  try {
+    const rows = await parseChecklistXlsxRows(data);
+    return validateChecklistTableRows(rows, "xlsx");
+  } catch {
+    return {
+      ok: false,
+      errors: [
+        {
+          path: "xlsx",
+          message: "Spreadsheet could not be parsed. Export a CampSync .xlsx or use CSV/JSON.",
+        },
+      ],
+    };
+  }
+}
+
+export function isSpreadsheetImportFile(filename?: string, mimeType?: string): boolean {
+  const extension = filename?.split(".").pop()?.toLowerCase();
+  if (extension === "xlsx" || extension === "xlsm") {
+    return true;
+  }
+  const mime = mimeType?.toLowerCase() ?? "";
+  return (
+    mime.includes("spreadsheetml") ||
+    mime === "application/vnd.ms-excel" ||
+    mime ===
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+}
+
 export function detectImportFormat(
   content: string,
   filename?: string,
-): "json" | "csv" {
+): "json" | "csv" | "xlsx" {
   const extension = filename?.split(".").pop()?.toLowerCase();
+  if (extension === "xlsx" || extension === "xlsm") {
+    return "xlsx";
+  }
   if (extension === "csv") {
     return "csv";
   }
@@ -726,6 +818,21 @@ export function validateChecklistImport(
     }
 
     const format = detectImportFormat(content, filename);
+    if (format === "xlsx") {
+      return surfaceImportFailure(
+        {
+          ok: false,
+          errors: [
+            {
+              path: "xlsx",
+              message: "Use the file picker to import spreadsheet (.xlsx) files.",
+            },
+          ],
+        },
+        options?.suppressNotification,
+      );
+    }
+
     const result =
       format === "json" ? validateChecklistJson(content) : validateChecklistCsv(content);
 
@@ -735,6 +842,58 @@ export function validateChecklistImport(
     }
 
     return surfaceImportFailure(result, options?.suppressNotification);
+  } catch {
+    return surfaceImportFailure(
+      {
+        ok: false,
+        errors: [
+          {
+            path: "import",
+            message: "Import file could not be parsed safely. Check the format and try again.",
+          },
+        ],
+      },
+      options?.suppressNotification,
+    );
+  }
+}
+
+/** Validates JSON, CSV, or XLSX checklist imports from a File. */
+export async function validateChecklistImportFile(
+  file: File,
+  options?: ValidateChecklistImportOptions,
+): Promise<ImportValidationResult> {
+  try {
+    if (file.size > MAX_IMPORT_FILE_BYTES) {
+      return surfaceImportFailure(
+        {
+          ok: false,
+          errors: [
+            {
+              path: "file.size",
+              message: `Import file is too large (max ${Math.round(MAX_IMPORT_FILE_BYTES / (1024 * 1024))} MB).`,
+            },
+          ],
+        },
+        options?.suppressNotification,
+      );
+    }
+
+    if (isSpreadsheetImportFile(file.name, file.type)) {
+      const buffer = await file.arrayBuffer();
+      const result = await validateChecklistXlsx(buffer);
+      if (result.ok) {
+        clearImportValidationFailure();
+        return result;
+      }
+      return surfaceImportFailure(result, options?.suppressNotification);
+    }
+
+    const content = await file.text();
+    return validateChecklistImport(content, file.name, {
+      ...options,
+      fileSize: file.size,
+    });
   } catch {
     return surfaceImportFailure(
       {
