@@ -45,6 +45,7 @@ import {
   CloudSun,
   Download,
   FileText,
+  Gauge,
   Info,
   Layers,
   ListFilter,
@@ -56,15 +57,17 @@ import {
   RefreshCw,
   RotateCcw,
   Save,
+  Scale,
   Settings,
   Upload,
+  UtensilsCrossed,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useId, useState } from "react";
 
 const ABOUT_TEXT =
-  "CampSync is a trip planner and gear checklist for camping and road trips. Create trips, build reusable gear inventories, load them onto pack lists, and move item-by-item from Needed to Staged to Packed. Add trip dates and a location to see weather on the Dashboard. Designed for one-handed use in the field, with a split dashboard and checklist layout on larger screens.";
+  "CampSync is a trip planner and gear checklist for camping and road trips. Create trips, build reusable gear inventories, pack item-by-item from Needed to Staged to Packed, plan meals by day, and monitor vehicle payload. Add trip dates and a location for Dashboard weather. Designed for one-handed field use, with a split dashboard and checklist layout on larger screens.";
 
 const INFORMATION_OVERLAY_CLASS_NAME = "information-menu-overlay";
 const INFORMATION_SUBMENU_OVERLAY_CLASS_NAME =
@@ -99,8 +102,12 @@ const USER_GUIDE_QUICK_START: UserGuideItem[] = [
     text: "Packing: tap an item to move Needed -> Staged -> Packed.",
   },
   {
+    icon: UtensilsCrossed,
+    text: "Meal Prep (Pro): enable in Settings, then plan food by trip day.",
+  },
+  {
     icon: Download,
-    text: "Export List: copy text or download a CSV.",
+    text: "Export List: copy text or download a CSV (gear and meals).",
   },
 ];
 
@@ -127,6 +134,11 @@ const USER_GUIDE: UserGuideSection[] = [
       {
         icon: CloudSun,
         text: "Weather card: add a location to show daily trip weather.",
+      },
+      {
+        icon: Gauge,
+        text: "Payload Summary: when enabled in Settings (Pro), shows packed gear weight vs your vehicle capacity.",
+        pro: true,
       },
     ],
   },
@@ -156,6 +168,31 @@ const USER_GUIDE: UserGuideSection[] = [
       {
         icon: FileText,
         text: "Export List: copy as text or download a CSV for the selected trip.",
+      },
+    ],
+  },
+  {
+    title: "Meal Prep",
+    items: [
+      {
+        icon: Settings,
+        text: "Enable Meal Prep in Settings to show the Meals tab and desktop trip tools.",
+        pro: true,
+      },
+      {
+        icon: UtensilsCrossed,
+        text: "Day cards: plan food for each trip day from start date through end date.",
+        pro: true,
+      },
+      {
+        icon: CheckCircle2,
+        text: "Status: tap to mark Available or Consumed; recipe notes stay with each food item.",
+        pro: true,
+      },
+      {
+        icon: FileText,
+        text: "Recipe notes: paste steps or links; URLs open as tappable links when viewed.",
+        pro: true,
       },
     ],
   },
@@ -220,7 +257,17 @@ const USER_GUIDE: UserGuideSection[] = [
       },
       {
         icon: Upload,
-        text: "Import List: merge a CSV into the selected trip without duplicating matching gear.",
+        text: "Import List: merge a CSV into the selected trip (gear and Type=Meal rows) without duplicating matches.",
+        pro: true,
+      },
+      {
+        icon: Gauge,
+        text: "Vehicle payload monitoring: track packed weight against capacity on the Dashboard.",
+        pro: true,
+      },
+      {
+        icon: UtensilsCrossed,
+        text: "Meal Prep: plan food by trip day with Available/Consumed tracking and recipe notes.",
         pro: true,
       },
       {
@@ -247,8 +294,22 @@ const USER_GUIDE: UserGuideSection[] = [
         text: "Theme: choose Dark or Light for this device.",
       },
       {
+        icon: Scale,
+        text: "Units: choose pounds or kilograms for gear weights.",
+      },
+      {
+        icon: Gauge,
+        text: "Vehicle Payload: enable the alarm and set max capacity (Pro).",
+        pro: true,
+      },
+      {
+        icon: UtensilsCrossed,
+        text: "Meal Prep: enable to show Meal Prep in navigation (Pro).",
+        pro: true,
+      },
+      {
         icon: Download,
-        text: "Download Backup: save all trips, dates, locations, pack status, and inventories.",
+        text: "Download Backup: save all trips, dates, locations, pack status, meals, and inventories.",
       },
       {
         icon: Upload,

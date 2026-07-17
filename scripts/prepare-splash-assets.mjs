@@ -10,7 +10,7 @@ import sharp from "sharp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
-const iconPath = path.join(root, "assets", "icon-only.png");
+const iconPath = path.join(root, "icons", "app_icon2.png");
 const splashPath = path.join(root, "assets", "splash.png");
 const androidRes = path.join(root, "android", "app", "src", "main", "res");
 const background = { r: 9, g: 9, b: 11, alpha: 1 };

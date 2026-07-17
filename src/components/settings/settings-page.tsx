@@ -406,10 +406,6 @@ export function SettingsPage() {
       <div className="flex flex-col gap-5 py-4 pb-8">
         <section className="rounded-xl border-2 border-border bg-surface p-4">
           <h1 className="text-xl font-black text-foreground">App Settings</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            Keep shared app preferences here so they stay independent from trip
-            and checklist data.
-          </p>
         </section>
 
         <section className="rounded-xl border-2 border-border bg-surface p-4">
