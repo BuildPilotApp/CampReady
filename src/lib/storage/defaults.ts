@@ -19,6 +19,9 @@ export function createEmptyDatabase(): CampReadyDatabase {
     vehiclePayload: {
       alarmEnabled: false,
     },
+    mealPrep: {
+      enabled: false,
+    },
   };
 }
 
@@ -26,6 +29,12 @@ export function createDefaultVehiclePayloadSettings(): NonNullable<
   CampReadyDatabase["vehiclePayload"]
 > {
   return { alarmEnabled: false };
+}
+
+export function createDefaultMealPrepSettings(): NonNullable<
+  CampReadyDatabase["mealPrep"]
+> {
+  return { enabled: false };
 }
 
 export function createTrip(

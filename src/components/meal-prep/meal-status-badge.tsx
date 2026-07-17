@@ -7,12 +7,12 @@ const MEAL_STATUS_STYLES: Record<
 > = {
   available: {
     className:
-      "bg-status-missing-bg text-status-missing-fg border-status-missing-border",
+      "bg-status-packed-bg text-status-packed-fg border-status-packed-border",
     label: "Available",
   },
   consumed: {
     className:
-      "bg-status-packed-bg text-status-packed-fg border-status-packed-border",
+      "bg-status-consumed-bg text-status-consumed-fg border-status-consumed-border",
     showCheck: true,
     label: "Consumed",
   },

@@ -30,6 +30,7 @@ import {
   Settings,
   Sun,
   Upload,
+  UtensilsCrossed,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
@@ -256,6 +257,85 @@ function VehiclePayloadSettingsSection() {
   );
 }
 
+function MealPrepSettingsSection() {
+  const { database, updateMealPrepSettings } = useCampReady();
+  const { isPro, openPaywall } = usePro();
+  const enabled = database.mealPrep?.enabled === true;
+
+  return (
+    <section className="rounded-xl border-2 border-border bg-surface p-4">
+      <h2 className="text-base font-bold text-foreground">Meal Prep</h2>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        Plan food by trip day, track what&apos;s consumed, and keep recipe notes
+        handy at camp.
+      </p>
+
+      {!isPro ? (
+        <div className="mt-4 rounded-xl border border-border bg-background px-4 py-3">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
+              <Lock className="size-4" strokeWidth={2.25} aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">
+                CampSync Pro feature
+              </p>
+              <p className="mt-1 text-xs leading-snug text-muted">
+                Unlock Meal Prep in navigation and trip day meal planning.
+              </p>
+              <button
+                type="button"
+                onClick={openPaywall}
+                className="touch-target mt-3 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-500 to-teal-500 px-3 py-2 text-xs font-bold text-zinc-950 active:opacity-90"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          onClick={() => updateMealPrepSettings({ enabled: !enabled })}
+          className={`touch-target mt-4 flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left active:opacity-90 ${
+            enabled
+              ? "border-accent bg-accent/15"
+              : "border-border bg-background"
+          }`}
+        >
+          <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
+            <UtensilsCrossed className="size-4" strokeWidth={2.25} aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-bold text-foreground">
+              Enable Meal Prep
+            </span>
+            <span className="mt-0.5 block text-sm leading-snug text-muted">
+              Show Meal Prep in the bottom navigation and desktop trip tools.
+            </span>
+          </span>
+          <span
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border-2 transition-colors ${
+              enabled
+                ? "border-accent bg-accent"
+                : "border-border bg-surface"
+            }`}
+            aria-hidden
+          >
+            <span
+              className={`inline-block size-5 rounded-full bg-foreground transition-transform ${
+                enabled ? "translate-x-5" : "translate-x-1"
+              }`}
+            />
+          </span>
+        </button>
+      )}
+    </section>
+  );
+}
+
 export function SettingsPage() {
   const { theme, setTheme } = useSystemTheme();
   const { units, setUnits } = useUnits();
@@ -423,6 +503,8 @@ export function SettingsPage() {
         </section>
 
         <VehiclePayloadSettingsSection />
+
+        <MealPrepSettingsSection />
 
         <section className="rounded-xl border-2 border-border bg-surface p-4">
           <h2 className="text-base font-bold text-foreground">Backup & Restore</h2>

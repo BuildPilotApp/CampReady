@@ -98,6 +98,37 @@ describe("CampSync app backups", () => {
     }
   });
 
+  it("preserves meal prep nav settings through format and restore", () => {
+    const withMealNav: CampReadyDatabase = {
+      ...database,
+      mealPrep: { enabled: true },
+    };
+
+    const result = validateCampReadyBackup(formatCampReadyBackup(withMealNav));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.database.mealPrep?.enabled).toBe(true);
+    }
+  });
+
+  it("defaults missing meal prep settings on legacy backups", () => {
+    const legacy = {
+      version: CAMPREADY_BACKUP_VERSION,
+      format: CAMPREADY_BACKUP_FORMAT,
+      exportedAt: "2026-01-01T00:00:00.000Z",
+      app: "CampReady",
+      database,
+    };
+
+    const result = validateCampReadyBackup(JSON.stringify(legacy));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.database.mealPrep?.enabled).toBe(false);
+    }
+  });
+
   it("preserves meal prep titles, notes, and consumed status through backup restore", () => {
     const withMeals: CampReadyDatabase = {
       ...database,

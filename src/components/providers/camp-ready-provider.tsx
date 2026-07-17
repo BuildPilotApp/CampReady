@@ -35,6 +35,7 @@ import type {
   GearItemStatus,
   InfoView,
   MealPrepItem,
+  MealPrepSettings,
   TripRecord,
   TripLocation,
   VehiclePayloadSettings,
@@ -167,6 +168,7 @@ interface CampReadyContextValue {
   updateVehiclePayloadSettings: (
     patch: Partial<VehiclePayloadSettings>,
   ) => void;
+  updateMealPrepSettings: (patch: Partial<MealPrepSettings>) => void;
   addMealPrepItem: (
     dayNumber: number,
     title: string,
@@ -1078,6 +1080,24 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     [database, persist],
   );
 
+  const updateMealPrepSettings = useCallback(
+    (patch: Partial<MealPrepSettings>) => {
+      if (!database) return;
+
+      const current = database.mealPrep ?? { enabled: false };
+      const next: MealPrepSettings = {
+        enabled:
+          typeof patch.enabled === "boolean" ? patch.enabled : current.enabled,
+      };
+
+      persist({
+        ...database,
+        mealPrep: next,
+      });
+    },
+    [database, persist],
+  );
+
   const addMealPrepItem = useCallback(
     (dayNumber: number, title: string, recipeNotes?: string) => {
       if (!database?.activeTripId) return;
@@ -1211,6 +1231,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
       resetAllData,
       restoreBackupCategories,
       updateVehiclePayloadSettings,
+      updateMealPrepSettings,
       addMealPrepItem,
       updateMealPrepItem,
       toggleMealPrepItemStatus,
@@ -1263,6 +1284,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
     resetAllData,
     restoreBackupCategories,
     updateVehiclePayloadSettings,
+    updateMealPrepSettings,
     addMealPrepItem,
     updateMealPrepItem,
     toggleMealPrepItemStatus,

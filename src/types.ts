@@ -104,6 +104,12 @@ export interface VehiclePayloadSettings {
   maxPayloadCapacityLbs?: number;
 }
 
+/** Device-level Meal Prep nav preference (Pro feature). */
+export interface MealPrepSettings {
+  /** When true, show Meal Prep in bottom nav and desktop trip tools. */
+  enabled: boolean;
+}
+
 /** Root document persisted to local storage. */
 export interface CampReadyDatabase {
   version: 1;
@@ -112,4 +118,6 @@ export interface CampReadyDatabase {
   activeTripId: string | null;
   /** Optional; missing on older installs means the alarm is off. */
   vehiclePayload?: VehiclePayloadSettings;
+  /** Optional; missing on older installs means Meal Prep nav is off. */
+  mealPrep?: MealPrepSettings;
 }

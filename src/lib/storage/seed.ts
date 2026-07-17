@@ -40,6 +40,7 @@ export function ensureSeededDatabase(
         ? data.activeTripId
         : trips[0]?.id ?? null,
     vehiclePayload: data.vehiclePayload ?? { alarmEnabled: false },
+    mealPrep: data.mealPrep ?? { enabled: false },
   };
 }
 

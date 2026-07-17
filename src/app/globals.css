@@ -31,6 +31,9 @@
   --status-packed-bg: #dcfce7;
   --status-packed-fg: #166534;
   --status-packed-border: #22c55e;
+  --status-consumed-bg: #e4e4e7;
+  --status-consumed-fg: #3f3f46;
+  --status-consumed-border: #71717a;
 }
 
 :root[data-theme="dark"],
@@ -54,6 +57,9 @@
   --status-packed-bg: #052e16;
   --status-packed-fg: #bbf7d0;
   --status-packed-border: #22c55e;
+  --status-consumed-bg: #27272a;
+  --status-consumed-fg: #d4d4d8;
+  --status-consumed-border: #71717a;
 }
 
 @theme inline {
@@ -73,6 +79,9 @@
   --color-status-packed-bg: var(--status-packed-bg);
   --color-status-packed-fg: var(--status-packed-fg);
   --color-status-packed-border: var(--status-packed-border);
+  --color-status-consumed-bg: var(--status-consumed-bg);
+  --color-status-consumed-fg: var(--status-consumed-fg);
+  --color-status-consumed-border: var(--status-consumed-border);
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 

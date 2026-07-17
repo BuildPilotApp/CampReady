@@ -10,11 +10,13 @@ import type {
   TripLocation,
   TripRecord,
   VehiclePayloadSettings,
+  MealPrepSettings,
 } from "@/types";
 import { filterUserSavedTemplates } from "@/lib/templates";
 import { DATABASE_VERSION } from "./constants";
 import {
   createDefaultVehiclePayloadSettings,
+  createDefaultMealPrepSettings,
   createEmptyDatabase,
   createGearItem,
   createMealPrepItem,
@@ -551,6 +553,34 @@ function normalizeVehiclePayload(
   return settings;
 }
 
+function normalizeMealPrepSettings(
+  raw: unknown,
+  phase: StorageAuditPhase,
+): MealPrepSettings {
+  if (raw == null) {
+    return createDefaultMealPrepSettings();
+  }
+
+  if (typeof raw !== "object") {
+    audit(phase, "strip", "mealPrep", "Malformed meal prep settings removed.");
+    return createDefaultMealPrepSettings();
+  }
+
+  const record = raw as Record<string, unknown>;
+  const enabled = record.enabled === true;
+
+  if (record.enabled != null && typeof record.enabled !== "boolean") {
+    audit(
+      phase,
+      "repair",
+      "mealPrep.enabled",
+      "Invalid enabled flag. Defaulting to disabled.",
+    );
+  }
+
+  return { enabled };
+}
+
 /**
  * Deeply validates and repairs a parsed database document.
  * Never throws. Corrupt records are stripped or coerced with audit logging.
@@ -634,6 +664,7 @@ export function normalizeDatabaseDocument(
   repairCount = getStorageAuditLog().length - countBefore;
 
   const vehiclePayload = normalizeVehiclePayload(record.vehiclePayload, phase);
+  const mealPrep = normalizeMealPrepSettings(record.mealPrep, phase);
 
   return {
     database: {
@@ -642,6 +673,7 @@ export function normalizeDatabaseDocument(
       templates,
       activeTripId,
       vehiclePayload,
+      mealPrep,
     },
     repairCount,
   };

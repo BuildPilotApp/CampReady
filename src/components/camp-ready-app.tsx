@@ -24,9 +24,18 @@ import { formatWeight } from "@/lib/units";
 import type { AppTab } from "@/types";
 import { ClipboardList, Info, RotateCcw, Settings, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 const APP_ICON_SRC = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/app-icon.png`;
+
+function useMealPrepNavEnabled(): boolean {
+  const { database } = useCampReady();
+  const { isPro } = usePro();
+  return (
+    database.mealPrep?.enabled === true &&
+    (isPro || isPrimeTestLabBypassActive())
+  );
+}
 
 function AppHeaderBrandIcon() {
   return (
@@ -176,55 +185,68 @@ function CampReadyFooter() {
 
 function DesktopSecondaryPane() {
   const { activeTab, setActiveTab } = useCampReady();
+  const mealPrepNavEnabled = useMealPrepNavEnabled();
   const secondaryTab: AppTab =
-    activeTab === "meal-prep" ? "meal-prep" : "checklist";
+    mealPrepNavEnabled && activeTab === "meal-prep" ? "meal-prep" : "checklist";
 
   return (
     <section
       aria-label={secondaryTab === "meal-prep" ? "Meal prep" : "Gear checklist"}
       className="app-split-pane app-split-divider"
     >
-      <div
-        className="mb-3 flex rounded-xl border border-border bg-surface p-1"
-        role="tablist"
-        aria-label="Trip tools"
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={secondaryTab === "checklist"}
-          onClick={() => setActiveTab("checklist")}
-          className={`touch-target inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold active:opacity-90 ${
-            secondaryTab === "checklist"
-              ? "bg-accent text-accent-foreground"
-              : "text-muted"
-          }`}
+      {mealPrepNavEnabled ? (
+        <div
+          className="mb-3 flex rounded-xl border border-border bg-surface p-1"
+          role="tablist"
+          aria-label="Trip tools"
         >
-          <ClipboardList className="size-4 shrink-0" aria-hidden />
-          Gear Checklist
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={secondaryTab === "meal-prep"}
-          onClick={() => setActiveTab("meal-prep")}
-          className={`touch-target inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold active:opacity-90 ${
-            secondaryTab === "meal-prep"
-              ? "bg-accent text-accent-foreground"
-              : "text-muted"
-          }`}
-        >
-          <UtensilsCrossed className="size-4 shrink-0" aria-hidden />
-          Meal Prep
-        </button>
-      </div>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={secondaryTab === "checklist"}
+            onClick={() => setActiveTab("checklist")}
+            className={`touch-target inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold active:opacity-90 ${
+              secondaryTab === "checklist"
+                ? "bg-accent text-accent-foreground"
+                : "text-muted"
+            }`}
+          >
+            <ClipboardList className="size-4 shrink-0" aria-hidden />
+            Gear Checklist
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={secondaryTab === "meal-prep"}
+            onClick={() => setActiveTab("meal-prep")}
+            className={`touch-target inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold active:opacity-90 ${
+              secondaryTab === "meal-prep"
+                ? "bg-accent text-accent-foreground"
+                : "text-muted"
+            }`}
+          >
+            <UtensilsCrossed className="size-4 shrink-0" aria-hidden />
+            Meal Prep
+          </button>
+        </div>
+      ) : null}
       {secondaryTab === "meal-prep" ? <MealPrepView /> : <ChecklistView />}
     </section>
   );
 }
 
 function CampReadyShell() {
-  const { activeTab, infoView } = useCampReady();
+  const { activeTab, infoView, setActiveTab } = useCampReady();
+  const mealPrepNavEnabled = useMealPrepNavEnabled();
+
+  useEffect(() => {
+    if (activeTab === "meal-prep" && !mealPrepNavEnabled) {
+      setActiveTab("checklist");
+    }
+  }, [activeTab, mealPrepNavEnabled, setActiveTab]);
+
+  const mobileTab =
+    activeTab === "meal-prep" && !mealPrepNavEnabled ? "checklist" : activeTab;
 
   return (
     <MobileShell header={<AppHeader />} footer={<CampReadyFooter />}>
@@ -233,9 +255,9 @@ function CampReadyShell() {
       <StorageRecoveryBanner />
 
       <div className="lg:hidden">
-        {activeTab === "dashboard" ? (
+        {mobileTab === "dashboard" ? (
           <DashboardView />
-        ) : activeTab === "meal-prep" ? (
+        ) : mobileTab === "meal-prep" ? (
           <MealPrepView />
         ) : (
           <ChecklistView />
