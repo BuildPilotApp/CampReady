@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  getMealDayProgress,
+  getMealPrepSummary,
   getVisibleMealPrepDays,
+  resolveFocusDayNumber,
+  truncateRecipePreview,
   upsertMealPrepDayItems,
+  type VisibleMealPrepDay,
 } from "@/lib/meal-prep";
 import type { TripRecord } from "@/types";
 
@@ -19,6 +24,24 @@ function makeTrip(
     mealPrepDays,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+}
+
+function makeDay(
+  partial: Partial<VisibleMealPrepDay> &
+    Pick<VisibleMealPrepDay, "dayNumber" | "dateIso">,
+): VisibleMealPrepDay {
+  const items = partial.items ?? [];
+  const consumedCount =
+    partial.consumedCount ??
+    items.filter((item) => item.status === "consumed").length;
+  return {
+    dayNumber: partial.dayNumber,
+    dateIso: partial.dateIso,
+    dateLabel: partial.dateLabel ?? partial.dateIso,
+    items,
+    consumedCount,
+    totalCount: partial.totalCount ?? items.length,
   };
 }
 
@@ -124,5 +147,130 @@ describe("upsertMealPrepDayItems", () => {
         items: [{ id: "b", title: "B", status: "available" }],
       },
     ]);
+  });
+});
+
+describe("getMealPrepSummary", () => {
+  it("aggregates counts and finds the next unconsumed item", () => {
+    const days = [
+      makeDay({
+        dayNumber: 1,
+        dateIso: "2026-07-10",
+        dateLabel: "Jul 10",
+        items: [
+          { id: "1", title: "Oatmeal", status: "consumed" },
+          { id: "2", title: "Chili", status: "available" },
+        ],
+      }),
+      makeDay({
+        dayNumber: 2,
+        dateIso: "2026-07-11",
+        dateLabel: "Jul 11",
+        items: [{ id: "3", title: "Steak", status: "available" }],
+      }),
+    ];
+
+    expect(getMealPrepSummary(days)).toEqual({
+      totalCount: 3,
+      consumedCount: 1,
+      remainingCount: 2,
+      nextItem: {
+        dayNumber: 1,
+        title: "Chili",
+        dateLabel: "Jul 10",
+      },
+    });
+  });
+
+  it("returns null nextItem when everything is consumed", () => {
+    const days = [
+      makeDay({
+        dayNumber: 1,
+        dateIso: "2026-07-10",
+        items: [{ id: "1", title: "Oatmeal", status: "consumed" }],
+      }),
+    ];
+
+    const summary = getMealPrepSummary(days);
+    expect(summary.remainingCount).toBe(0);
+    expect(summary.nextItem).toBeNull();
+  });
+});
+
+describe("resolveFocusDayNumber", () => {
+  const days = [
+    makeDay({
+      dayNumber: 1,
+      dateIso: "2026-07-10",
+      items: [{ id: "1", title: "A", status: "consumed" }],
+    }),
+    makeDay({
+      dayNumber: 2,
+      dateIso: "2026-07-11",
+      items: [{ id: "2", title: "B", status: "available" }],
+    }),
+    makeDay({
+      dayNumber: 3,
+      dateIso: "2026-07-12",
+      items: [],
+    }),
+  ];
+
+  it("focuses today when today is inside the trip", () => {
+    expect(resolveFocusDayNumber(days, "2026-07-11")).toBe(2);
+  });
+
+  it("focuses the first day with remaining items when today is before the trip", () => {
+    expect(resolveFocusDayNumber(days, "2026-07-01")).toBe(2);
+  });
+
+  it("focuses the first day with remaining items when today is after the trip", () => {
+    expect(resolveFocusDayNumber(days, "2026-07-20")).toBe(2);
+  });
+
+  it("falls back to Day 1 when all items are consumed", () => {
+    const allConsumed = [
+      makeDay({
+        dayNumber: 1,
+        dateIso: "2026-07-10",
+        items: [{ id: "1", title: "A", status: "consumed" }],
+      }),
+      makeDay({
+        dayNumber: 2,
+        dateIso: "2026-07-11",
+        items: [{ id: "2", title: "B", status: "consumed" }],
+      }),
+    ];
+    expect(resolveFocusDayNumber(allConsumed, "2026-07-20")).toBe(1);
+  });
+
+  it("returns null for an empty day list", () => {
+    expect(resolveFocusDayNumber([], "2026-07-10")).toBeNull();
+  });
+});
+
+describe("getMealDayProgress", () => {
+  it("classifies empty, partial, and complete days", () => {
+    expect(getMealDayProgress({ totalCount: 0, consumedCount: 0 })).toBe(
+      "empty",
+    );
+    expect(getMealDayProgress({ totalCount: 3, consumedCount: 1 })).toBe(
+      "partial",
+    );
+    expect(getMealDayProgress({ totalCount: 2, consumedCount: 2 })).toBe(
+      "complete",
+    );
+  });
+});
+
+describe("truncateRecipePreview", () => {
+  it("normalizes whitespace and truncates long notes", () => {
+    expect(truncateRecipePreview("  Simmer\nfor 45 min  ")).toBe(
+      "Simmer for 45 min",
+    );
+    const long = "a".repeat(100);
+    const preview = truncateRecipePreview(long, 80);
+    expect(preview.endsWith("…")).toBe(true);
+    expect(preview.length).toBe(80);
   });
 });

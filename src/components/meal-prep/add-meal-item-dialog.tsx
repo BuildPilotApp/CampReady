@@ -6,7 +6,7 @@ import {
   modalTextareaClassName,
 } from "@/components/ui/modal-field-styles";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AddMealItemDialogProps {
   open: boolean;
@@ -23,30 +23,54 @@ export function AddMealItemDialog({
 }: AddMealItemDialogProps) {
   const [title, setTitle] = useState("");
   const [recipeNotes, setRecipeNotes] = useState("");
+  const titleRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      const timer = window.setTimeout(() => titleRef.current?.focus(), 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, [open]);
 
   if (!open) {
     return null;
   }
 
-  const handleAdd = () => {
+  const clearFields = () => {
+    setTitle("");
+    setRecipeNotes("");
+  };
+
+  const commitAdd = (): boolean => {
     const trimmed = title.trim();
-    if (!trimmed) return;
+    if (!trimmed) return false;
 
     const notes = recipeNotes.trim();
     onAdd({
       title: trimmed,
       recipeNotes: notes || undefined,
     });
-    setTitle("");
-    setRecipeNotes("");
-    onClose();
+    clearFields();
+    return true;
+  };
+
+  const handleAddAndClose = () => {
+    if (commitAdd()) {
+      onClose();
+    }
+  };
+
+  const handleAddAndContinue = () => {
+    if (!commitAdd()) return;
+    window.setTimeout(() => titleRef.current?.focus(), 0);
   };
 
   const handleClose = () => {
-    setTitle("");
-    setRecipeNotes("");
+    clearFields();
     onClose();
   };
+
+  const canAdd = Boolean(title.trim());
 
   return (
     <OverlayModal title={`Add food · ${dayLabel}`} onClose={handleClose}>
@@ -56,15 +80,15 @@ export function AddMealItemDialog({
             Food or recipe title
           </span>
           <input
+            ref={titleRef}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                handleAdd();
+                handleAddAndClose();
               }
             }}
-            autoFocus
             className={modalInputClassName}
             placeholder="Trail mix, chili, breakfast burritos…"
           />
@@ -81,15 +105,25 @@ export function AddMealItemDialog({
             placeholder="Ingredients, steps, or paste a recipe link…"
           />
         </label>
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={!title.trim()}
-          className="touch-target inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground active:opacity-90 disabled:opacity-40"
-        >
-          <Plus className="size-5" strokeWidth={2.5} aria-hidden />
-          Add food item
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={handleAddAndClose}
+            disabled={!canAdd}
+            className="touch-target inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-accent-foreground active:opacity-90 disabled:opacity-40"
+          >
+            <Plus className="size-5" strokeWidth={2.5} aria-hidden />
+            Add food item
+          </button>
+          <button
+            type="button"
+            onClick={handleAddAndContinue}
+            disabled={!canAdd}
+            className="touch-target inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold text-foreground active:opacity-90 disabled:opacity-40"
+          >
+            Add and continue
+          </button>
+        </div>
       </div>
     </OverlayModal>
   );

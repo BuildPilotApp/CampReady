@@ -166,6 +166,129 @@ export function deleteMealItemFromDays(
   );
 }
 
+export type MealDayProgress = "empty" | "partial" | "complete";
+
+export interface MealPrepNextItem {
+  dayNumber: number;
+  title: string;
+  dateLabel: string;
+}
+
+export interface MealPrepSummary {
+  totalCount: number;
+  consumedCount: number;
+  remainingCount: number;
+  nextItem: MealPrepNextItem | null;
+}
+
+export function getMealPrepSummary(days: VisibleMealPrepDay[]): MealPrepSummary {
+  let totalCount = 0;
+  let consumedCount = 0;
+  let nextItem: MealPrepNextItem | null = null;
+
+  for (const day of days) {
+    totalCount += day.totalCount;
+    consumedCount += day.consumedCount;
+
+    if (!nextItem) {
+      const remaining = day.items.find((item) => item.status !== "consumed");
+      if (remaining) {
+        nextItem = {
+          dayNumber: day.dayNumber,
+          title: remaining.title,
+          dateLabel: day.dateLabel,
+        };
+      }
+    }
+  }
+
+  return {
+    totalCount,
+    consumedCount,
+    remainingCount: totalCount - consumedCount,
+    nextItem,
+  };
+}
+
+/**
+ * Day to emphasize: today if in range, else first day with remaining items,
+ * else Day 1 when any days exist.
+ */
+export function resolveFocusDayNumber(
+  days: VisibleMealPrepDay[],
+  todayIso: string,
+): number | null {
+  if (days.length === 0) {
+    return null;
+  }
+
+  const todayDay = days.find((day) => day.dateIso === todayIso);
+  if (todayDay) {
+    return todayDay.dayNumber;
+  }
+
+  const withRemaining = days.find(
+    (day) => day.totalCount - day.consumedCount > 0,
+  );
+  if (withRemaining) {
+    return withRemaining.dayNumber;
+  }
+
+  return days[0]?.dayNumber ?? null;
+}
+
+export function getMealDayProgress(
+  day: Pick<VisibleMealPrepDay, "totalCount" | "consumedCount">,
+): MealDayProgress {
+  if (day.totalCount === 0) {
+    return "empty";
+  }
+  if (day.consumedCount >= day.totalCount) {
+    return "complete";
+  }
+  return "partial";
+}
+
+export function getMealDayProgressStyles(progress: MealDayProgress): {
+  header: string;
+  border: string;
+  subtitle: string;
+} {
+  switch (progress) {
+    case "complete":
+      return {
+        header: "bg-background/80",
+        border: "border-border/80",
+        subtitle: "text-muted",
+      };
+    case "partial":
+      return {
+        header: "bg-accent/8",
+        border: "border-accent/35",
+        subtitle: "text-accent",
+      };
+    case "empty":
+    default:
+      return {
+        header: "bg-accent/8",
+        border: "border-border",
+        subtitle: "text-muted",
+      };
+  }
+}
+
+/** One-line preview of recipe notes for collapsed rows. */
+export function truncateRecipePreview(
+  notes: string,
+  maxLength = 80,
+): string {
+  const normalized = notes.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
 /** Split recipe notes into text and http(s) URL segments for display. */
 export function splitRecipeNoteSegments(
   notes: string,

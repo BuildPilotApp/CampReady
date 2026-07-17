@@ -3,7 +3,12 @@
 import { MealDaySection } from "@/components/meal-prep/meal-day-section";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { usePro } from "@/components/providers/pro-provider";
-import { getVisibleMealPrepDays } from "@/lib/meal-prep";
+import { todayIso } from "@/lib/date-utils";
+import {
+  getMealPrepSummary,
+  getVisibleMealPrepDays,
+  resolveFocusDayNumber,
+} from "@/lib/meal-prep";
 import { isPrimeTestLabBypassActive } from "@/lib/pro";
 import { LayoutDashboard, Lock, UtensilsCrossed } from "lucide-react";
 
@@ -71,6 +76,9 @@ export function MealPrepView() {
   }
 
   const days = getVisibleMealPrepDays(activeTrip);
+  const summary = getMealPrepSummary(days);
+  const focusDayNumber = resolveFocusDayNumber(days, todayIso());
+  const today = todayIso();
 
   return (
     <div className="flex flex-col gap-3 py-2">
@@ -96,7 +104,38 @@ export function MealPrepView() {
           </button>
         </div>
       ) : (
-        days.map((day) => <MealDaySection key={day.dayNumber} day={day} />)
+        <>
+          <div className="rounded-xl border border-border bg-surface px-3 py-3">
+            <p className="text-sm font-bold text-foreground">
+              {summary.remainingCount} remaining{" "}
+              <span className="font-semibold text-muted">·</span>{" "}
+              {summary.consumedCount} of {summary.totalCount} consumed
+            </p>
+            {summary.nextItem ? (
+              <p className="mt-1 truncate text-xs font-semibold text-muted">
+                Next: {summary.nextItem.title} · Day {summary.nextItem.dayNumber}{" "}
+                · {summary.nextItem.dateLabel}
+              </p>
+            ) : summary.totalCount > 0 ? (
+              <p className="mt-1 text-xs font-semibold text-accent">
+                All meals consumed
+              </p>
+            ) : (
+              <p className="mt-1 text-xs font-semibold text-muted">
+                Add food items to start planning
+              </p>
+            )}
+          </div>
+
+          {days.map((day) => (
+            <MealDaySection
+              key={day.dayNumber}
+              day={day}
+              focusDayNumber={focusDayNumber}
+              isToday={day.dateIso === today}
+            />
+          ))}
+        </>
       )}
     </div>
   );

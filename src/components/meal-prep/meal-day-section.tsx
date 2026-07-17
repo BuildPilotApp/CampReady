@@ -3,23 +3,42 @@
 import { AddMealItemDialog } from "@/components/meal-prep/add-meal-item-dialog";
 import { MealItemRow } from "@/components/meal-prep/meal-item-row";
 import { useCampReady } from "@/components/providers/camp-ready-provider";
-import type { VisibleMealPrepDay } from "@/lib/meal-prep";
+import {
+  getMealDayProgress,
+  getMealDayProgressStyles,
+  type VisibleMealPrepDay,
+} from "@/lib/meal-prep";
 import { ChevronDown, Plus } from "lucide-react";
 import { useState } from "react";
 
 interface MealDaySectionProps {
   day: VisibleMealPrepDay;
+  focusDayNumber: number | null;
+  isToday: boolean;
 }
 
-export function MealDaySection({ day }: MealDaySectionProps) {
+export function MealDaySection({
+  day,
+  focusDayNumber,
+  isToday,
+}: MealDaySectionProps) {
   const { addMealPrepItem } = useCampReady();
-  const [collapsed, setCollapsed] = useState(false);
+  const isFocused = focusDayNumber === day.dayNumber;
+  const [collapsed, setCollapsed] = useState(!isFocused);
   const [addOpen, setAddOpen] = useState(false);
   const dayLabel = `Day ${day.dayNumber}`;
+  const progress = getMealDayProgress(day);
+  const statusStyles = getMealDayProgressStyles(progress);
+
+  const focusBadge = isToday ? "Today" : isFocused ? "Next" : null;
 
   return (
-    <section className="overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="relative flex min-h-11 w-full items-center gap-1.5 px-2">
+    <section
+      className={`overflow-hidden rounded-xl border bg-surface ${statusStyles.border}`}
+    >
+      <div
+        className={`relative flex min-h-11 w-full items-center gap-1.5 px-2 ${statusStyles.header}`}
+      >
         <button
           type="button"
           onClick={() => setCollapsed((value) => !value)}
@@ -33,10 +52,19 @@ export function MealDaySection({ day }: MealDaySectionProps) {
             aria-hidden
           />
           <span className="min-w-0 flex-1 py-1">
-            <span className="block truncate text-base font-bold leading-tight text-foreground">
-              {dayLabel}
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="block truncate text-base font-bold leading-tight text-foreground">
+                {dayLabel}
+              </span>
+              {focusBadge ? (
+                <span className="inline-flex shrink-0 rounded-full border border-accent/40 bg-accent/15 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-accent">
+                  {focusBadge}
+                </span>
+              ) : null}
             </span>
-            <span className="mt-0.5 block text-xs font-semibold leading-tight text-muted">
+            <span
+              className={`mt-0.5 block text-xs font-semibold leading-tight ${statusStyles.subtitle}`}
+            >
               {day.dateLabel} · {day.consumedCount} / {day.totalCount} consumed
             </span>
           </span>

@@ -4,7 +4,7 @@ import { useCampReady } from "@/components/providers/camp-ready-provider";
 import { useAppToast } from "@/components/ui/app-toast-provider";
 import { useDestructiveConfirm } from "@/hooks/use-destructive-confirm";
 import { usePersistedDraft } from "@/hooks/use-persisted-draft";
-import { splitRecipeNoteSegments } from "@/lib/meal-prep";
+import { splitRecipeNoteSegments, truncateRecipePreview } from "@/lib/meal-prep";
 import { openExternalUrl } from "@/lib/open-external-url";
 import type { MealPrepItem } from "@/types";
 import { Check, ChevronDown, Circle, Pencil, Trash2 } from "lucide-react";
@@ -201,8 +201,8 @@ export function MealItemRow({ dayNumber, item }: MealItemRowProps) {
           />
           Recipe notes
           {!recipeOpen && hasNotes ? (
-            <span className="truncate text-xs font-medium text-muted/80">
-              · saved
+            <span className="min-w-0 truncate text-xs font-medium text-muted/80">
+              · {truncateRecipePreview(item.recipeNotes ?? "")}
             </span>
           ) : null}
         </button>
