@@ -1,5 +1,5 @@
-export const TERMS_LAST_UPDATED = "June 2026";
-export const PRIVACY_LAST_UPDATED = "June 2026";
+export const TERMS_LAST_UPDATED = "August 2026";
+export const PRIVACY_LAST_UPDATED = "August 2026";
 
 export const PRIVACY_SECTIONS = [
   {
@@ -19,7 +19,7 @@ Android auto-backup is disabled for CampSync so checklist data is not copied to 
 • Weather forecasts and location suggestions for a trip place name you enter (sent to Open-Meteo geocoding and forecast services)
 • Opening Amazon shopping links when you tap the shopping cart icon on an eligible gear item
 • Submitting Feedback or a Bug Report (message and optional email sent to our form provider)
-• Completing a Lifetime Pro upgrade through Google Play Billing on the Android app
+• Completing a Lifetime Pro upgrade through Google Play Billing on Android or App Store In-App Purchase on iOS
 
 These requests are initiated by your actions. CampSync does not perform background tracking or silent data collection.`,
   },
@@ -37,7 +37,7 @@ These requests are initiated by your actions. CampSync does not perform backgrou
   },
   {
     title: "Contact",
-    body: `For privacy questions, use the Feedback option in the CampSync information menu.`,
+    body: `For privacy questions, email support@buildpilotapps.com or use the Feedback option in the CampSync information menu.`,
   },
 ] as const;
 

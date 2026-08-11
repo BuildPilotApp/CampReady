@@ -2,7 +2,8 @@
 
 import { usePro } from "@/components/providers/pro-provider";
 import {
-  canUseNativeGooglePlayBilling,
+  canUseNativeStoreBilling,
+  getNativeStoreDisplayName,
   purchaseCampReadyPro,
   restoreNativeCampReadyPro,
 } from "@/lib/native-billing";
@@ -51,7 +52,8 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
   const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState(false);
   const primeTestLabBypass = isPrimeTestLabBypassActive();
-  const nativeBilling = canUseNativeGooglePlayBilling();
+  const nativeBilling = canUseNativeStoreBilling();
+  const storeName = getNativeStoreDisplayName();
 
   const handleNativePurchase = async () => {
     setPurchasing(true);
@@ -82,7 +84,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
 
     if (!nativeBilling) {
       setRestoreMessage(
-        "Lifetime Pro is available in the CampSync Android app through Google Play.",
+        "Lifetime Pro is available in the CampSync mobile apps through Google Play or the App Store.",
       );
       return;
     }
@@ -96,7 +98,7 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
     }
 
     setRestoreMessage(
-      "No Google Play purchase found for this account on this device.",
+      `No ${storeName} purchase found for this account on this device.`,
     );
   };
 
@@ -179,11 +181,13 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
                 disabled={purchasing}
                 className="touch-target mt-7 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 px-4 py-4 text-center text-base font-bold text-zinc-950 shadow-lg shadow-amber-500/20 active:opacity-90 disabled:opacity-70"
               >
-                {purchasing ? "Opening Google Play…" : "Unlock forever with a one-time purchase"}
+                {purchasing
+                  ? `Opening ${storeName}…`
+                  : "Unlock forever with a one-time purchase"}
               </button>
 
               <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
-                Secure checkout through Google Play. Pro unlocks automatically on
+                Secure checkout through {storeName}. Pro unlocks automatically on
                 this device after purchase.
               </p>
 
@@ -199,8 +203,8 @@ export function PaywallModal({ onClose }: PaywallModalProps) {
           ) : (
             <>
               <p className="mt-7 text-center text-sm leading-relaxed text-zinc-400">
-                Lifetime Pro is available in the CampSync Android app through
-                Google Play.
+                Lifetime Pro is available in the CampSync mobile apps through
+                Google Play or the App Store.
               </p>
               <button
                 type="button"

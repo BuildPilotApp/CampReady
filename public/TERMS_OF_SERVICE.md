@@ -1,6 +1,6 @@
 # CampSync Terms of Service & Disclaimers
 
-**Last Updated:** June 2026
+**Last Updated:** August 2026
 
 ## 1. App Purpose & User Responsibility
 
@@ -22,4 +22,4 @@ As an Amazon Associate I earn from qualifying purchases. Tapping the shopping ca
 
 ## Contact
 
-For questions about these terms, use the **Feedback** option in the CampSync information menu.
+For questions about these terms, email **support@buildpilotapps.com** or use the **Feedback** option in the CampSync information menu.

@@ -4,5 +4,6 @@ import UIKit
 class CampReadyViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(SystemUrlLauncherPlugin())
+        bridge?.registerPluginInstance(CampReadyBillingPlugin())
     }
 }

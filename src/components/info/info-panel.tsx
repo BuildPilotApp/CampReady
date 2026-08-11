@@ -25,10 +25,11 @@ import {
   FREE_TRIP_LIMIT,
   isPrimeTestLabBypassActive,
 } from "@/lib/pro";
-import { canUseNativeGooglePlayBilling, restoreNativeCampReadyPro } from "@/lib/native-billing";
+import { canUseNativeStoreBilling, getNativeStoreDisplayName, restoreNativeCampReadyPro } from "@/lib/native-billing";
 import {
   APP_VERSION,
   DEVELOPER_NAME,
+  DEVELOPER_SUPPORT_EMAIL,
   IS_PRIME_TEST_LAB_BUILD,
 } from "@/lib/build-config";
 import {
@@ -272,7 +273,7 @@ const USER_GUIDE: UserGuideSection[] = [
       },
       {
         icon: Lock,
-        text: "Upgrade: tap a Pro button and finish the one-time Google Play purchase.",
+        text: "Upgrade: tap a Pro button and finish the one-time Google Play or App Store purchase.",
         pro: true,
       },
       {
@@ -521,7 +522,8 @@ export function InfoPanel() {
       return;
     }
 
-    if (canUseNativeGooglePlayBilling()) {
+    const storeName = getNativeStoreDisplayName();
+    if (canUseNativeStoreBilling()) {
       const restored = await restoreNativeCampReadyPro();
       if (restored) {
         refreshProAccess();
@@ -529,13 +531,13 @@ export function InfoPanel() {
         return;
       }
       showToast(
-        "No Google Play purchase found for this account on this device.",
+        `No ${storeName} purchase found for this account on this device.`,
       );
       return;
     }
 
     showToast(
-      "Lifetime Pro is available in the CampSync Android app through Google Play.",
+      "Lifetime Pro is available in the CampSync mobile apps through Google Play or the App Store.",
     );
   };
 
@@ -621,6 +623,17 @@ export function InfoPanel() {
         <p className="mt-1 text-xs text-muted">
           {DEVELOPER_NAME}
         </p>
+        {DEVELOPER_SUPPORT_EMAIL ? (
+          <p className="mt-1 text-xs text-muted">
+            Support:{" "}
+            <a
+              href={`mailto:${DEVELOPER_SUPPORT_EMAIL}`}
+              className="font-semibold text-teal-400 underline-offset-2 hover:underline"
+            >
+              {DEVELOPER_SUPPORT_EMAIL}
+            </a>
+          </p>
+        ) : null}
         <p className="mt-4 text-base leading-relaxed text-foreground">{ABOUT_TEXT}</p>
         <section className="mt-5 rounded-xl border border-border bg-background/60 px-4 py-3">
           <h3 className="text-sm font-bold text-foreground">Free vs Pro</h3>
@@ -641,7 +654,7 @@ export function InfoPanel() {
                 <li>Import List for merging spreadsheet (.xlsx) or legacy CSV/JSON into a selected trip.</li>
                 <li>Vehicle payload monitoring on the Dashboard.</li>
                 <li>Meal Prep with day-by-day planning and recipe notes.</li>
-                <li>A one-time Google Play purchase with no subscription.</li>
+                <li>A one-time Google Play or App Store purchase with no subscription.</li>
               </ul>
             </div>
           </div>

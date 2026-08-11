@@ -23,20 +23,24 @@ Offline-first camping and road-trip packing utility. Plan trips, build reusable 
 | Export | Yes | Yes |
 | Import / merge | No | Yes |
 
-**Android:** Lifetime Pro is a one-time purchase through Google Play (`campready_pro_lifetime`). Pro unlocks on the device after purchase and can be restored via Google Play.
+**Android:** Lifetime Pro is a one-time purchase through Google Play (`campready_pro_lifetime`).
 
-**Web (GitHub Pages):** checklist features work in the browser; Pro purchase is available in the Android app.
+**iOS:** Lifetime Pro is a one-time purchase through the App Store (same product ID: `campready_pro_lifetime`).
+
+**Web (GitHub Pages):** checklist features work in the browser; Pro purchase is available in the CampSync mobile apps.
+
+Support: [support@buildpilotapps.com](mailto:support@buildpilotapps.com)
 
 ## Release builds
 
-Edit `src/lib/build-config.ts` before uploading to Play Console:
+Edit `src/lib/build-config.ts` before uploading store builds:
 
 | Build | `IS_PRIME_TEST_LAB_BUILD` |
 |-------|---------------------------|
-| PrimeTestLab / closed testing | `true` (current) |
-| Production | `false` |
+| PrimeTestLab / closed testing | `true` |
+| Production (current) | `false` |
 
-Then run `npm run cap:sync` and build a signed release AAB.
+Then run `npm run cap:sync` and build a signed release AAB (Android) or Archive in Xcode (iOS).
 
 ## Development
 
@@ -50,10 +54,12 @@ npm run lint
 
 ### Mobile (Capacitor)
 
+Android and iOS share this project. Native shells live in `android/` and `ios/`.
+
 ```bash
 npm run cap:sync   # build + copy to android/ and ios/
 npm run cap:android
-npm run cap:ios
+npm run cap:ios    # requires macOS + Xcode
 ```
 
 ## Deploy

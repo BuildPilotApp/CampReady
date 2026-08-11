@@ -3,7 +3,7 @@
 import { PaywallModal } from "@/components/premium/paywall-modal";
 import { ProSuccessToast } from "@/components/premium/pro-success-toast";
 import {
-  canUseNativeGooglePlayBilling,
+  canUseNativeStoreBilling,
   restoreNativeCampReadyPro,
 } from "@/lib/native-billing";
 import {
@@ -83,8 +83,8 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshProState();
 
-    const restorePlayPurchase = async (): Promise<boolean> => {
-      if (isPrimeTestLabBypassActive() || !canUseNativeGooglePlayBilling()) {
+    const restoreStorePurchase = async (): Promise<boolean> => {
+      if (isPrimeTestLabBypassActive() || !canUseNativeStoreBilling()) {
         return false;
       }
       const restored = await restoreNativeCampReadyPro();
@@ -97,7 +97,7 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
     // Capture entitlement before restore so a reinstall can celebrate once,
     // while already-Pro devices skip the toast on every successful owned check.
     const wasProOnMount = isProRef.current;
-    void restorePlayPurchase().then((restored) => {
+    void restoreStorePurchase().then((restored) => {
       if (restored) {
         celebrateProUnlock(wasProOnMount);
       }
@@ -108,7 +108,7 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       const wasPro = isProRef.current;
-      void restorePlayPurchase().then((restored) => {
+      void restoreStorePurchase().then((restored) => {
         if (restored) {
           setIsPro(true);
           celebrateProUnlock(wasPro);

@@ -1,9 +1,12 @@
-import { registerPlugin } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { IS_PRIME_TEST_LAB_BUILD } from "@/lib/build-config";
 import { unlockProLocally } from "@/lib/pro";
 import { isNativePlatform } from "@/lib/system-url-launcher";
 
+/** Product ID must match Google Play Console and App Store Connect. */
 export const CAMPREADY_PRO_PRODUCT_ID = "campready_pro_lifetime";
+
+export type NativeStore = "android" | "ios";
 
 export interface NativePurchaseResult {
   success: boolean;
@@ -32,12 +35,40 @@ const CampReadyBilling = registerPlugin<CampReadyBillingPlugin>("CampReadyBillin
   },
 });
 
+/** True on Android/iOS production builds where store billing is wired. */
+export function canUseNativeStoreBilling(): boolean {
+  if (!isNativePlatform() || IS_PRIME_TEST_LAB_BUILD) {
+    return false;
+  }
+  const platform = Capacitor.getPlatform();
+  return platform === "android" || platform === "ios";
+}
+
+/** @deprecated Prefer canUseNativeStoreBilling — kept for older call sites. */
 export function canUseNativeGooglePlayBilling(): boolean {
-  return isNativePlatform() && !IS_PRIME_TEST_LAB_BUILD;
+  return canUseNativeStoreBilling();
+}
+
+export function getNativeStore(): NativeStore | null {
+  if (!canUseNativeStoreBilling()) {
+    return null;
+  }
+  const platform = Capacitor.getPlatform();
+  if (platform === "ios") {
+    return "ios";
+  }
+  if (platform === "android") {
+    return "android";
+  }
+  return null;
+}
+
+export function getNativeStoreDisplayName(): string {
+  return getNativeStore() === "ios" ? "App Store" : "Google Play";
 }
 
 export async function purchaseCampReadyPro(): Promise<NativePurchaseResult> {
-  if (!canUseNativeGooglePlayBilling()) {
+  if (!canUseNativeStoreBilling()) {
     return { success: false, cancelled: true };
   }
 
@@ -53,7 +84,7 @@ export async function purchaseCampReadyPro(): Promise<NativePurchaseResult> {
 }
 
 export async function restoreNativeCampReadyPro(): Promise<boolean> {
-  if (!canUseNativeGooglePlayBilling()) {
+  if (!canUseNativeStoreBilling()) {
     return false;
   }
 

@@ -1,12 +1,12 @@
 /**
- * Release build switches to read before every Play Store upload.
+ * Release build switches to read before every store upload.
  *
  * PrimeTestLab / closed testing:
  *   IS_PRIME_TEST_LAB_BUILD = true
  *
  * Production release (current):
  *   IS_PRIME_TEST_LAB_BUILD = false
- *   Then rebuild (`npm run cap:sync`) and upload a new signed AAB.
+ *   Then rebuild (`npm run cap:sync`) and upload a signed AAB (Android) or Archive (iOS).
  */
 
 export const IS_PRIME_TEST_LAB_BUILD = false;
@@ -18,7 +18,7 @@ export const APP_VERSION = "1.0.3";
 export const DEVELOPER_NAME = "BuildPilot Apps";
 
 /**
- * Optional Play Console support email for privacy/contact copy.
- * Set before production (e.g. "support@yourdomain.com") or leave null to use in-app Feedback only.
+ * Support email shown in About/Settings and App Store / Play Console listings.
+ * Leave null to use in-app Feedback only.
  */
-export const DEVELOPER_SUPPORT_EMAIL: string | null = "carpleteapp@gmail.com";
+export const DEVELOPER_SUPPORT_EMAIL: string | null = "support@buildpilotapps.com";

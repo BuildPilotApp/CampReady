@@ -13,6 +13,7 @@ import {
 import {
   APP_VERSION,
   DEVELOPER_NAME,
+  DEVELOPER_SUPPORT_EMAIL,
   IS_PRIME_TEST_LAB_BUILD,
 } from "@/lib/build-config";
 import { readDatabaseSync, writeDatabaseSync } from "@/lib/storage";
@@ -575,6 +576,19 @@ export function SettingsPage() {
                 {DEVELOPER_NAME}
               </dd>
             </div>
+            {DEVELOPER_SUPPORT_EMAIL ? (
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background px-3 py-2.5">
+                <dt className="text-sm font-semibold text-muted">Support</dt>
+                <dd className="text-right text-sm font-bold text-foreground">
+                  <a
+                    href={`mailto:${DEVELOPER_SUPPORT_EMAIL}`}
+                    className="text-teal-400 underline-offset-2 hover:underline"
+                  >
+                    {DEVELOPER_SUPPORT_EMAIL}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </section>
       </div>
