@@ -40,6 +40,7 @@ public class CampReadyBillingPlugin extends Plugin implements PurchasesUpdatedLi
                 .enablePendingPurchases(
                     PendingPurchasesParams.newBuilder().enableOneTimeProducts().build()
                 )
+                .enableAutoServiceReconnection()
                 .build();
 
         billingClient.startConnection(
@@ -97,7 +98,11 @@ public class CampReadyBillingPlugin extends Plugin implements PurchasesUpdatedLi
 
                 billingClient.queryProductDetailsAsync(
                     params,
-                    (billingResult, productDetailsList) -> {
+                    (billingResult, queryProductDetailsResult) -> {
+                        List<ProductDetails> productDetailsList =
+                            queryProductDetailsResult != null
+                                ? queryProductDetailsResult.getProductDetailsList()
+                                : null;
                         if (
                             billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK ||
                             productDetailsList == null ||
@@ -114,10 +119,20 @@ public class CampReadyBillingPlugin extends Plugin implements PurchasesUpdatedLi
                             return;
                         }
 
-                        BillingFlowParams.ProductDetailsParams productDetailsParams = BillingFlowParams.ProductDetailsParams
-                            .newBuilder()
-                            .setProductDetails(productDetails)
-                            .build();
+                        BillingFlowParams.ProductDetailsParams.Builder productDetailsParamsBuilder =
+                            BillingFlowParams.ProductDetailsParams
+                                .newBuilder()
+                                .setProductDetails(productDetails);
+                        List<ProductDetails.OneTimePurchaseOfferDetails> offers =
+                            productDetails.getOneTimePurchaseOfferDetailsList();
+                        if (offers != null && !offers.isEmpty()) {
+                            String offerToken = offers.get(0).getOfferToken();
+                            if (offerToken != null && !offerToken.isEmpty()) {
+                                productDetailsParamsBuilder.setOfferToken(offerToken);
+                            }
+                        }
+                        BillingFlowParams.ProductDetailsParams productDetailsParams =
+                            productDetailsParamsBuilder.build();
 
                         BillingFlowParams flowParams = BillingFlowParams
                             .newBuilder()
