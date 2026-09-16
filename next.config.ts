@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const isCapacitorBuild = process.env.CAPACITOR_BUILD === "1";
+const basePath = isCapacitorBuild ? "" : (process.env.NEXT_PUBLIC_BASE_PATH ?? "");
 
 const nextConfig: NextConfig = {
   output: "export",
@@ -19,7 +20,7 @@ const withPWAInit = require("@ducanh2912/next-pwa").default as (
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  disable: process.env.NODE_ENV === "development" || isCapacitorBuild,
   register: true,
   skipWaiting: true,
   reloadOnOnline: false,

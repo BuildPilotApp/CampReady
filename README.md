@@ -40,7 +40,33 @@ Edit `src/lib/build-config.ts` before uploading store builds:
 | PrimeTestLab / closed testing | `true` |
 | Production (current) | `false` |
 
-Then run `npm run cap:sync` and build a signed release AAB (Android) or Archive in Xcode (iOS).
+Then run `npm run cap:sync` and build a signed release AAB (Android) or Archive in Xcode / Codemagic (iOS).
+
+## iOS / Codemagic
+
+iOS TestFlight builds are **not** started on every push to `main` (GitHub Actions already deploys the web app from `main`). Codemagic reads [`codemagic.yaml`](./codemagic.yaml) and uploads an IPA to TestFlight only.
+
+**First-time setup (App Store Connect + Codemagic UI):**
+
+1. Create the app record with bundle ID `com.buildpilotapps.campready` and In-App Purchase product `campready_pro_lifetime`.
+2. Create an App Store Connect API key (App Manager), then in Codemagic Team settings → Apple Developer Portal add it with the integration name **`CampReady`** (must match `integrations.app_store_connect` in `codemagic.yaml`).
+3. Generate an Apple Distribution certificate and App Store provisioning profile for `com.buildpilotapps.campready`.
+4. Set application env var `APP_STORE_APPLE_ID` to the numeric Apple ID from App Store Connect → App Information.
+5. Start the first build manually in Codemagic (`ios-testflight` on `main`).
+
+**Later iOS builds:** push a tag matching `ios-*` (does not submit for App Store review):
+
+```bash
+git tag ios-1.0.4
+git push origin ios-1.0.4
+```
+
+Submit for App Store review from App Store Connect after TestFlight QA, screenshots, and listing metadata. Do not put `.p8` keys, certificates, or provisioning profiles in git.
+
+Hosted legal pages for App Store Connect:
+
+- Privacy: https://buildpilotapp.github.io/CampReady/privacy/
+- Terms: https://buildpilotapp.github.io/CampReady/terms/
 
 ## Development
 
@@ -68,7 +94,7 @@ Pushes to `main` deploy automatically to GitHub Pages via GitHub Actions (`.gith
 
 ## Privacy
 
-See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md). The in-app Information menu also includes the full privacy policy.
+See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md) and the hosted page at [buildpilotapp.github.io/CampReady/privacy](https://buildpilotapp.github.io/CampReady/privacy/). The in-app Information menu also includes the full privacy policy.
 
 ## License
 

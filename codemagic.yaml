@@ -1,0 +1,95 @@
+workflows:
+  ios-testflight:
+    name: iOS TestFlight
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: CampReady
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.buildpilotapps.campready
+      vars:
+        XCODE_PROJECT: App.xcodeproj
+        XCODE_SCHEME: App
+      node: 24
+      xcode: latest
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: ios-*
+          include: true
+      cancel_previous_builds: true
+    scripts:
+      - name: Install npm dependencies
+        script: npm ci
+      - name: Run tests and lint
+        script: |
+          npm test
+          npm run lint
+      - name: Compile web assets for Capacitor
+        script: npm run build:mobile
+      - name: Sync web assets into the iOS project
+        script: npx cap sync ios
+      - name: Set up code signing settings on Xcode project
+        script: xcode-project use-profiles
+      - name: Increment iOS build number
+        script: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ -z "${APP_STORE_APPLE_ID:-}" ]; then
+            echo "APP_STORE_APPLE_ID must be set in Codemagic application environment variables."
+            echo "Use the numeric Apple ID from App Store Connect → App Information."
+            exit 1
+          fi
+
+          cd "$CM_BUILD_DIR/ios/App"
+
+          LATEST_TESTFLIGHT=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" --platform IOS || true)
+          LATEST_APP_STORE=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" --platform IOS || true)
+
+          to_int() {
+            case "${1:-}" in
+              ''|*[!0-9]*) echo 0 ;;
+              *) echo "$1" ;;
+            esac
+          }
+
+          TESTFLIGHT_N=$(to_int "$LATEST_TESTFLIGHT")
+          APP_STORE_N=$(to_int "$LATEST_APP_STORE")
+          LATEST=$TESTFLIGHT_N
+          if [ "$APP_STORE_N" -gt "$LATEST" ]; then
+            LATEST=$APP_STORE_N
+          fi
+
+          if [ "$LATEST" -eq 0 ]; then
+            UPDATED_BUILD_NUMBER=1
+          else
+            UPDATED_BUILD_NUMBER=$((LATEST + 1))
+          fi
+
+          echo "Using iOS build number $UPDATED_BUILD_NUMBER"
+          agvtool new-version -all "$UPDATED_BUILD_NUMBER"
+      - name: Build ipa for distribution
+        script: |
+          cd "$CM_BUILD_DIR/ios/App"
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      email:
+        recipients:
+          - support@buildpilotapps.com
+        notify:
+          success: false
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
