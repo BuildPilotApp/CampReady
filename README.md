@@ -51,7 +51,7 @@ iOS TestFlight builds are **not** started on every push to `main` (GitHub Action
 1. Create the app record with bundle ID `com.buildpilotapps.campready` and In-App Purchase product `campready_pro_lifetime`.
 2. Create an App Store Connect API key (App Manager), then in Codemagic Team settings → Apple Developer Portal add it with the integration name **`CampReady`** (must match `integrations.app_store_connect` in `codemagic.yaml`).
 3. Generate an Apple Distribution certificate and App Store provisioning profile for `com.buildpilotapps.campready`.
-4. Set application env var `APP_STORE_APPLE_ID` to the numeric Apple ID from App Store Connect → App Information.
+4. In Codemagic, create variable group `app_store` and set `APP_STORE_APPLE_ID` to the numeric Apple ID from App Store Connect → App Information.
 5. Start the first build manually in Codemagic (`ios-testflight` on `main`).
 
 **Later iOS builds:** push a tag matching `ios-*` (does not submit for App Store review):
