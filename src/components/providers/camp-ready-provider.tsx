@@ -1318,7 +1318,7 @@ export function CampReadyProvider({ children }: { children: React.ReactNode }) {
 
   if (!value) {
     return (
-      <div className="mobile-app-shell flex min-h-dvh items-center justify-center bg-background text-foreground">
+      <div className="mobile-app-shell flex min-h-svh items-center justify-center bg-background text-foreground">
         <p className="text-base font-medium text-muted">Loading CampSync…</p>
       </div>
     );

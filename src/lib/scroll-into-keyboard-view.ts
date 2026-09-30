@@ -3,46 +3,64 @@ type ScrollIntoKeyboardViewOptions = {
   padding?: number;
 };
 
-function getVisibleBand(padding: number): { top: number; bottom: number } | null {
-  const visualViewport = window.visualViewport;
-  if (!visualViewport) {
-    return null;
+export type KeyboardScrollMeasurement = {
+  rectTop: number;
+  rectBottom: number;
+  viewportHeight: number;
+  offsetTop: number;
+  padding?: number;
+};
+
+const DEFAULT_PADDING = 16;
+const SETTLE_MS = 80;
+
+/**
+ * Scroll delta that brings a focused field into the visible band.
+ * A non-zero visualViewport offset means iOS already panned for the keyboard,
+ * so the window must stay put or WebKit paints both positions.
+ * Coordinates are visual-viewport relative (getBoundingClientRect).
+ */
+export function keyboardScrollDelta(measurement: KeyboardScrollMeasurement): number {
+  if (measurement.offsetTop !== 0) {
+    return 0;
   }
 
-  return {
-    top: visualViewport.offsetTop + padding,
-    bottom: visualViewport.offsetTop + visualViewport.height - padding,
-  };
+  const padding = measurement.padding ?? DEFAULT_PADDING;
+  const visibleBottom = measurement.viewportHeight - padding;
+  if (visibleBottom <= padding) {
+    return 0;
+  }
+
+  if (measurement.rectTop < padding) {
+    return measurement.rectTop - padding;
+  }
+
+  if (measurement.rectBottom > visibleBottom) {
+    return measurement.rectBottom - visibleBottom;
+  }
+
+  return 0;
 }
 
 export function scrollElementIntoKeyboardView(
   element: HTMLElement,
   options?: ScrollIntoKeyboardViewOptions,
 ): void {
-  const behavior = options?.behavior ?? "smooth";
-  const padding = options?.padding ?? 16;
+  const behavior = options?.behavior ?? "auto";
+  const padding = options?.padding ?? DEFAULT_PADDING;
+  const visualViewport = window.visualViewport;
+  const rect = element.getBoundingClientRect();
+  const delta = keyboardScrollDelta({
+    rectTop: rect.top,
+    rectBottom: rect.bottom,
+    viewportHeight: visualViewport?.height ?? window.innerHeight,
+    offsetTop: visualViewport?.offsetTop ?? 0,
+    padding,
+  });
 
-  const align = () => {
-    const band = getVisibleBand(padding);
-    if (!band || band.bottom <= band.top) {
-      element.scrollIntoView({ behavior, block: "center" });
-      return;
-    }
-
-    const rect = element.getBoundingClientRect();
-    const visibleMid = (band.top + band.bottom) / 2;
-    const elementMid = rect.top + rect.height / 2;
-    const delta = elementMid - visibleMid;
-
-    if (Math.abs(delta) > 2) {
-      window.scrollBy({ top: delta, behavior });
-    }
-  };
-
-  align();
-  requestAnimationFrame(align);
-  window.setTimeout(align, 100);
-  window.setTimeout(align, 350);
+  if (Math.abs(delta) > 2) {
+    window.scrollBy({ top: delta, behavior });
+  }
 }
 
 export function watchKeyboardViewportForElement(
@@ -54,17 +72,19 @@ export function watchKeyboardViewportForElement(
     return () => {};
   }
 
-  const padding = options?.padding ?? 16;
+  const padding = options?.padding ?? DEFAULT_PADDING;
+  let settleTimer = 0;
   const align = () => {
-    scrollElementIntoKeyboardView(element, { behavior: "auto", padding });
+    window.clearTimeout(settleTimer);
+    settleTimer = window.setTimeout(() => {
+      scrollElementIntoKeyboardView(element, { behavior: "auto", padding });
+    }, SETTLE_MS);
   };
 
   visualViewport.addEventListener("resize", align);
-  visualViewport.addEventListener("scroll", align);
-  align();
 
   return () => {
+    window.clearTimeout(settleTimer);
     visualViewport.removeEventListener("resize", align);
-    visualViewport.removeEventListener("scroll", align);
   };
 }

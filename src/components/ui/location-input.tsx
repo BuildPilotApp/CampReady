@@ -1,6 +1,5 @@
 "use client";
 
-import { scrollElementIntoKeyboardView } from "@/lib/scroll-into-keyboard-view";
 import { geocodeLocation, searchGeocodeLocations } from "@/lib/weather";
 import { useKeyboardAwareScroll } from "@/hooks/use-keyboard-aware-scroll";
 import { isNetworkAvailable } from "@/lib/runtime/network-guard";
@@ -166,9 +165,6 @@ export const LocationInput = forwardRef<LocationInputHandle, LocationInputProps>
         commitQuery: resolveTypedLocation,
         focus: () => {
           inputRef.current?.focus();
-          if (inputRef.current) {
-            scrollElementIntoKeyboardView(inputRef.current);
-          }
         },
       }),
       [resolveTypedLocation],

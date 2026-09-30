@@ -102,7 +102,7 @@ body {
 /* Full-width canvas with a centered phone-width column (max 480px). */
 .app-viewport-canvas {
   display: flex;
-  min-height: 100dvh;
+  min-height: 100svh;
   width: 100%;
   justify-content: center;
   background: var(--background);
@@ -111,7 +111,7 @@ body {
 .app-viewport-frame {
   width: 100%;
   max-width: var(--app-max-width);
-  min-height: 100dvh;
+  min-height: 100svh;
   box-shadow: 0 0 0 1px var(--border);
 }
 
@@ -153,7 +153,7 @@ body {
 
 .mobile-app-shell {
   width: 100%;
-  min-height: 100dvh;
+  min-height: 100svh;
 }
 
 .mobile-safe-x {
